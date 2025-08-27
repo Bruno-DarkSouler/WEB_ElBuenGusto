@@ -1,0 +1,162 @@
+@font-face{
+    font-family: "Averia Serif Libre";
+    src: url(./AveriaSerif-Bold.ttf);
+}
+*{
+    margin: 0;
+    padding: 0;
+    font-family: "Averia Serif Libre";
+}
+header{
+    width: 100%;
+    justify-content: center;
+    align-items: center;
+    background-color: #C81E2D;
+    top: 0;
+    left: 0;
+}
+.div_navbar{
+    padding: 1rem;
+}
+.navbar{
+    display: flex;
+    width: auto;
+    height: 6rem;
+    border-radius: 30px;
+    background-color: #F5EBD2;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 160%;
+}
+.nombre_sitio{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-left: 1rem;
+}
+.nombre_sitio p{
+    margin-left: 1rem;
+}
+.opciones{
+    width: 24rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.preguntas{
+    margin-right: 6rem;
+}
+.bienvenida{
+    width: 100%;
+    flex-direction: column;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.titulo{
+    font-size: 420%;
+    color: white;
+    margin: 1rem;
+}
+.subtitulo{
+    font-size: 160%;
+    color: white;
+}
+.sesion{
+    display: flex;
+    justify-content: space-evenly;
+    align-items: center;
+    color: white;
+    height: 13rem;
+    font-size: 160%;
+}
+.inicio{
+    border-radius: 3rem;
+    background-color: #7D121B;
+    padding: 1.5rem;
+}
+.registro{
+    border-radius: 3rem;
+    background-color: #FE2639;
+    padding: 1.5rem;
+}
+.opinion img{
+    height: 13rem;
+    width: 13rem;
+    border-radius: 3rem;
+}
+main{
+    background-color: #F5EBD2;
+}
+.div_opiniones{
+    display: grid;
+    place-items: center;
+}
+.opiniones{
+    font-size: 300%;
+    margin: 3rem;
+}
+.opinion{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 3rem;
+}
+.ejemplo{
+    flex-direction: column;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: rgb(224, 215, 186);
+    width: 30rem;
+    height: 30rem;
+    border-radius: 3rem;
+}
+.foto_usuario{
+    display: grid;
+    place-items: center;
+    height: 13rem;
+    width: 13rem;
+}
+.text_opinion{
+    padding: 3rem;
+    font-size: 160%;
+    color: rgb(60, 60, 60);
+}
+.nombre_usuario{
+    font-size: 160%;
+}
+.preguntas_frecuentes{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    gap: 3rem;
+    padding: 8rem;
+}
+.texto_principal{
+    font-size: 300%;
+}
+.pregunta{
+    background-color: rgb(224, 215, 186);
+    width: 80%;
+    height: 24rem;
+    border-radius: 3rem;
+    flex-direction: column;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.text_pregunta{
+    font-size: 280%;
+}
+.respuesta_pregunta{
+    font-size: 240%;
+    padding: 3rem;
+    color: rgb(60, 60, 60);
+}
+hr{
+    padding: 0.rem;
+    margin: 3rem;
+    background-color: #503214;
+}
