@@ -160,3 +160,23 @@ hr{
     margin: 3rem;
     background-color: #503214;
 }
+.redes_sociales{
+    flex-direction: column;
+    display: grid;
+    place-items: center;
+    gap: 3rem;
+    padding: 5rem;
+}
+.text_redes{
+    font-size: 380%;
+}
+svg{
+    width: 3rem;
+    height: 3rem;
+}
+.redes{
+    width: 30%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}

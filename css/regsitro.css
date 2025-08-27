@@ -1,14 +1,21 @@
- * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+@font-face{
+    font-family: "Averia Serif Libre";
+    src: url(./AveriaSerif-Bold.ttf);
+}
+*{
+    margin: 0;
+    padding: 0;
+    font-family: "Averia Serif Libre";
+}
 
-        body {
+        .body_registro {
             font-family: 'Arial', sans-serif;
             background: linear-gradient(135deg, #f5f0e8 0%, #ede1d3 50%, #e8d5bf 100%);
             min-height: 100vh;
+            position: fixed;
             display: flex;
+            top: 0;
+    left: 0;
             justify-content: center;
             align-items: center;
             padding: 20px;

@@ -4,11 +4,14 @@
             box-sizing: border-box;
         }
 
-        body {
+        .body_registro {
             font-family: 'Arial', sans-serif;
             background: linear-gradient(135deg, #f5f0e8 0%, #ede1d3 50%, #e8d5bf 100%);
             min-height: 100vh;
+            position: fixed;
             display: flex;
+            top: 0;
+    left: 0;
             justify-content: center;
             align-items: center;
             padding: 20px;
