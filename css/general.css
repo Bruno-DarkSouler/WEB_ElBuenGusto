@@ -1,4 +1,27 @@
 @import "tailwindcss";
-@import "tailwindcss/preflight";
-@tailwind utilities;
 
+:root{
+    --rojo: rgb(200,30,45);
+    --marron: rgb(80,50,20);
+    --blanco: rgb(245,235,210);
+}
+
+*{
+    box-sizing: border-box;
+    font-family: 'Times New Roman', Times, serif;
+}
+
+html{
+    height: 100%;
+}
+
+body{
+    min-height: 100%;
+}
+
+.barra_busqueda{
+    margin: 1rem 0;
+    padding: 0 1rem;
+    border-radius: calc(infinity * 1px);
+    background-color: var(--blanco);
+}
