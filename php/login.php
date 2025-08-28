@@ -45,11 +45,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     // Verificar contraseña
     if (password_verify($password, $usuario['contraseña'])) {
         // Login exitoso - crear sesión
-        $_SESSION['usuario_id'] = $usuario['id'];
-        $_SESSION['usuario_nombre'] = $usuario['nombre'];
-        $_SESSION['usuario_apellido'] = $usuario['apellido'];
-        $_SESSION['usuario_email'] = $usuario['email'];
-        $_SESSION['usuario_rol'] = $usuario['rol'];
+        $_SESSION['user_id'] = $usuario['id'];
+        $_SESSION['user_name'] = $usuario['nombre'] . ' ' . $usuario['apellido'];
+        $_SESSION['user_email'] = $usuario['email'];
+        $_SESSION['user_rol'] = $usuario['rol'];
         
         echo json_encode([
             'success' => true, 

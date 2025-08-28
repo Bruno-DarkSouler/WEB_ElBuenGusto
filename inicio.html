@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>El Buen Gusto - Inicio</title>
+    <link rel="stylesheet" href="./css/inicio.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Header con navegación -->
+    <header class="header">
+        <div class="navbar">
+            <div class="logo-section">
+                <img src="./img/logo 2.png" alt="El Buen Gusto" class="logo">
+                <h1>El Buen Gusto</h1>
+            </div>
+            
+            <div class="search-section">
+                <div class="search-container">
+                    <input type="text" id="searchInput" placeholder="Buscar productos..." class="search-input">
+                    <button class="search-btn">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                            <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="user-section">
+                <span class="welcome-text">Bienvenido, <span id="userName">Usuario</span></span>
+                <button class="cart-btn" onclick="toggleCart()">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 16 16">
+                        <path d="M0 1.5A.5.5 0 0 1 .5 1H2a.5.5 0 0 1 .485.379L2.89 3H14.5a.5.5 0 0 1 .491.592l-1.5 8A.5.5 0 0 1 13 12H4a.5.5 0 0 1-.491-.408L2.01 3.607 1.61 2H.5a.5.5 0 0 1-.5-.5zM3.102 4l1.313 7h8.17l1.313-7H3.102zM5 12a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm7 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm-7 1a1 1 0 1 1 0 2 1 1 0 0 1 0-2zm7 0a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/>
+                    </svg>
+                    <span class="cart-count" id="cartCount">0</span>
+                </button>
+                <button class="logout-btn" onclick="logout()">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                        <path fill-rule="evenodd" d="M10 12.5a.5.5 0 0 1-.5.5h-8a.5.5 0 0 1-.5-.5v-9a.5.5 0 0 1 .5-.5h8a.5.5 0 0 1 .5.5v2a.5.5 0 0 0 1 0v-2A1.5 1.5 0 0 0 9.5 2h-8A1.5 1.5 0 0 0 0 3.5v9A1.5 1.5 0 0 0 1.5 14h8a1.5 1.5 0 0 0 1.5-1.5v-2a.5.5 0 0 0-1 0v2z"/>
+                        <path fill-rule="evenodd" d="M15.854 8.354a.5.5 0 0 0 0-.708l-3-3a.5.5 0 0 0-.708.708L14.293 7.5H5.5a.5.5 0 0 0 0 1h8.793l-2.147 2.146a.5.5 0 0 0 .708.708l3-3z"/>
+                    </svg>
+                    Salir
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Carrito desplegable -->
+    <div class="cart-sidebar" id="cartSidebar">
+        <div class="cart-header">
+            <h3>Mi Carrito</h3>
+            <button class="close-cart" onclick="toggleCart()">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                    <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/>
+                </svg>
+            </button>
+        </div>
+        <div class="cart-items" id="cartItems">
+            <p class="empty-cart">Tu carrito está vacío</p>
+        </div>
+        <div class="cart-footer">
+            <div class="cart-total">
+                <strong>Total: $<span id="cartTotal">0</span></strong>
+            </div>
+            <button class="checkout-btn" onclick="checkout()">Finalizar Pedido</button>
+        </div>
+    </div>
+
+    <!-- Overlay para el carrito -->
+    <div class="cart-overlay" id="cartOverlay" onclick="toggleCart()"></div>
+
+    <!-- Contenido principal -->
+    <main class="main-content">
+        <!-- Filtros de categorías -->
+        <section class="categories-section">
+            <h2>Nuestras Especialidades</h2>
+            <div class="categories-filter">
+                <button class="category-btn active" data-category="all">Todos</button>
+                <button class="category-btn" data-category="minutas">Minutas</button>
+                <button class="category-btn" data-category="pastas">Pastas</button>
+                <button class="category-btn" data-category="guisos">Guisos</button>
+                <button class="category-btn" data-category="tartas">Tartas</button>
+                <button class="category-btn" data-category="empanadas">Empanadas</button>
+                <button class="category-btn" data-category="postres">Postres</button>
+                <button class="category-btn" data-category="bebidas">Bebidas</button>
+                <button class="category-btn" data-category="embutidos">Embutidos</button>
+            </div>
+        </section>
+
+        <!-- Productos -->
+        <section class="products-section">
+            <div class="products-grid" id="productsGrid">
+                <!-- Minutas -->
+                <div class="product-card" data-category="minutas">
+                    <img src="https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=300&h=200&fit=crop" alt="Hamburguesa Completa" class="product-image">
+                    <div class="product-info">
+                        <h3 class="product-name">Hamburguesa Completa</h3>
+                        <p class="product-description">Carne, lechuga, tomate, queso, huevo, jamón</p>
+                        <div class="product-price">$2500</div>
+                        <button class="add-to-cart-btn" onclick="addToCart('hamburguesa-completa', 'Hamburguesa Completa', 2500, 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=300&h=200&fit=crop')">Agregar al Carrito</button>
+                    </div>
+                </div>
+
+                <div class="product-card" data-category="minutas">
+                    <img src="https://media.istockphoto.com/id/1905645778/es/foto/vista-a%C3%A9rea-de-un-plato-de-milanesa-con-papas-fritas-concepto-de-comida-argentina-comida.jpg?s=612x612&w=0&k=20&c=ZbnQfEOs6vxEj1NMw77Cn6LlW7GPCPJl44Ip-TGy2sM=" alt="Milanesa con Papas" class="product-image">
+                    <div class="product-info">
+                        <h3 class="product-name">Milanesa con Papas</h3>
+                        <p class="product-description">Milanesa de carne con papas fritas caseras</p>
+                        <div class="product-price">$3200</div>
+                        <button class="add-to-cart-btn" onclick="addToCart('milanesa-papas', 'Milanesa con Papas', 3200, 'https://images.unsplash.com/photo-1565299624946-b28f40a0ca4b?w=300&h=200&fit=crop')">Agregar al Carrito</button>
+                    </div>
+                </div>
+
+                <!-- Pastas -->
+                <div class="product-card" data-category="pastas">
+                    <img src="https://images.unsplash.com/photo-1645087177483-f760329f470f?q=80&w=870&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" alt="Ñoquis con Salsa" class="product-image">
+                    <div class="product-info">
+                        <h3 class="product-name">Ñoquis con Salsa</h3>
+                        <p class="product-description">Ñoquis caseros con salsa de tomate y albahaca</p>
+                        <div class="product-price">$2800</div>
+                        <button class="add-to-cart-btn" onclick="addToCart('noquis-salsa', 'Ñoquis con Salsa', 2800, 'https://images.unsplash.com/photo-1621996346565-e3dbc353d2e5?w=300&h=200&fit=crop')">Agregar al Carrito</button>
+                    </div>
+                </div>
+
+                <div class="product-card" data-category="pastas">
+                    <img src="https://images.unsplash.com/photo-1551183053-bf91a1d81141?w=300&h=200&fit=crop" alt="Ravioles de Ricota" class="product-image">
+                    <div class="product-info">
+                        <h3 class="product-name">Ravioles de Ricota</h3>
+                        <p class="product-description">Ravioles caseros rellenos de ricota y espinaca</p>
+                        <div class="product-price">$3000</div>
+                        <button class="add-to-cart-btn" onclick="addToCart('ravioles-ricota', 'Ravioles de Ricota', 3000, 'https://images.unsplash.com/photo-1551183053-bf91a1d81141?w=300&h=200&fit=crop')">Agregar al Carrito</button>
+                    </div>
+                </div>
+
+                <!-- Guisos -->
+                <div class="product-card" data-category="guisos">
+                    <img src="https://images.unsplash.com/photo-1574484284002-952d92456975?w=300&h=200&fit=crop" alt="Locro Criollo" class="product-image">
+                    <div class="product-info">
+                        <h3 class="product-name">Locro Criollo</h3>
+                        <p class="product-description">Locro tradicional argentino con chorizo y panceta</p>
+                        <div class="product-price">$3500</div>
+                        <button class="add-to-cart-btn" onclick="addToCart('locro-criollo', 'Locro Criollo', 3500, 'https://images.unsplash.com/photo-1574484284002-952d92456975?w=300&h=200&fit=crop')">Agregar al Carrito</button>
+                    </div>
+                </div>
+
+                <!-- Tartas -->
+                <div class="product-card" data-category="tartas">
+                    <img src="https://images.unsplash.com/photo-1565299507177-b0ac66763828?w=300&h=200&fit=crop" alt="Tarta de Jamón y Queso" class="product-image">
+                    <div class="product-info">
+                        <h3 class="product-name">Tarta de Jamón y Queso</h3>
+                        <p class="product-description">Tarta casera con jamón cocido y queso cremoso</p>
+                        <div class="product-price">$2200</div>
+                        <button class="add-to-cart-btn" onclick="addToCart('tarta-jamon-queso', 'Tarta de Jamón y Queso', 2200, 'https://images.unsplash.com/photo-1565299507177-b0ac66763828?w=300&h=200&fit=crop')">Agregar al Carrito</button>
+                    </div>
+                </div>
+
+                <!-- Empanadas -->
+                <div class="product-card" data-category="empanadas">
+                    <img src="https://images.unsplash.com/photo-1601050690597-df0568f70950?w=300&h=200&fit=crop" alt="Empanadas de Carne" class="product-image">
+                    <div class="product-info">
+                        <h3 class="product-name">Empanadas de Carne</h3>
+                        <p class="product-description">Empanadas criollas de carne cortada a cuchillo (docena)</p>
+                        <div class="product-price">$4800</div>
+                        <button class="add-to-cart-btn" onclick="addToCart('empanadas-carne', 'Empanadas de Carne', 4800, 'https://images.unsplash.com/photo-1601050690597-df0568f70950?w=300&h=200&fit=crop')">Agregar al Carrito</button>
+                    </div>
+                </div>
+
+                <!-- Postres -->
+                <div class="product-card" data-category="postres">
+                    <img src="https://images.unsplash.com/photo-1551024506-0bccd828d307?w=300&h=200&fit=crop" alt="Flan Casero" class="product-image">
+                    <div class="product-info">
+                        <h3 class="product-name">Flan Casero</h3>
+                        <p class="product-description">Flan casero con dulce de leche y crema</p>
+                        <div class="product-price">$1800</div>
+                        <button class="add-to-cart-btn" onclick="addToCart('flan-casero', 'Flan Casero', 1800, 'https://images.unsplash.com/photo-1551024506-0bccd828d307?w=300&h=200&fit=crop')">Agregar al Carrito</button>
+                    </div>
+                </div>
+
+                <!-- Bebidas -->
+                <div class="product-card" data-category="bebidas">
+                    <img src="https://images.unsplash.com/photo-1544145945-f90425340c7e?w=300&h=200&fit=crop" alt="Coca Cola 500ml" class="product-image">
+                    <div class="product-info">
+                        <h3 class="product-name">Coca Cola 500ml</h3>
+                        <p class="product-description">Gaseosa Coca Cola 500ml</p>
+                        <div class="product-price">$800</div>
+                        <button class="add-to-cart-btn" onclick="addToCart('coca-cola-500', 'Coca Cola 500ml', 800, 'https://images.unsplash.com/photo-1544145945-f90425340c7e?w=300&h=200&fit=crop')">Agregar al Carrito</button>
+                    </div>
+                </div>
+
+                <!-- Embutidos -->
+                <div class="product-card" data-category="embutidos">
+                    <img src="https://images.unsplash.com/photo-1544025162-d76694265947?w=300&h=200&fit=crop" alt="Jamón Crudo" class="product-image">
+                    <div class="product-info">
+                        <h3 class="product-name">Jamón Crudo (100g)</h3>
+                        <p class="product-description">Jamón crudo premium cortado al momento</p>
+                        <div class="product-price">$1200</div>
+                        <button class="add-to-cart-btn" onclick="addToCart('jamon-crudo-100g', 'Jamón Crudo (100g)', 1200, 'https://images.unsplash.com/photo-1544025162-d76694265947?w=300&h=200&fit=crop')">Agregar al Carrito</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script src="./js/inicio.js"></script>
+</body>
+</html>
