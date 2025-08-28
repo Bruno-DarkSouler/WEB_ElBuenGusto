@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel Administrador - Rotisería</title>
+    <link rel="stylesheet" href="../css/admin.css">
+</head>
+<body>
+    <div class="admin-container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="logo">
+                <h2>Rotisería</h2>
+                <p>Panel Admin</p>
+            </div>
+            <nav>
+                <ul class="nav-menu">
+                    <li class="nav-item">
+                        <a href="#dashboard" class="nav-link active">
+                            <span class="nav-icon">📊</span>
+                            Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#pedidos" class="nav-link">
+                            <span class="nav-icon">📋</span>
+                            Pedidos
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#productos" class="nav-link">
+                            <span class="nav-icon">🍽️</span>
+                            Productos
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#usuarios" class="nav-link">
+                            <span class="nav-icon">👥</span>
+                            Usuarios
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#configuracion" class="nav-link">
+                            <span class="nav-icon">⚙️</span>
+                            Configuración
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#reportes" class="nav-link">
+                            <span class="nav-icon">📈</span>
+                            Reportes
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <div class="header">
+                <h1>Panel de Administrador</h1>
+                <div class="user-info">
+                    
+                    <span>Admin Usuario</span>
+                </div>
+            </div>
+
+            <!-- Dashboard Cards -->
+            <div class="dashboard-grid">
+                <div class="dashboard-card">
+                    <div class="card-header">
+                        <h3 class="card-title">Pedidos Hoy</h3>
+                    </div>
+                    <div class="card-value">24</div>
+                    <small>+15% vs ayer</small>
+                </div>
+
+                <div class="dashboard-card">
+                    <div class="card-header">
+                        <h3 class="card-title">Ventas del Día</h3>
+                    </div>
+                    <div class="card-value">$12,450</div>
+                    <small>+8% vs ayer</small>
+                </div>
+
+                <div class="dashboard-card">
+                    <div class="card-header">
+                        <h3 class="card-title">Pedidos Activos</h3>
+                    </div>
+                    <div class="card-value">7</div>
+                    <small>En preparación/entrega</small>
+                </div>
+
+                <div class="dashboard-card">
+                    <div class="card-header">
+                        <h3 class="card-title">Productos Activos</h3>
+                    </div>
+                    <div class="card-value">42</div>
+                    <small>Disponibles para venta</small>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="quick-actions" style="margin-top: 2rem;">
+                <h3 style="color: var(--tertiary-color); margin-bottom: 1rem;">Acciones Rápidas</h3>
+                <div class="dashboard-grid">
+                    <button class="btn btn-secondary" onclick="toggleLocalStatus()">
+                        🏪 Cambiar Estado Local
+                    </button>
+                    <button class="btn btn-secondary" onclick="manageProducts()">
+                        ➕ Gestionar Productos
+                    </button>
+                    <button class="btn btn-secondary" onclick="viewReports()">
+                        📊 Ver Reportes
+                    </button>
+                    <button class="btn btn-secondary" onclick="manageUsers()">
+                        👥 Gestionar Usuarios
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Phone Order Modal -->
+    <div id="phoneOrderModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>📞 Nuevo Pedido Telefónico</h2>
+                <span class="close" onclick="closePhoneOrderModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="phoneOrderForm">
+                    <!-- Customer Information -->
+                    <h3 style="color: var(--tertiary-color); margin-bottom: 1rem;">Información del Cliente</h3>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label class="form-label" for="customerPhone">Teléfono *</label>
+                            <input type="tel" id="customerPhone" class="form-control" required 
+                                   placeholder="Ej: +54 11 1234-5678" onblur="searchCustomer()">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="customerName">Nombre Completo *</label>
+                            <input type="text" id="customerName" class="form-control" required 
+                                   placeholder="Nombre y apellido">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="customerEmail">Email</label>
+                            <input type="email" id="customerEmail" class="form-control" 
+                                   placeholder="cliente@email.com">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="deliveryAddress">Dirección de Entrega *</label>
+                            <textarea id="deliveryAddress" class="form-control" required rows="2" 
+                                      placeholder="Calle, número, piso, depto, referencias"></textarea>
+                        </div>
+                    </div>
+
+                    <!-- Order Type and Timing -->
+                    <h3 style="color: var(--tertiary-color); margin: 2rem 0 1rem 0;">Tipo de Pedido</h3>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label class="form-label" for="orderType">Tipo de Pedido *</label>
+                            <select id="orderType" class="form-control select-control" required onchange="toggleScheduleTime()">
+                                <option value="">Seleccionar tipo</option>
+                                <option value="inmediato">Inmediato</option>
+                                <option value="programado">Programado</option>
+                            </select>
+                        </div>
+                        <div class="form-group" id="scheduleTimeGroup" style="display: none;">
+                            <label class="form-label" for="scheduleTime">Hora de Entrega</label>
+                            <input type="datetime-local" id="scheduleTime" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="paymentMethod">Método de Pago *</label>
+                            <select id="paymentMethod" class="form-control select-control" required>
+                                <option value="">Seleccionar método</option>
+                                <option value="digital">Digital (Mercado Pago, Cuenta DNI)</option>
+                                <option value="efectivo">Efectivo (Solo clientes autorizados)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="deliveryZone">Zona de Entrega *</label>
+                            <select id="deliveryZone" class="form-control select-control" required onchange="updateDeliveryPrice()">
+                                <option value="">Seleccionar zona</option>
+                                <option value="1" data-price="200">Zona Centro - $200</option>
+                                <option value="2" data-price="300">Zona Norte - $300</option>
+                                <option value="3" data-price="400">Zona Sur - $400</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Product Selection -->
+                    <div class="product-section">
+                        <h3 style="color: var(--tertiary-color); margin-bottom: 1rem;">Selección de Productos</h3>
+                        
+                        <!-- Category Filter -->
+                        <div class="form-group">
+                            <label class="form-label" for="categoryFilter">Filtrar por Categoría</label>
+                            <select id="categoryFilter" class="form-control select-control" onchange="filterProducts()">
+                                <option value="">Todas las categorías</option>
+                                <option value="minutas">Minutas</option>
+                                <option value="pastas">Pastas</option>
+                                <option value="guisos">Guisos</option>
+                                <option value="tartas">Tartas</option>
+                                <option value="empanadas">Empanadas</option>
+                                <option value="postres">Postres</option>
+                                <option value="bebidas">Bebidas</option>
+                                <option value="embutidos">Embutidos</option>
+                            </select>
+                        </div>
+
+                        <div class="product-grid" id="productGrid">
+                            <!-- Example Products -->
+                            <div class="product-card" data-category="minutas" onclick="selectProduct(1, 'Milanesa con Papas', 850)">
+                                <h4>Milanesa con Papas</h4>
+                                <p style="color: #666; font-size: 0.9rem;">Milanesa de carne con guarnición de papas fritas</p>
+                                <p style="font-weight: bold; color: var(--primary-color);">$850</p>
+                                <div class="quantity-control" style="display: none;">
+                                    <button type="button" class="quantity-btn" onclick="changeQuantity(1, -1)">-</button>
+                                    <span class="quantity">1</span>
+                                    <button type="button" class="quantity-btn" onclick="changeQuantity(1, 1)">+</button>
+                                </div>
+                            </div>
+
+                            <div class="product-card" data-category="pastas" onclick="selectProduct(2, 'Ravioles con Salsa', 720)">
+                                <h4>Ravioles con Salsa</h4>
+                                <p style="color: #666; font-size: 0.9rem;">Ravioles caseros con salsa bolognesa</p>
+                                <p style="font-weight: bold; color: var(--primary-color);">$720</p>
+                                <div class="quantity-control" style="display: none;">
+                                    <button type="button" class="quantity-btn" onclick="changeQuantity(2, -1)">-</button>
+                                    <span class="quantity">1</span>
+                                    <button type="button" class="quantity-btn" onclick="changeQuantity(2, 1)">+</button>
+                                </div>
+                            </div>
+
+                            <div class="product-card" data-category="empanadas" onclick="selectProduct(3, 'Empanadas de Carne (x6)', 480)">
+                                <h4>Empanadas de Carne (x6)</h4>
+                                <p style="color: #666; font-size: 0.9rem;">Media docena de empanadas de carne cortada a cuchillo</p>
+                                <p style="font-weight: bold; color: var(--primary-color);">$480</p>
+                                <div class="quantity-control" style="display: none;">
+                                    <button type="button" class="quantity-btn" onclick="changeQuantity(3, -1)">-</button>
+                                    <span class="quantity">1</span>
+                                    <button type="button" class="quantity-btn" onclick="changeQuantity(3, 1)">+</button>
+                                </div>
+                            </div>
+
+                            <div class="product-card" data-category="bebidas" onclick="selectProduct(4, 'Coca Cola 1.5L', 320)">
+                                <h4>Coca Cola 1.5L</h4>
+                                <p style="color: #666; font-size: 0.9rem;">Gaseosa Coca Cola botella 1.5 litros</p>
+                                <p style="font-weight: bold; color: var(--primary-color);">$320</p>
+                                <div class="quantity-control" style="display: none;">
+                                    <button type="button" class="quantity-btn" onclick="changeQuantity(4, -1)">-</button>
+                                    <span class="quantity">1</span>
+                                    <button type="button" class="quantity-btn" onclick="changeQuantity(4, 1)">+</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Order Summary -->
+                    <div class="order-summary">
+                        <h3 style="color: var(--tertiary-color); margin-bottom: 1rem;">Resumen del Pedido</h3>
+                        <div id="orderItems"></div>
+                        <div class="summary-line">
+                            <span>Subtotal:</span>
+                            <span id="subtotal">$0</span>
+                        </div>
+                        <div class="summary-line">
+                            <span>Delivery:</span>
+                            <span id="deliveryPrice">$0</span>
+                        </div>
+                        <div class="summary-line summary-total">
+                            <span>Total:</span>
+                            <span id="totalPrice">$0</span>
+                        </div>
+                    </div>
+
+                    <!-- Comments -->
+                    <div class="form-group">
+                        <label class="form-label" for="orderComments">Comentarios del Cliente</label>
+                        <textarea id="orderComments" class="form-control" rows="3" 
+                                  placeholder="Comentarios especiales, instrucciones de entrega, etc."></textarea>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div style="display: flex; gap: 1rem; margin-top: 2rem; justify-content: flex-end;">
+                        <button type="button" class="btn btn-secondary" onclick="closePhoneOrderModal()">
+                            Cancelar
+                        </button>
+                        <button type="submit" class="btn btn-primary">
+                            📞 Confirmar Pedido
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="../js/admin.js"></script>
+        
