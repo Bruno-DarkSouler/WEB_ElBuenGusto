@@ -43,6 +43,9 @@ header{
     justify-content: space-between;
     align-items: center;
 }
+a{
+    text-decoration: none;
+}
 .preguntas{
     margin-right: 6rem;
 }
@@ -74,11 +77,27 @@ header{
     border-radius: 3rem;
     background-color: #7D121B;
     padding: 1.5rem;
+    border: none;
+    color: white;
+    font-family: inherit;
+  font-size: inherit;
+  cursor: pointer;
+}
+.inicio:hover{
+    background-color: #640f16;
 }
 .registro{
     border-radius: 3rem;
     background-color: #FE2639;
     padding: 1.5rem;
+    border: none;
+    color: white;
+    font-family: inherit;
+  font-size: inherit;
+  cursor: pointer;
+}
+.registro:hover{
+    background-color: #e42333;
 }
 .opinion img{
     height: 13rem;
@@ -170,7 +189,7 @@ hr{
 .text_redes{
     font-size: 380%;
 }
-svg{
+.red_social{
     width: 3rem;
     height: 3rem;
 }
@@ -179,4 +198,16 @@ svg{
     display: flex;
     justify-content: space-between;
     align-items: center;
+}
+.cancel{
+    width: 2.4rem;
+    height: 2.4rem;
+    position: absolute;
+    top: 0;
+    right: 0;
+    margin: 0.3rem;
+    border-radius: 50%;
+}
+.cancel:hover{
+    background-color: rgba(0, 0, 0, 0.3);
 }
