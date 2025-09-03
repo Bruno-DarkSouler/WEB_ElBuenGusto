@@ -1,6 +1,6 @@
 @font-face{
     font-family: "Averia Serif Libre";
-    src: url(./AveriaSerif-Bold.ttf);
+    src: url(../AveriaSerif-Bold.ttf);
 }
 *{
     margin: 0;

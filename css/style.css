@@ -1,6 +1,6 @@
 @font-face{
     font-family: "Averia Serif Libre";
-    src: url(./AveriaSerif-Bold.ttf);
+    src: url(../AveriaSerif-Bold.ttf);
 }
 *{
     margin: 0;
@@ -38,10 +38,7 @@ header{
     margin-left: 1rem;
 }
 .opciones{
-    width: 24rem;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+    max-width: 24rem;
 }
 a{
     text-decoration: none;
@@ -116,9 +113,6 @@ main{
     margin: 3rem;
 }
 .opinion{
-    display: flex;
-    justify-content: center;
-    align-items: center;
     gap: 3rem;
 }
 .ejemplo{
