@@ -35,7 +35,7 @@ function checkUserSession() {
         })
         .catch(error => {
             console.error('Error verificando sesión:', error);
-            window.location.href = 'index.html';
+            // window.location.href = 'index.html';
         });
 }
 
