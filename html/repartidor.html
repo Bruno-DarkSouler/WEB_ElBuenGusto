@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel Repartidor - El Buen Gusto</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="js/repartidor.js"></script>
+    <link rel="stylesheet" href="css/repartidor.css">
+    <link href="https://fonts.googleapis.com/css2?family=Averia+Serif+Libre:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body class="font-averia bg-primary-cream min-h-screen">
+    <header class="bg-primary-red shadow-lg sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 py-4">
+            <div class="flex justify-between items-center">
+                <div class="flex items-center gap-4">
+                    <div class="text-3xl">🍗</div>
+                    <div>
+                        <h1 class="text-white text-2xl font-bold">El Buen Gusto</h1>
+                        <p class="text-primary-cream text-sm">Panel Repartidor</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-4">
+                    <div class="flex items-center gap-2">
+                        <span class="text-white">Estado:</span>
+                        <button id="statusToggle" onclick="toggleStatus()" 
+                                class="px-4 py-2 rounded-full text-sm font-bold transition-all duration-300 status-animation">
+                            <span id="statusText">Disponible</span>
+                        </button>
+                    </div>
+                    <div class="flex items-center gap-3 text-white">
+                        <div class="w-10 h-10 bg-primary-cream rounded-full flex items-center justify-center text-primary-brown font-bold">
+                            JD
+                        </div>
+                        <div>
+                            <p class="text-sm font-bold">Juan Delivery</p>
+                            <p class="text-xs text-primary-cream">Repartidor</p>
+                        </div>
+                    </div>
+                    <button class="bg-primary-brown hover:bg-opacity-80 text-white px-4 py-2 rounded-lg transition-colors duration-300">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+    <div id="notifications" class="fixed top-20 right-4 z-40 space-y-2"></div>
+    <main class="max-w-7xl mx-auto px-4 py-6">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div class="bg-white rounded-xl shadow-md p-6 border-l-4 border-primary-red">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-primary-brown text-sm font-medium">Entregas Hoy</p>
+                        <p class="text-3xl font-bold text-primary-red" id="entregasHoy">12</p>
+                    </div>
+                    <div class="text-4xl">📦</div>
+                </div>
+            </div>
+            <div class="bg-white rounded-xl shadow-md p-6 border-l-4 border-green-500">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-primary-brown text-sm font-medium">Ganancia Hoy</p>
+                        <p class="text-3xl font-bold text-green-600" id="gananciaHoy">$4,800</p>
+                    </div>
+                    <div class="text-4xl">💰</div>
+                </div>
+            </div>
+            <div class="bg-white rounded-xl shadow-md p-6 border-l-4 border-blue-500">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-primary-brown text-sm font-medium">Promedio Reseñas</p>
+                        <p class="text-3xl font-bold text-blue-600" id="promedioReseñas">4.8</p>
+                    </div>
+                    <div class="text-4xl">⭐</div>
+                </div>
+            </div>
+            <div class="bg-white rounded-xl shadow-md p-6 border-l-4 border-orange-500">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-primary-brown text-sm font-medium">Pendientes</p>
+                        <p class="text-3xl font-bold text-orange-600" id="pedidosPendientes">3</p>
+                    </div>
+                    <div class="text-4xl">🚚</div>
+                </div>
+            </div>
+        </div>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div class="bg-white rounded-xl shadow-lg">
+                <div class="bg-primary-red text-white p-6 rounded-t-xl">
+                    <h2 class="text-xl font-bold flex items-center gap-3">
+                        🚚 Entregas Pendientes
+                        <span id="pendingCount" class="bg-white text-primary-red px-3 py-1 rounded-full text-sm">3</span>
+                    </h2>
+                </div>
+                <div id="pedidosPendientesContainer" class="p-6 space-y-4 max-h-96 overflow-y-auto">
+                    <!-- Los pedidos se cargarán aquí dinámicamente -->
+                </div>
+            </div>
+            <div class="bg-white rounded-xl shadow-lg">
+                <div class="bg-blue-600 text-white p-6 rounded-t-xl">
+                    <h2 class="text-xl font-bold flex items-center gap-3">
+                        🛣️ En Camino
+                        <span id="enCaminoCount" class="bg-white text-blue-600 px-3 py-1 rounded-full text-sm">1</span>
+                    </h2>
+                </div>
+                <div id="pedidosEnCaminoContainer" class="p-6 space-y-4 max-h-96 overflow-y-auto">
+                    <!-- Los pedidos en camino se cargarán aquí -->
+                </div>
+            </div>
+        </div>
+        <div class="mt-8 bg-white rounded-xl shadow-lg">
+            <div class="bg-green-600 text-white p-6 rounded-t-xl">
+                <h2 class="text-xl font-bold flex items-center gap-3">
+                    ✅ Entregas Completadas Hoy
+                </h2>
+            </div>
+            
+            <div class="p-6">
+                <div id="historialContainer" class="space-y-3 max-h-64 overflow-y-auto">
+                    <!-- Historial se cargará aquí -->
+                </div>
+            </div>
+        </div>
+        <div id="reviewModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center">
+            <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 max-h-96 overflow-y-auto">
+                <div class="bg-primary-red text-white p-6 rounded-t-2xl">
+                    <div class="flex justify-between items-center">
+                        <h3 class="text-xl font-bold">📝 Reseñas del Pedido</h3>
+                        <button onclick="closeReviewModal()" class="text-white hover:bg-red-600 p-2 rounded-full">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                <div id="reviewContent" class="p-6">
+                    <!-- Contenido de reseñas se cargará aquí -->
+                </div>
+            </div>
+        </div>
+    </main>
+</body>
+</html>

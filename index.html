@@ -1,251 +1,545 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="./css/login.css">
-    <link rel="stylesheet" href="./css/regsitro.css">
-    <title>El Buen Gusto</title>
-</head>
-<body>
-    <header>
-
-        <!--Barra de navegación-->
-        <div class="div_navbar"><nav class="navbar">
-            <div class="nombre_sitio">
-                <img src="./img/logo 2.png" alt="">
-                <p>Rotiseria</p>
-            </div>
-            <div class="opciones">
-                <a href=""><p>Inicio</p></a>
-                <a href=""><p>Perfil</p></a>
-                <a href=""><p>Opiniones</p></a>
-            </div>
-
-            <div class="preguntas"><p>Preguntas frecuentes</p></div>
-        </nav></div>
-
-        <div class="bienvenida">
-            <!--<h1 class="titulo">Inicia Sesión o Registrate</h1>-->
-            <h1 class="titulo">El Buen Gusto</h1>
-            <!--<h2 class="subtitulo">¡Únete a nuestra comunidad y disfruta de los mejores sabores! Regístrate ahora.</h2>-->
-            <h2 class="subtitulo">¡Disfruta de los sabores de la mejor rotiseria del pais!.</h2>
-        </div>
+    <title>Panel Repartidor - El Buen Gusto</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'primary-brown': 'rgb(80, 50, 20)',
+                        'primary-cream': 'rgb(245, 235, 210)',
+                        'primary-red': 'rgb(200, 30, 45)'
+                    },
+                    fontFamily: {
+                        'averia': ['"Averia Serif Libre"', 'serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Averia+Serif+Libre:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        .status-animation {
+            animation: pulse 2s infinite;
+        }
         
-        <div class="sesion">
-            <button class="inicio" onclick="abrir_login()">Iniciar sesión</button>
-            <button class="registro" onclick="abrir_registro()">Registrarse</button>
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        
+        .notification-slide {
+            animation: slideDown 0.3s ease-out;
+        }
+        
+        @keyframes slideDown {
+            from { transform: translateY(-100%); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.5s ease-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="font-averia bg-primary-cream min-h-screen">
+    
+    <!-- Header -->
+    <header class="bg-primary-red shadow-lg sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 py-4">
+            <div class="flex justify-between items-center">
+                <div class="flex items-center gap-4">
+                    <div class="text-3xl">🍗</div>
+                    <div>
+                        <h1 class="text-white text-2xl font-bold">El Buen Gusto</h1>
+                        <p class="text-primary-cream text-sm">Panel Repartidor</p>
+                    </div>
+                </div>
+                
+                <div class="flex items-center gap-4">
+                    <!-- Estado del Repartidor -->
+                    <div class="flex items-center gap-2">
+                        <span class="text-white">Estado:</span>
+                        <button id="statusToggle" onclick="toggleStatus()" 
+                                class="px-4 py-2 rounded-full text-sm font-bold transition-all duration-300 status-animation">
+                            <span id="statusText">Disponible</span>
+                        </button>
+                    </div>
+                    
+                    <!-- Perfil -->
+                    <div class="flex items-center gap-3 text-white">
+                        <div class="w-10 h-10 bg-primary-cream rounded-full flex items-center justify-center text-primary-brown font-bold">
+                            JD
+                        </div>
+                        <div>
+                            <p class="text-sm font-bold">Juan Delivery</p>
+                            <p class="text-xs text-primary-cream">Repartidor</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Cerrar sesión -->
+                    <button class="bg-primary-brown hover:bg-opacity-80 text-white px-4 py-2 rounded-lg transition-colors duration-300">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
         </div>
-
     </header>
 
-    <main>
+    <!-- Notificaciones -->
+    <div id="notifications" class="fixed top-20 right-4 z-40 space-y-2"></div>
 
-        <div class="div_opiniones"><p class="opiniones">Opiniones</p></div>
-
-        <div class="opinion">
-
-            <div class="ejemplo">
-
-                <div class="foto_usuario"><img src="./img/alex-suprun-bYODySpLIhE-unsplash.jpg" alt=""></div>
-                <div class="text_opinion"><p>¡La mejor rotisería de la ciudad!
-                    Comida deliciosa y atención de
-                    primera.</p></div>
-                <div class="nombre_usuario"><p>Carlos Gómez</p></div>
-
-            </div>
-            <div class="ejemplo">
-
-                <div class="foto_usuario"><img src="./img/alex-suprun-ZHvM3XIOHoE-unsplash.jpg" alt=""></div>
-                <div class="text_opinion"><p>Me encanta la variedad y la calidad. ¡Siempre vuelvo por más!</p></div>
-                <div class="nombre_usuario"><p>Mateo Silvero</p></div>
-
-            </div>
-            <div class="ejemplo">
-
-                <div class="foto_usuario"><img src="./img/alexander-hipp-iEEBWgY_6lA-unsplash.jpg" alt=""></div>
-                <div class="text_opinion"><p>Una experiencia culinaria increíble. ¡Totalmente recomendado!</p></div>
-                <div class="nombre_usuario"><p>Juan Pérez</p></div>
-
-            </div>
-
-        </div>
+    <!-- Contenido Principal -->
+    <main class="max-w-7xl mx-auto px-4 py-6">
         
-        <hr>
-
-        <div class="preguntas_frecuentes">
-
-            <p class="texto_principal">Preguntas Frecuentes</p>
-
-            <div class="pregunta">
-                <div class="text_pregunta">¿Tienen opciones vegetarianas?</div>
-                <div class="respuesta_pregunta">Sí, contamos con opciones vegetarianas y veganas deliciosas.
-                    Por favor, consulta nuestro menú o
-                    pregunta a nuestro personal para más detalles.</div>
+        <!-- Estadísticas Rápidas -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div class="bg-white rounded-xl shadow-md p-6 border-l-4 border-primary-red">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-primary-brown text-sm font-medium">Entregas Hoy</p>
+                        <p class="text-3xl font-bold text-primary-red" id="entregasHoy">12</p>
+                    </div>
+                    <div class="text-4xl">📦</div>
+                </div>
             </div>
-            <div class="pregunta">
-                <div class="text_pregunta">¿Ofrecen servicio a domicilio?</div>
-                <div class="respuesta_pregunta">Realizamos entregas a domicilio en toda la ciudad.
-                    Puedes hacer tu pedido a través de nuestro sitio web o
-                    llamando directamente a la rotisería.</div>
+            
+            <div class="bg-white rounded-xl shadow-md p-6 border-l-4 border-green-500">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-primary-brown text-sm font-medium">Ganancia Hoy</p>
+                        <p class="text-3xl font-bold text-green-600" id="gananciaHoy">$4,800</p>
+                    </div>
+                    <div class="text-4xl">💰</div>
+                </div>
             </div>
-            <div class="pregunta">
-                <div class="text_pregunta">¿Cuáles son sus promociones?</div>
-                <div class="respuesta_pregunta">Nuestras promociones cambian semanalmente.
-                    Te recomendamos seguirnos en redes sociales para
-                    estar al tanto de las últimas ofertas.</div>
+            
+            <div class="bg-white rounded-xl shadow-md p-6 border-l-4 border-blue-500">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-primary-brown text-sm font-medium">Promedio Reseñas</p>
+                        <p class="text-3xl font-bold text-blue-600" id="promedioReseñas">4.8</p>
+                    </div>
+                    <div class="text-4xl">⭐</div>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-xl shadow-md p-6 border-l-4 border-orange-500">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-primary-brown text-sm font-medium">Pendientes</p>
+                        <p class="text-3xl font-bold text-orange-600" id="pedidosPendientes">3</p>
+                    </div>
+                    <div class="text-4xl">🚚</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pedidos Asignados -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            
+            <!-- Entregas Pendientes -->
+            <div class="bg-white rounded-xl shadow-lg">
+                <div class="bg-primary-red text-white p-6 rounded-t-xl">
+                    <h2 class="text-xl font-bold flex items-center gap-3">
+                        🚚 Entregas Pendientes
+                        <span id="pendingCount" class="bg-white text-primary-red px-3 py-1 rounded-full text-sm">3</span>
+                    </h2>
+                </div>
+                
+                <div id="pedidosPendientesContainer" class="p-6 space-y-4 max-h-96 overflow-y-auto">
+                    <!-- Los pedidos se cargarán aquí dinámicamente -->
+                </div>
             </div>
 
+            <!-- Entregas en Camino -->
+            <div class="bg-white rounded-xl shadow-lg">
+                <div class="bg-blue-600 text-white p-6 rounded-t-xl">
+                    <h2 class="text-xl font-bold flex items-center gap-3">
+                        🛣️ En Camino
+                        <span id="enCaminoCount" class="bg-white text-blue-600 px-3 py-1 rounded-full text-sm">1</span>
+                    </h2>
+                </div>
+                
+                <div id="pedidosEnCaminoContainer" class="p-6 space-y-4 max-h-96 overflow-y-auto">
+                    <!-- Los pedidos en camino se cargarán aquí -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Historial de Entregas -->
+        <div class="mt-8 bg-white rounded-xl shadow-lg">
+            <div class="bg-green-600 text-white p-6 rounded-t-xl">
+                <h2 class="text-xl font-bold flex items-center gap-3">
+                    ✅ Entregas Completadas Hoy
+                </h2>
+            </div>
+            
+            <div class="p-6">
+                <div id="historialContainer" class="space-y-3 max-h-64 overflow-y-auto">
+                    <!-- Historial se cargará aquí -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal de Reseñas -->
+        <div id="reviewModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center">
+            <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 max-h-96 overflow-y-auto">
+                <div class="bg-primary-red text-white p-6 rounded-t-2xl">
+                    <div class="flex justify-between items-center">
+                        <h3 class="text-xl font-bold">📝 Reseñas del Pedido</h3>
+                        <button onclick="closeReviewModal()" class="text-white hover:bg-red-600 p-2 rounded-full">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                <div id="reviewContent" class="p-6">
+                    <!-- Contenido de reseñas se cargará aquí -->
+                </div>
+            </div>
         </div>
 
     </main>
 
-    <footer>
+    <script>
+        // Estado del repartidor
+        let isAvailable = true;
+        let pedidos = [
+            {
+                id: 1,
+                cliente: "María González",
+                direccion: "Av. Libertador 1234, San Isidro",
+                telefono: "11-1234-5678",
+                total: 12500,
+                items: ["2x Pollo Entero", "1x Pizza Muzzarella", "2x Coca Cola"],
+                estado: "listo",
+                tiempoEstimado: "15 min",
+                distancia: "2.3 km",
+                reseñas: {
+                    entrega: { puntuacion: 5, comentario: "Llegó súper rápido y caliente!" }
+                }
+            },
+            {
+                id: 2,
+                cliente: "Carlos Ruiz",
+                direccion: "Mitre 567, Vicente López",
+                telefono: "11-8765-4321",
+                total: 8700,
+                items: ["1x Empanadas x12", "1x Flan Casero"],
+                estado: "listo",
+                tiempoEstimado: "20 min",
+                distancia: "1.8 km"
+            },
+            {
+                id: 3,
+                cliente: "Ana Torres",
+                direccion: "Belgrano 890, Villa Adelina",
+                telefono: "11-5555-1234",
+                total: 15300,
+                items: ["4x Milanesas", "1x Tarta J&Q", "3x Agua"],
+                estado: "enCamino",
+                tiempoEstimado: "10 min",
+                distancia: "0.9 km"
+            }
+        ];
 
-        <div class="redes_sociales">
-            <h1 class="text_redes">Síguenos</h1>
-            <div class="redes">
+        let historial = [
+            {
+                id: 10,
+                cliente: "Luis Pérez",
+                direccion: "San Martín 123",
+                total: 9500,
+                horaEntrega: "14:30",
+                reseñas: {
+                    entrega: { puntuacion: 4, comentario: "Muy buen servicio" }
+                }
+            },
+            {
+                id: 11,
+                cliente: "Sofia Mendez",
+                direccion: "Rivadavia 456",
+                total: 7200,
+                horaEntrega: "13:15",
+                reseñas: {
+                    entrega: { puntuacion: 5, comentario: "Excelente atención!" }
+                }
+            }
+        ];
 
-                <svg class="red_social" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-facebook" viewBox="0 0 16 16">
-                    <path d="M16 8.049c0-4.446-3.582-8.05-8-8.05C3.58 0-.002 3.603-.002 8.05c0 4.017 2.926 7.347 6.75 7.951v-5.625h-2.03V8.05H6.75V6.275c0-2.017 1.195-3.131 3.022-3.131.876 0 1.791.157 1.791.157v1.98h-1.009c-.993 0-1.303.621-1.303 1.258v1.51h2.218l-.354 2.326H9.25V16c3.824-.604 6.75-3.934 6.75-7.951"/>
-                  </svg>
+        // Función para alternar estado
+        function toggleStatus() {
+            isAvailable = !isAvailable;
+            const statusButton = document.getElementById('statusToggle');
+            const statusText = document.getElementById('statusText');
+            
+            if (isAvailable) {
+                statusButton.className = 'px-4 py-2 rounded-full text-sm font-bold bg-green-500 text-white status-animation';
+                statusText.textContent = 'Disponible';
+            } else {
+                statusButton.className = 'px-4 py-2 rounded-full text-sm font-bold bg-gray-500 text-white';
+                statusText.textContent = 'No Disponible';
+            }
+            
+            showNotification(isAvailable ? 'Estado cambiado a Disponible' : 'Estado cambiado a No Disponible');
+        }
 
-                <svg class="red_social" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-twitter-x" viewBox="0 0 16 16">
-                    <path d="M12.6.75h2.454l-5.36 6.142L16 15.25h-4.937l-3.867-5.07-4.425 5.07H.316l5.733-6.57L0 .75h5.063l3.495 4.633L12.601.75Zm-.86 13.028h1.36L4.323 2.145H2.865z"/>
-                </svg>
-
-                <svg class="red_social" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-instagram" viewBox="0 0 16 16">
-                    <path d="M8 0C5.829 0 5.556.01 4.703.048 3.85.088 3.269.222 2.76.42a3.9 3.9 0 0 0-1.417.923A3.9 3.9 0 0 0 .42 2.76C.222 3.268.087 3.85.048 4.7.01 5.555 0 5.827 0 8.001c0 2.172.01 2.444.048 3.297.04.852.174 1.433.372 1.942.205.526.478.972.923 1.417.444.445.89.719 1.416.923.51.198 1.09.333 1.942.372C5.555 15.99 5.827 16 8 16s2.444-.01 3.298-.048c.851-.04 1.434-.174 1.943-.372a3.9 3.9 0 0 0 1.416-.923c.445-.445.718-.891.923-1.417.197-.509.332-1.09.372-1.942C15.99 10.445 16 10.173 16 8s-.01-2.445-.048-3.299c-.04-.851-.175-1.433-.372-1.941a3.9 3.9 0 0 0-.923-1.417A3.9 3.9 0 0 0 13.24.42c-.51-.198-1.092-.333-1.943-.372C10.443.01 10.172 0 7.998 0zm-.717 1.442h.718c2.136 0 2.389.007 3.232.046.78.035 1.204.166 1.486.275.373.145.64.319.92.599s.453.546.598.92c.11.281.24.705.275 1.485.039.843.047 1.096.047 3.231s-.008 2.389-.047 3.232c-.035.78-.166 1.203-.275 1.485a2.5 2.5 0 0 1-.599.919c-.28.28-.546.453-.92.598-.28.11-.704.24-1.485.276-.843.038-1.096.047-3.232.047s-2.39-.009-3.233-.047c-.78-.036-1.203-.166-1.485-.276a2.5 2.5 0 0 1-.92-.598 2.5 2.5 0 0 1-.6-.92c-.109-.281-.24-.705-.275-1.485-.038-.843-.046-1.096-.046-3.233s.008-2.388.046-3.231c.036-.78.166-1.204.276-1.486.145-.373.319-.64.599-.92s.546-.453.92-.598c.282-.11.705-.24 1.485-.276.738-.034 1.024-.044 2.515-.045zm4.988 1.328a.96.96 0 1 0 0 1.92.96.96 0 0 0 0-1.92m-4.27 1.122a4.109 4.109 0 1 0 0 8.217 4.109 4.109 0 0 0 0-8.217m0 1.441a2.667 2.667 0 1 1 0 5.334 2.667 2.667 0 0 1 0-5.334"/>
-                  </svg>
-
-                <svg class="red_social" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-linkedin" viewBox="0 0 16 16">
-                    <path d="M0 1.146C0 .513.526 0 1.175 0h13.65C15.474 0 16 .513 16 1.146v13.708c0 .633-.526 1.146-1.175 1.146H1.175C.526 16 0 15.487 0 14.854zm4.943 12.248V6.169H2.542v7.225zm-1.2-8.212c.837 0 1.358-.554 1.358-1.248-.015-.709-.52-1.248-1.342-1.248S2.4 3.226 2.4 3.934c0 .694.521 1.248 1.327 1.248zm4.908 8.212V9.359c0-.216.016-.432.08-.586.173-.431.568-.878 1.232-.878.869 0 1.216.662 1.216 1.634v3.865h2.401V9.25c0-2.22-1.184-3.252-2.764-3.252-1.274 0-1.845.7-2.165 1.193v.025h-.016l.016-.025V6.169h-2.4c.03.678 0 7.225 0 7.225z"/>
-                </svg>
-
-                <svg class="red_social" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-twitch" viewBox="0 0 16 16">
-                    <path d="M3.857 0 1 2.857v10.286h3.429V16l2.857-2.857H9.57L14.714 8V0zm9.714 7.429-2.285 2.285H9l-2 2v-2H4.429V1.143h9.142z"/>
-                    <path d="M11.857 3.143h-1.143V6.57h1.143zm-3.143 0H7.571V6.57h1.143z"/>
-                  </svg>
-
-            </div>
-        </div>
-
-    </footer>
-
-    <!--formulario de login-->
-
-    <div class="body_login" id="login">
-        <div class="container">
-            <div class="form-container">
-                <svg class="cancel" onclick="cerrar_modal()" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-x" viewBox="0 0 16 16">
-                    <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708"/>
-                  </svg>
-                <div class="logo">
-                    <img src="./img/logo 2.png" alt="Logo">
+        // Función para mostrar notificaciones
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            const colors = {
+                success: 'bg-green-500',
+                error: 'bg-red-500',
+                info: 'bg-blue-500'
+            };
+            
+            notification.className = `${colors[type]} text-white px-6 py-3 rounded-lg shadow-lg notification-slide`;
+            notification.innerHTML = `
+                <div class="flex items-center gap-3">
+                    <span>${message}</span>
+                    <button onclick="this.parentElement.parentElement.remove()" class="text-white hover:bg-black hover:bg-opacity-20 p-1 rounded">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
                 </div>
-                <h1 class="title">El Buen Gusto</h1>
-                <p class="subtitle">Sabores que enamoran</p>
-    
-                <form id="loginForm">
-                    <div class="form-group">
-                        <label for="login-email">Correo electrónico</label>
-                        <input type="email" id="login-email" name="email" placeholder="ejemplo@email.com" required>
-                    </div>
-    
-                    <div class="form-group">
-                        <label for="login-password">Contraseña</label>
-                        <input type="password" id="login-password" name="password" placeholder="Ingresa tu contraseña" required>
-                    </div>
-    
-                    <button type="submit" class="btn-primary">Acceder</button>
-                </form>
-    
-                <a href="#" class="forgot-password">¿Olvidaste tu contraseña?</a>
-    
-                <div class="divider" onclick="abrir_registro()">¿No tienes cuenta?</div>
-            </div>
-        </div>
-    
-        <script src="./js/login.js"></script>
-    </div>
+            `;
+            
+            document.getElementById('notifications').appendChild(notification);
+            
+            setTimeout(() => {
+                if (notification.parentElement) {
+                    notification.remove();
+                }
+            }, 5000);
+        }
 
-    <!--Formulario de registro-->
+        // Función para marcar pedido como en camino
+        function marcarEnCamino(pedidoId) {
+            const pedido = pedidos.find(p => p.id === pedidoId);
+            if (pedido) {
+                pedido.estado = 'enCamino';
+                renderPedidos();
+                showNotification(`Pedido #${pedidoId} marcado como "En Camino"`, 'success');
+            }
+        }
 
-    <div class="body_registro" id="registro">
-        <div class="container">
-            <div class="form-container">
-                <svg class="cancel" onclick="cerrar_modal()" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-x" viewBox="0 0 16 16">
-                    <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708"/>
-                  </svg>
-                <div class="logo">
-                    <img src="./img/logo 2.png" alt="Logo">
+        // Función para marcar pedido como entregado
+        function marcarEntregado(pedidoId) {
+            const pedido = pedidos.find(p => p.id === pedidoId);
+            if (pedido) {
+                pedido.estado = 'entregado';
+                pedido.horaEntrega = new Date().toLocaleTimeString('es-AR', {hour: '2-digit', minute:'2-digit'});
+                
+                // Mover al historial
+                historial.unshift(pedido);
+                pedidos = pedidos.filter(p => p.id !== pedidoId);
+                
+                // Actualizar estadísticas
+                updateStats();
+                renderPedidos();
+                renderHistorial();
+                
+                showNotification(`Pedido #${pedidoId} entregado correctamente`, 'success');
+            }
+        }
+
+        // Función para ver reseñas
+        function verReseñas(pedidoId) {
+            const pedido = [...pedidos, ...historial].find(p => p.id === pedidoId);
+            if (pedido && pedido.reseñas) {
+                const modal = document.getElementById('reviewModal');
+                const content = document.getElementById('reviewContent');
+                
+                content.innerHTML = `
+                    <div class="space-y-4">
+                        <div class="text-center">
+                            <h4 class="text-lg font-bold text-primary-brown">Pedido #${pedido.id}</h4>
+                            <p class="text-gray-600">${pedido.cliente}</p>
+                        </div>
+                        
+                        ${pedido.reseñas.entrega ? `
+                        <div class="bg-blue-50 p-4 rounded-lg">
+                            <h5 class="font-bold text-blue-800 mb-2">Reseña del Servicio de Entrega</h5>
+                            <div class="flex items-center gap-2 mb-2">
+                                <span class="text-yellow-500">${'⭐'.repeat(pedido.reseñas.entrega.puntuacion)}</span>
+                                <span class="text-gray-600">(${pedido.reseñas.entrega.puntuacion}/5)</span>
+                            </div>
+                            <p class="text-gray-700">"${pedido.reseñas.entrega.comentario}"</p>
+                        </div>
+                        ` : '<p class="text-gray-500 text-center">Aún no hay reseñas para este pedido</p>'}
+                    </div>
+                `;
+                
+                modal.classList.remove('hidden');
+            }
+        }
+
+        // Función para cerrar modal de reseñas
+        function closeReviewModal() {
+            document.getElementById('reviewModal').classList.add('hidden');
+        }
+
+        // Función para renderizar pedidos
+        function renderPedidos() {
+            const pendientes = pedidos.filter(p => p.estado === 'listo');
+            const enCamino = pedidos.filter(p => p.estado === 'enCamino');
+            
+            // Actualizar contadores
+            document.getElementById('pendingCount').textContent = pendientes.length;
+            document.getElementById('enCaminoCount').textContent = enCamino.length;
+            document.getElementById('pedidosPendientes').textContent = pendientes.length;
+            
+            // Renderizar pendientes
+            const pendientesContainer = document.getElementById('pedidosPendientesContainer');
+            pendientesContainer.innerHTML = pendientes.length > 0 ? pendientes.map(pedido => `
+                <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow duration-300 fade-in">
+                    <div class="flex justify-between items-start mb-3">
+                        <div>
+                            <h4 class="font-bold text-primary-brown">Pedido #${pedido.id}</h4>
+                            <p class="text-gray-600">${pedido.cliente}</p>
+                        </div>
+                        <span class="bg-orange-100 text-orange-800 px-3 py-1 rounded-full text-sm font-medium">
+                            Listo
+                        </span>
+                    </div>
+                    
+                    <div class="space-y-2 text-sm text-gray-700 mb-4">
+                        <p><strong>📍 Dirección:</strong> ${pedido.direccion}</p>
+                        <p><strong>📞 Teléfono:</strong> ${pedido.telefono}</p>
+                        <p><strong>🕒 Tiempo est.:</strong> ${pedido.tiempoEstimado}</p>
+                        <p><strong>📏 Distancia:</strong> ${pedido.distancia}</p>
+                        <p><strong>💰 Total:</strong> $${pedido.total.toLocaleString()}</p>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <p class="font-medium text-primary-brown mb-2">Items del pedido:</p>
+                        <ul class="text-sm text-gray-600">
+                            ${pedido.items.map(item => `<li>• ${item}</li>`).join('')}
+                        </ul>
+                    </div>
+                    
+                    <div class="flex gap-2">
+                        <button onclick="marcarEnCamino(${pedido.id})" 
+                                class="flex-1 bg-primary-red hover:bg-red-600 text-white py-2 px-4 rounded-lg transition-colors duration-300">
+                            🚚 Salir a Entregar
+                        </button>
+                        ${pedido.reseñas ? `
+                        <button onclick="verReseñas(${pedido.id})" 
+                                class="bg-gray-100 hover:bg-gray-200 text-gray-700 py-2 px-4 rounded-lg transition-colors duration-300">
+                            📝
+                        </button>
+                        ` : ''}
+                    </div>
                 </div>
-                <h1 class="title">El Buen Gusto</h1>
-                <p class="subtitle">Sabores que enamoran</p>
-                
-                <div style="margin: 15px 0; color: #5D4037; font-weight: 500;">Crear nueva cuenta</div>
-    
-                <form id="registroForm">
-                    <div class="form-group">
-                        <label for="registro-nombre">Nombre *</label>
-                        <input type="text" id="registro-nombre" name="nombre" placeholder="Tu nombre" required>
-                    </div>
-    
-                    <div class="form-group">
-                        <label for="registro-apellido">Apellido *</label>
-                        <input type="text" id="registro-apellido" name="apellido" placeholder="Tu apellido" required>
-                    </div>
-    
-                    <div class="form-group">
-                        <label for="registro-email">Correo electrónico *</label>
-                        <input type="email" id="registro-email" name="email" placeholder="correo@ejemplo.com" required>
-                    </div>
-    
-                    <div class="form-group">
-                        <label for="registro-telefono">Teléfono *</label>
-                        <input type="tel" id="registro-telefono" name="telefono" placeholder="11-1234-5678" required>
-                    </div>
-    
-                    <div class="form-group">
-                        <label for="registro-direccion">Dirección *</label>
-                        <input type="text" id="registro-direccion" name="direccion" placeholder="Calle y número, ciudad" required>
-                    </div>
-    
-                    <div class="form-group">
-                        <label for="registro-password">Contraseña *</label>
-                        <div class="password-group">
-                            <input type="password" id="registro-password" name="password" placeholder="Mínimo 6 caracteres" required>
-                            <button type="button" class="password-toggle" onclick="togglePassword('registro-password')">👁</button>
+            `).join('') : '<p class="text-gray-500 text-center py-8">No hay entregas pendientes</p>';
+            
+            // Renderizar en camino
+            const enCaminoContainer = document.getElementById('pedidosEnCaminoContainer');
+            enCaminoContainer.innerHTML = enCamino.length > 0 ? enCamino.map(pedido => `
+                <div class="border border-blue-200 rounded-lg p-4 bg-blue-50 fade-in">
+                    <div class="flex justify-between items-start mb-3">
+                        <div>
+                            <h4 class="font-bold text-primary-brown">Pedido #${pedido.id}</h4>
+                            <p class="text-gray-600">${pedido.cliente}</p>
                         </div>
+                        <span class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
+                            En Camino
+                        </span>
                     </div>
-    
-                    <div class="form-group">
-                        <label for="registro-confirm-password">Confirmar *</label>
-                        <div class="password-group">
-                            <input type="password" id="registro-confirm-password" name="confirm_password" placeholder="Repetir contraseña" required>
-                            <button type="button" class="password-toggle" onclick="togglePassword('registro-confirm-password')">👁</button>
-                        </div>
+                    
+                    <div class="space-y-2 text-sm text-gray-700 mb-4">
+                        <p><strong>📍 Dirección:</strong> ${pedido.direccion}</p>
+                        <p><strong>📞 Teléfono:</strong> ${pedido.telefono}</p>
+                        <p><strong>💰 Total:</strong> $${pedido.total.toLocaleString()}</p>
                     </div>
-    
-                    <div class="checkbox-group">
-                        <input type="checkbox" id="terms" required>
-                        <label for="terms">Al registrarme acepto los términos de uso y política de privacidad</label>
-                    </div>
-    
-                    <button type="submit" class="btn-primary">Crear Cuenta</button>
-                </form>
-    
-                <div class="divider" onclick="abrir_login()">¿Ya tienes cuenta?</div>
-                
-              
-            </div>
-        </div>
-    
-        <script src="./js/registro.js"></script>
-    </div>
+                    
+                    <button onclick="marcarEntregado(${pedido.id})" 
+                            class="w-full bg-green-500 hover:bg-green-600 text-white py-2 px-4 rounded-lg transition-colors duration-300">
+                        ✅ Marcar como Entregado
+                    </button>
+                </div>
+            `).join('') : '<p class="text-gray-500 text-center py-8">No hay entregas en camino</p>';
+        }
 
-    <script src="./script.js"></script>
+        // Función para renderizar historial
+        function renderHistorial() {
+            const historialContainer = document.getElementById('historialContainer');
+            historialContainer.innerHTML = historial.length > 0 ? historial.map(pedido => `
+                <div class="flex justify-between items-center p-3 bg-green-50 rounded-lg">
+                    <div>
+                        <p class="font-medium text-gray-800">Pedido #${pedido.id} - ${pedido.cliente}</p>
+                        <p class="text-sm text-gray-600">${pedido.direccion}</p>
+                        <p class="text-sm text-green-600">Entregado a las ${pedido.horaEntrega}</p>
+                    </div>
+                    <div class="text-right">
+                        <p class="font-bold text-green-600">$${pedido.total.toLocaleString()}</p>
+                        ${pedido.reseñas ? `
+                        <button onclick="verReseñas(${pedido.id})" 
+                                class="text-sm bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-1 rounded-full mt-1">
+                            Ver Reseña
+                        </button>
+                        ` : ''}
+                    </div>
+                </div>
+            `).join('') : '<p class="text-gray-500 text-center py-4">No hay entregas completadas hoy</p>';
+        }
+
+        // Función para actualizar estadísticas
+        function updateStats() {
+            const entregasHoy = historial.length;
+            const gananciaHoy = historial.reduce((total, pedido) => total + (pedido.total * 0.1), 0); // 10% por entrega
+            const promedioReseñas = historial
+                .filter(p => p.reseñas && p.reseñas.entrega)
+                .reduce((avg, p, _, arr) => avg + p.reseñas.entrega.puntuacion / arr.length, 0);
+            
+            document.getElementById('entregasHoy').textContent = entregasHoy;
+            document.getElementById('gananciaHoy').textContent = `$${gananciaHoy.toLocaleString()}`;
+            document.getElementById('promedioReseñas').textContent = promedioReseñas.toFixed(1);
+        }
+
+        // Inicializar la aplicación
+        function init() {
+            renderPedidos();
+            renderHistorial();
+            updateStats();
+            
+            // Simular nuevos pedidos cada 30 segundos (para demostración)
+            setInterval(() => {
+                if (Math.random() > 0.7) { // 30% de probabilidad
+                    const nuevoId = Math.max(...pedidos.map(p => p.id)) + 1;
+                    pedidos.push({
+                        id: nuevoId,
+                        cliente: "Cliente Nuevo",
+                        direccion: "Dirección Nueva 123",
+                        telefono: "11-0000-0000",
+                        total: Math.floor(Math.random() * 15000) + 5000,
+                        items: ["Producto Nuevo"],
+                        estado: "listo",
+                        tiempoEstimado: "20 min",
+                        distancia: "1.5 km"
+                    });
+                    renderPedidos();
+                    showNotification('¡Nuevo pedido asignado!', 'success');
+                }
+            }, 30000);
+        }
+
+        // Inicializar cuando se carga la página
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
 
 </body>
 </html>
