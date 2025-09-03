@@ -42,7 +42,7 @@
         .logo {
             width: 60px;
             height: 60px;
-            background: #DC143C;
+            background: lightgray;
             border-radius: 50%;
             margin: 0 auto 20px;
             display: flex;
