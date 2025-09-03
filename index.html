@@ -6,7 +6,7 @@
     <link rel="stylesheet" href="./css/style.css">
     <link rel="stylesheet" href="./css/login.css">
     <link rel="stylesheet" href="./css/regsitro.css">
-    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link rel="stylesheet" href="./css/tailwind_inicio.css">
     <title>El Buen Gusto</title>
 </head>
 <body>
@@ -18,7 +18,7 @@
                 <img src="./img/logo 2.png" alt="">
                 <p>Rotiseria</p>
             </div>
-            <div class="opciones">
+            <div class="opciones flex justify-center align-middle gap-7">
                 <a href=""><p>Inicio</p></a>
                 <a href=""><p>Perfil</p></a>
                 <a href=""><p>Opiniones</p></a>
@@ -29,9 +29,9 @@
 
         <div class="bienvenida">
             <!--<h1 class="titulo">Inicia Sesión o Registrate</h1>-->
-            <h1 class="titulo">El Buen Gusto</h1>
+            <h1 class="titulo text-center">El Buen Gusto</h1>
             <!--<h2 class="subtitulo">¡Únete a nuestra comunidad y disfruta de los mejores sabores! Regístrate ahora.</h2>-->
-            <h2 class="subtitulo">¡Disfruta de los sabores de la mejor rotiseria del pais!.</h2>
+            <h2 class="subtitulo text-center">¡Disfruta de los sabores de la mejor rotiseria del pais!.</h2>
         </div>
         
         <div class="sesion">
@@ -45,9 +45,9 @@
 
         <div class="div_opiniones"><p class="opiniones">Opiniones</p></div>
 
-        <div class="opinion md:grid-cols-3 sm:grid-cols-1">
+        <div class="opinion grid gap-10 md:mx-10 lg:grid-cols-3 md:grid-cols-1 sm:grid-cols-1">
 
-            <div class="ejemplo">
+            <div class="ejemplo py-5">
 
                 <div class="foto_usuario"><img src="./img/alex-suprun-bYODySpLIhE-unsplash.jpg" alt=""></div>
                 <div class="text_opinion"><p>¡La mejor rotisería de la ciudad!
@@ -56,14 +56,14 @@
                 <div class="nombre_usuario"><p>Carlos Gómez</p></div>
 
             </div>
-            <div class="ejemplo">
+            <div class="ejemplo py-5">
 
                 <div class="foto_usuario"><img src="./img/alex-suprun-ZHvM3XIOHoE-unsplash.jpg" alt=""></div>
                 <div class="text_opinion"><p>Me encanta la variedad y la calidad. ¡Siempre vuelvo por más!</p></div>
                 <div class="nombre_usuario"><p>Mateo Silvero</p></div>
 
             </div>
-            <div class="ejemplo">
+            <div class="ejemplo py-5">
 
                 <div class="foto_usuario"><img src="./img/alexander-hipp-iEEBWgY_6lA-unsplash.jpg" alt=""></div>
                 <div class="text_opinion"><p>Una experiencia culinaria increíble. ¡Totalmente recomendado!</p></div>
@@ -79,20 +79,20 @@
 
             <p class="texto_principal">Preguntas Frecuentes</p>
 
-            <div class="pregunta">
-                <div class="text_pregunta">¿Tienen opciones vegetarianas?</div>
+            <div class="pregunta sm:w-full lg:w-[80%]">
+                <p class="text_pregunta text-center">¿Tienen opciones vegetarianas?</p>
                 <div class="respuesta_pregunta">Sí, contamos con opciones vegetarianas y veganas deliciosas.
                     Por favor, consulta nuestro menú o
                     pregunta a nuestro personal para más detalles.</div>
             </div>
-            <div class="pregunta">
-                <div class="text_pregunta">¿Ofrecen servicio a domicilio?</div>
+            <div class="pregunta sm:w-full lg:w-[80%]">
+                <p class="text_pregunta text-center">¿Ofrecen servicio a domicilio?</p>
                 <div class="respuesta_pregunta">Realizamos entregas a domicilio en toda la ciudad.
                     Puedes hacer tu pedido a través de nuestro sitio web o
                     llamando directamente a la rotisería.</div>
             </div>
-            <div class="pregunta">
-                <div class="text_pregunta">¿Cuáles son sus promociones?</div>
+            <div class="pregunta sm:w-full lg:w-[80%]">
+                <p class="text_pregunta text-center">¿Cuáles son sus promociones?</p>
                 <div class="respuesta_pregunta">Nuestras promociones cambian semanalmente.
                     Te recomendamos seguirnos en redes sociales para
                     estar al tanto de las últimas ofertas.</div>
@@ -143,7 +143,7 @@
                     <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708"/>
                   </svg>
                 <div class="logo">
-                    <img src="./img/logo 2.png" alt="Logo">
+                    <img src="./img/isotipo_sm.png" alt="Logo">
                 </div>
                 <h1 class="title">El Buen Gusto</h1>
                 <p class="subtitle">Sabores que enamoran</p>
@@ -180,7 +180,7 @@
                     <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708"/>
                   </svg>
                 <div class="logo">
-                    <img src="./img/logo 2.png" alt="Logo">
+                    <img src="./img/isotipo_sm.png" alt="Logo">
                 </div>
                 <h1 class="title">El Buen Gusto</h1>
                 <p class="subtitle">Sabores que enamoran</p>
@@ -239,7 +239,6 @@
     
                 <div class="divider" onclick="abrir_login()">¿Ya tienes cuenta?</div>
                 
-              
             </div>
         </div>
     

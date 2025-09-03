@@ -1,10 +1,12 @@
+@import "tailwindcss";
+
 @font-face{
     font-family: "Averia Serif Libre";
     src: url(../AveriaSerif-Bold.ttf);
 }
 *{
-    margin: 0;
-    padding: 0;
+    /* margin: 0;
+    padding: 0; */
     font-family: "Averia Serif Libre";
 }
 header{
@@ -112,17 +114,12 @@ main{
     font-size: 300%;
     margin: 3rem;
 }
-.opinion{
-    gap: 3rem;
-}
 .ejemplo{
     flex-direction: column;
     display: flex;
     justify-content: center;
     align-items: center;
     background-color: rgb(224, 215, 186);
-    width: 30rem;
-    height: 30rem;
     border-radius: 3rem;
 }
 .foto_usuario{
@@ -152,8 +149,7 @@ main{
 }
 .pregunta{
     background-color: rgb(224, 215, 186);
-    width: 80%;
-    height: 24rem;
+    min-height: 24rem;
     border-radius: 3rem;
     flex-direction: column;
     display: flex;

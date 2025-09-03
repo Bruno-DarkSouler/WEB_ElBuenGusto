@@ -1,6 +1,6 @@
 * {
-            margin: 0;
-            padding: 0;
+            /* margin: 0;
+            padding: 0; */
             box-sizing: border-box;
         }
 
@@ -42,7 +42,6 @@
         .logo {
             width: 60px;
             height: 60px;
-            background: lightgray;
             border-radius: 50%;
             margin: 0 auto 20px;
             display: flex;
