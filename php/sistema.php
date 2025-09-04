@@ -3,15 +3,24 @@
 
     $conexion = new mysqli("localhost", "root", "", "calera");
 
-    $consulta = $conexion->prepare("SELECT * FROM usuarios WHERE id <= ?;");
-    $consulta->bind_param("i", $valor);
+    function consultaSelect(&$conexion, $consulta, $tipo_d, $parametros){
+        $cursor = $conexion->prepare($consulta);
+        $cursor->bind_param($tipo_d, ...$parametros);
 
-    $valor = 6;
+        $cursor->execute();
+        $resultado = $cursor->get_result();
 
-    $consulta->execute();
-    $resultado = $consulta->get_result();
-    
-    while($fila = $resultado->fetch_assoc()){
-        echo $fila["nombre"];
+        $lista_resultados = [];
+
+        if($resultado->num_rows > 0){
+            while($fila = $resultado->fetch_assoc()){
+                array_push($lista_resultados, $fila);
+            }
+            return $lista_resultados;
+        }else{
+            return 1;
+        }
     }
+
+    print_r(consultaSelect($conexion, "SELECT * FROM usuarios WHERE nombre = ? AND id <= ?;", "si", ["Bruno", 7]));
 ?>
