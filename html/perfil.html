@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mi Perfil - El Buen Gusto</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="js/perfil.js"></script>
-    <link rel="stylesheet" href="css/perfil.css">
+    <script src="../js/perfil.js"></script>
+    <link rel="stylesheet" href="../css/perfil.css">
     <link href="https://fonts.googleapis.com/css2?family=Averia+Serif+Libre:wght@400;700&display=swap" rel="stylesheet">
 </head>
 <body class="font-averia bg-primary-cream min-h-screen">
@@ -14,7 +14,7 @@
         <div class="max-w-7xl mx-auto px-4 py-4">
             <div class="flex justify-between items-center">
                 <div class="flex items-center gap-4">
-                    <div class="text-3xl">🍗</div>
+                    <div class="text-3xl"><img class="h-[7vh]" src="../img/isotipo_sm.png" alt="isotipo"></div>
                     <div>
                         <h1 class="text-white text-2xl font-bold">El Buen Gusto</h1>
                         <p class="text-primary-cream text-sm">Mi Perfil</p>
@@ -76,9 +76,6 @@
                                 <p class="text-gray-600">Cliente desde: Enero 2023</p>
                                 <div class="flex items-center gap-2 mt-1">
                                     <span class="text-primary-red font-medium">⭐ Cliente VIP</span>
-                                    <div class="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full">
-                                        Nivel Oro
-                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -211,17 +208,6 @@
                             <span class="text-gray-600">Reseñas Dadas:</span>
                             <span class="font-bold text-green-600">31</span>
                         </div>
-                        
-                        <!-- Progreso a siguiente nivel -->
-                        <div class="pt-4 border-t">
-                            <div class="flex justify-between items-center mb-2">
-                                <span class="text-sm text-gray-600">Progreso a Platino:</span>
-                                <span class="text-sm font-medium">8 pedidos más</span>
-                            </div>
-                            <div class="w-full bg-gray-200 rounded-full h-2">
-                                <div class="progress-bar h-2 rounded-full" style="--progress: 75%;"></div>
-                            </div>
-                        </div>
                     </div>
                 </div>
 
@@ -231,47 +217,6 @@
                         <h3 class="text-lg font-bold">💳 Métodos de Pago</h3>
                     </div>
                     <div class="p-4 space-y-3">
-                        <div class="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
-                            <div class="flex items-center gap-3">
-                                <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                                    <svg class="w-4 h-4 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
-                                        <path d="M4 4a2 2 0 00-2 2v1h16V6a2 2 0 00-2-2H4zM18 9H2v5a2 2 0 002 2h12a2 2 0 002-2V9zM4 13a1 1 0 011-1h1a1 1 0 110 2H5a1 1 0 01-1-1zm5-1a1 1 0 100 2h1a1 1 0 100-2H9z"></path>
-                                    </svg>
-                                </div>
-                                <div>
-                                    <p class="font-medium">•••• •••• •••• 4532</p>
-                                    <p class="text-sm text-gray-600">Visa - Vence 12/26</p>
-                                </div>
-                            </div>
-                            <div class="flex items-center gap-2">
-                                <span class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">Principal</span>
-                                <button onclick="eliminarTarjeta(1)" class="text-red-500 hover:bg-red-100 p-1 rounded">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                                    </svg>
-                                </button>
-                            </div>
-                        </div>
-                        
-                        <div class="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
-                            <div class="flex items-center gap-3">
-                                <div class="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center">
-                                    <svg class="w-4 h-4 text-orange-600" fill="currentColor" viewBox="0 0 20 20">
-                                        <path d="M4 4a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2H4zm0 2h12v2H4V6zm0 4h12v4H4v-4z"></path>
-                                    </svg>
-                                </div>
-                                <div>
-                                    <p class="font-medium">•••• •••• •••• 7891</p>
-                                    <p class="text-sm text-gray-600">MasterCard - Vence 08/25</p>
-                                </div>
-                            </div>
-                            <button onclick="eliminarTarjeta(2)" class="text-red-500 hover:bg-red-100 p-1 rounded">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                                </svg>
-                            </button>
-                        </div>
-
                         <button onclick="agregarTarjeta()" class="w-full border-2 border-dashed border-gray-300 p-3 rounded-lg hover:border-primary-red hover:bg-red-50 transition-colors">
                             <span class="text-primary-red font-medium">+ Agregar Método de Pago</span>
                         </button>
