@@ -1,301 +1,1128 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" class="h-full bg-gray-50">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Panel Administrador - Rotisería</title>
-    <link rel="stylesheet" href="../css/admin.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
 </head>
-<body>
-    <div class="admin-container">
+<body class="h-full overflow-hidden">
+    <!-- Toast Notification -->
+    <div id="toast" class="hidden fixed top-4 right-4 z-50 max-w-sm bg-white border border-gray-200 rounded-lg shadow-lg">
+        <div class="flex items-center p-4">
+            <div id="toastIcon" class="flex-shrink-0">
+                <div class="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
+                    <span class="text-white text-sm">✓</span>
+                </div>
+            </div>
+            <div class="ml-3">
+                <p id="toastMessage" class="text-sm font-medium text-gray-900"></p>
+            </div>
+            <button onclick="hideToast()" class="ml-auto text-gray-400 hover:text-gray-600">
+                <span class="sr-only">Cerrar</span>
+                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+                </svg>
+            </button>
+        </div>
+    </div>
+
+    <div class="flex h-full">
         <!-- Sidebar -->
-        <div class="sidebar">
-            <div class="logo">
-                <h2>Rotisería</h2>
-                <p>Panel Admin</p>
-            </div>
-            <nav>
-                <ul class="nav-menu">
-                    <li class="nav-item">
-                        <a href="#dashboard" class="nav-link active">
-                            <span class="nav-icon">📊</span>
-                            Dashboard
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a href="#pedidos" class="nav-link">
-                            <span class="nav-icon">📋</span>
-                            Pedidos
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a href="#productos" class="nav-link">
-                            <span class="nav-icon">🍽️</span>
-                            Productos
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a href="#usuarios" class="nav-link">
-                            <span class="nav-icon">👥</span>
-                            Usuarios
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a href="#configuracion" class="nav-link">
-                            <span class="nav-icon">⚙️</span>
-                            Configuración
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a href="#reportes" class="nav-link">
-                            <span class="nav-icon">📈</span>
-                            Reportes
-                        </a>
-                    </li>
-                </ul>
-            </nav>
-        </div>
-
-        <!-- Main Content -->
-        <div class="main-content">
-            <div class="header">
-                <h1>Panel de Administrador</h1>
-                <div class="user-info">
-                    
-                    <span>Admin Usuario</span>
-                </div>
-            </div>
-
-            <!-- Dashboard Cards -->
-            <div class="dashboard-grid">
-                <div class="dashboard-card">
-                    <div class="card-header">
-                        <h3 class="card-title">Pedidos Hoy</h3>
+        <div class="hidden md:flex md:w-64 md:flex-col">
+            <div class="flex flex-col flex-grow pt-5 bg-gradient-to-b from-indigo-800 to-indigo-900 overflow-y-auto">
+                <div class="flex items-center flex-shrink-0 px-4">
+                    <div class="text-white">
+                        <h2 class="text-xl font-bold">🍽️ Rotisería</h2>
+                        <p class="text-indigo-200 text-sm">Panel Admin</p>
                     </div>
-                    <div class="card-value">24</div>
-                    <small>+15% vs ayer</small>
                 </div>
-
-                <div class="dashboard-card">
-                    <div class="card-header">
-                        <h3 class="card-title">Ventas del Día</h3>
+                <div class="mt-8 flex-grow flex flex-col">
+                    <nav class="flex-1 px-2 pb-4 space-y-1">
+                        <a href="#" onclick="showSection('metricas')" class="nav-link active bg-indigo-700 text-white group flex items-center px-2 py-2 text-sm font-medium rounded-md">
+                            <span class="mr-3">📊</span>
+                            Métricas & Dashboard
+                        </a>
+                        <a href="#" onclick="showSection('usuarios')" class="nav-link text-indigo-100 hover:bg-indigo-700 group flex items-center px-2 py-2 text-sm font-medium rounded-md">
+                            <span class="mr-3">👥</span>
+                            Gestión Usuarios
+                        </a>
+                        <a href="#" onclick="showSection('productos')" class="nav-link text-indigo-100 hover:bg-indigo-700 group flex items-center px-2 py-2 text-sm font-medium rounded-md">
+                            <span class="mr-3">⚙️</span>
+                            Productos & Precios
+                        </a>
+                        <a href="#" onclick="showSection('reportes')" class="nav-link text-indigo-100 hover:bg-indigo-700 group flex items-center px-2 py-2 text-sm font-medium rounded-md">
+                            <span class="mr-3">📈</span>
+                            Reportes Financieros
+                        </a>
+                        <a href="#" onclick="showSection('configuracion')" class="nav-link text-indigo-100 hover:bg-indigo-700 group flex items-center px-2 py-2 text-sm font-medium rounded-md">
+                            <span class="mr-3">🏪</span>
+                            Configuración Local
+                        </a>
+                        <a href="#" onclick="showSection('pagos')" class="nav-link text-indigo-100 hover:bg-indigo-700 group flex items-center px-2 py-2 text-sm font-medium rounded-md">
+                            <span class="mr-3">💰</span>
+                            Métodos de Pago
+                        </a>
+                        <a href="#" onclick="showSection('promociones')" class="nav-link text-indigo-100 hover:bg-indigo-700 group flex items-center px-2 py-2 text-sm font-medium rounded-md">
+                            <span class="mr-3">🗓️</span>
+                            Promociones
+                        </a>
+                    </nav>
+                </div>
+                <div class="flex-shrink-0 flex border-t border-indigo-700 p-4">
+                    <div class="flex items-center">
+                        <div class="h-8 w-8 rounded-full bg-primary flex items-center justify-center">
+                            <span class="text-white text-sm font-medium">AU</span>
+                        </div>
+                        <div class="ml-3">
+                            <p class="text-sm font-medium text-white">Admin Usuario</p>
+                            <p class="text-xs text-indigo-200">Administrador</p>
+                        </div>
                     </div>
-                    <div class="card-value">$12,450</div>
-                    <small>+8% vs ayer</small>
-                </div>
-
-                <div class="dashboard-card">
-                    <div class="card-header">
-                        <h3 class="card-title">Pedidos Activos</h3>
-                    </div>
-                    <div class="card-value">7</div>
-                    <small>En preparación/entrega</small>
-                </div>
-
-                <div class="dashboard-card">
-                    <div class="card-header">
-                        <h3 class="card-title">Productos Activos</h3>
-                    </div>
-                    <div class="card-value">42</div>
-                    <small>Disponibles para venta</small>
-                </div>
-            </div>
-
-            <!-- Quick Actions -->
-            <div class="quick-actions" style="margin-top: 2rem;">
-                <h3 style="color: var(--tertiary-color); margin-bottom: 1rem;">Acciones Rápidas</h3>
-                <div class="dashboard-grid">
-                    <button class="btn btn-secondary" onclick="toggleLocalStatus()">
-                        🏪 Cambiar Estado Local
-                    </button>
-                    <button class="btn btn-secondary" onclick="manageProducts()">
-                        ➕ Gestionar Productos
-                    </button>
-                    <button class="btn btn-secondary" onclick="viewReports()">
-                        📊 Ver Reportes
-                    </button>
-                    <button class="btn btn-secondary" onclick="manageUsers()">
-                        👥 Gestionar Usuarios
-                    </button>
                 </div>
             </div>
         </div>
-    </div>
 
-    <!-- Phone Order Modal -->
-    <div id="phoneOrderModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2>📞 Nuevo Pedido Telefónico</h2>
-                <span class="close" onclick="closePhoneOrderModal()">&times;</span>
+        <!-- Main content -->
+        <div class="flex flex-col flex-1 overflow-hidden">
+            <!-- Header -->
+            <div class="relative z-10 flex-shrink-0 flex h-16 bg-white shadow-sm border-b border-gray-200">
+                <div class="flex-1 px-4 flex justify-between items-center">
+                    <h1 id="pageTitle" class="text-2xl font-semibold text-gray-900">Métricas & Dashboard</h1>
+                    <div class="ml-4 flex items-center space-x-4">
+                        <div class="text-sm text-gray-500">
+                            <span id="currentTime"></span>
+                        </div>
+                        <button class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg text-sm transition-colors duration-200">
+                            Cerrar Sesión
+                        </button>
+                    </div>
+                </div>
             </div>
-            <div class="modal-body">
-                <form id="phoneOrderForm">
-                    <!-- Customer Information -->
-                    <h3 style="color: var(--tertiary-color); margin-bottom: 1rem;">Información del Cliente</h3>
-                    <div class="form-grid">
-                        <div class="form-group">
-                            <label class="form-label" for="customerPhone">Teléfono *</label>
-                            <input type="tel" id="customerPhone" class="form-control" required 
-                                   placeholder="Ej: +54 11 1234-5678" onblur="searchCustomer()">
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label" for="customerName">Nombre Completo *</label>
-                            <input type="text" id="customerName" class="form-control" required 
-                                   placeholder="Nombre y apellido">
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label" for="customerEmail">Email</label>
-                            <input type="email" id="customerEmail" class="form-control" 
-                                   placeholder="cliente@email.com">
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label" for="deliveryAddress">Dirección de Entrega *</label>
-                            <textarea id="deliveryAddress" class="form-control" required rows="2" 
-                                      placeholder="Calle, número, piso, depto, referencias"></textarea>
-                        </div>
-                    </div>
 
-                    <!-- Order Type and Timing -->
-                    <h3 style="color: var(--tertiary-color); margin: 2rem 0 1rem 0;">Tipo de Pedido</h3>
-                    <div class="form-grid">
-                        <div class="form-group">
-                            <label class="form-label" for="orderType">Tipo de Pedido *</label>
-                            <select id="orderType" class="form-control select-control" required onchange="toggleScheduleTime()">
-                                <option value="">Seleccionar tipo</option>
-                                <option value="inmediato">Inmediato</option>
-                                <option value="programado">Programado</option>
-                            </select>
-                        </div>
-                        <div class="form-group" id="scheduleTimeGroup" style="display: none;">
-                            <label class="form-label" for="scheduleTime">Hora de Entrega</label>
-                            <input type="datetime-local" id="scheduleTime" class="form-control">
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label" for="paymentMethod">Método de Pago *</label>
-                            <select id="paymentMethod" class="form-control select-control" required>
-                                <option value="">Seleccionar método</option>
-                                <option value="digital">Digital (Mercado Pago, Cuenta DNI)</option>
-                                <option value="efectivo">Efectivo (Solo clientes autorizados)</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label" for="deliveryZone">Zona de Entrega *</label>
-                            <select id="deliveryZone" class="form-control select-control" required onchange="updateDeliveryPrice()">
-                                <option value="">Seleccionar zona</option>
-                                <option value="1" data-price="200">Zona Centro - $200</option>
-                                <option value="2" data-price="300">Zona Norte - $300</option>
-                                <option value="3" data-price="400">Zona Sur - $400</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <!-- Product Selection -->
-                    <div class="product-section">
-                        <h3 style="color: var(--tertiary-color); margin-bottom: 1rem;">Selección de Productos</h3>
+            <!-- Page content -->
+            <main class="flex-1 relative overflow-y-auto focus:outline-none">
+                <div class="py-6">
+                    <div class="max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
                         
-                        <!-- Category Filter -->
-                        <div class="form-group">
-                            <label class="form-label" for="categoryFilter">Filtrar por Categoría</label>
-                            <select id="categoryFilter" class="form-control select-control" onchange="filterProducts()">
-                                <option value="">Todas las categorías</option>
-                                <option value="minutas">Minutas</option>
-                                <option value="pastas">Pastas</option>
-                                <option value="guisos">Guisos</option>
-                                <option value="tartas">Tartas</option>
-                                <option value="empanadas">Empanadas</option>
-                                <option value="postres">Postres</option>
-                                <option value="bebidas">Bebidas</option>
-                                <option value="embutidos">Embutidos</option>
-                            </select>
-                        </div>
+                        <!-- Métricas & Dashboard Section -->
+                        <div id="metricas" class="section">
+                            <!-- Stats Cards -->
+                            <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4 mb-8">
+                                <div class="bg-white overflow-hidden shadow-lg rounded-lg hover:shadow-xl transition-all duration-300">
+                                    <div class="p-5">
+                                        <div class="flex items-center">
+                                            <div class="flex-shrink-0">
+                                                <div class="w-8 h-8 bg-blue-500 rounded-md flex items-center justify-center">
+                                                    <span class="text-white text-sm">💰</span>
+                                                </div>
+                                            </div>
+                                            <div class="ml-5 w-0 flex-1">
+                                                <dl>
+                                                    <dt class="text-sm font-medium text-gray-500 truncate">Ventas Hoy</dt>
+                                                    <dd class="flex items-baseline">
+                                                        <div class="text-2xl font-semibold text-gray-900">$14,550</div>
+                                                        <div class="ml-2 flex items-baseline text-sm font-semibold text-green-600">
+                                                            <svg class="self-center flex-shrink-0 h-5 w-5 text-green-500" viewBox="0 0 20 20" fill="currentColor">
+                                                                <path fill-rule="evenodd" d="M5.293 9.707a1 1 0 010-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 01-1.414 1.414L11 7.414V15a1 1 0 11-2 0V7.414L6.707 9.707a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                                                            </svg>
+                                                            8%
+                                                        </div>
+                                                    </dd>
+                                                </dl>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
 
-                        <div class="product-grid" id="productGrid">
-                            <!-- Example Products -->
-                            <div class="product-card" data-category="minutas" onclick="selectProduct(1, 'Milanesa con Papas', 850)">
-                                <h4>Milanesa con Papas</h4>
-                                <p style="color: #666; font-size: 0.9rem;">Milanesa de carne con guarnición de papas fritas</p>
-                                <p style="font-weight: bold; color: var(--primary-color);">$850</p>
-                                <div class="quantity-control" style="display: none;">
-                                    <button type="button" class="quantity-btn" onclick="changeQuantity(1, -1)">-</button>
-                                    <span class="quantity">1</span>
-                                    <button type="button" class="quantity-btn" onclick="changeQuantity(1, 1)">+</button>
+                                <div class="bg-white overflow-hidden shadow-lg rounded-lg hover:shadow-xl transition-all duration-300">
+                                    <div class="p-5">
+                                        <div class="flex items-center">
+                                            <div class="flex-shrink-0">
+                                                <div class="w-8 h-8 bg-green-500 rounded-md flex items-center justify-center">
+                                                    <span class="text-white text-sm">📋</span>
+                                                </div>
+                                            </div>
+                                            <div class="ml-5 w-0 flex-1">
+                                                <dl>
+                                                    <dt class="text-sm font-medium text-gray-500 truncate">Pedidos Procesados</dt>
+                                                    <dd class="flex items-baseline">
+                                                        <div class="text-2xl font-semibold text-gray-900">24</div>
+                                                        <div class="ml-2 flex items-baseline text-sm font-semibold text-green-600">
+                                                            <svg class="self-center flex-shrink-0 h-5 w-5 text-green-500" viewBox="0 0 20 20" fill="currentColor">
+                                                                <path fill-rule="evenodd" d="M5.293 9.707a1 1 0 010-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 01-1.414 1.414L11 7.414V15a1 1 0 11-2 0V7.414L6.707 9.707a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                                                            </svg>
+                                                            15%
+                                                        </div>
+                                                    </dd>
+                                                </dl>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="bg-white overflow-hidden shadow-lg rounded-lg hover:shadow-xl transition-all duration-300">
+                                    <div class="p-5">
+                                        <div class="flex items-center">
+                                            <div class="flex-shrink-0">
+                                                <div class="w-8 h-8 bg-purple-500 rounded-md flex items-center justify-center">
+                                                    <span class="text-white text-sm">👥</span>
+                                                </div>
+                                            </div>
+                                            <div class="ml-5 w-0 flex-1">
+                                                <dl>
+                                                    <dt class="text-sm font-medium text-gray-500 truncate">Empleados Activos</dt>
+                                                    <dd class="text-2xl font-semibold text-gray-900">5</dd>
+                                                </dl>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="bg-white overflow-hidden shadow-lg rounded-lg hover:shadow-xl transition-all duration-300">
+                                    <div class="p-5">
+                                        <div class="flex items-center">
+                                            <div class="flex-shrink-0">
+                                                <div class="w-8 h-8 bg-yellow-500 rounded-md flex items-center justify-center">
+                                                    <span class="text-white text-sm">⭐</span>
+                                                </div>
+                                            </div>
+                                            <div class="ml-5 w-0 flex-1">
+                                                <dl>
+                                                    <dt class="text-sm font-medium text-gray-500 truncate">Ticket Promedio</dt>
+                                                    <dd class="text-2xl font-semibold text-gray-900">$606</dd>
+                                                </dl>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
 
-                            <div class="product-card" data-category="pastas" onclick="selectProduct(2, 'Ravioles con Salsa', 720)">
-                                <h4>Ravioles con Salsa</h4>
-                                <p style="color: #666; font-size: 0.9rem;">Ravioles caseros con salsa bolognesa</p>
-                                <p style="font-weight: bold; color: var(--primary-color);">$720</p>
-                                <div class="quantity-control" style="display: none;">
-                                    <button type="button" class="quantity-btn" onclick="changeQuantity(2, -1)">-</button>
-                                    <span class="quantity">1</span>
-                                    <button type="button" class="quantity-btn" onclick="changeQuantity(2, 1)">+</button>
+                            <!-- Charts Row -->
+                            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                                <div class="bg-white p-6 rounded-lg shadow-lg">
+                                    <div class="flex justify-between items-center mb-4">
+                                        <h3 class="text-lg font-medium text-gray-900">Ventas de la Semana</h3>
+                                        <button class="text-sm text-indigo-600 hover:text-indigo-800">Ver detalles</button>
+                                    </div>
+                                    <canvas id="salesChart" width="400" height="200"></canvas>
+                                </div>
+                                <div class="bg-white p-6 rounded-lg shadow-lg">
+                                    <div class="flex justify-between items-center mb-4">
+                                        <h3 class="text-lg font-medium text-gray-900">Performance por Empleado</h3>
+                                        <button class="text-sm text-indigo-600 hover:text-indigo-800">Gestionar</button>
+                                    </div>
+                                    <canvas id="employeeChart" width="400" height="200"></canvas>
                                 </div>
                             </div>
 
-                            <div class="product-card" data-category="empanadas" onclick="selectProduct(3, 'Empanadas de Carne (x6)', 480)">
-                                <h4>Empanadas de Carne (x6)</h4>
-                                <p style="color: #666; font-size: 0.9rem;">Media docena de empanadas de carne cortada a cuchillo</p>
-                                <p style="font-weight: bold; color: var(--primary-color);">$480</p>
-                                <div class="quantity-control" style="display: none;">
-                                    <button type="button" class="quantity-btn" onclick="changeQuantity(3, -1)">-</button>
-                                    <span class="quantity">1</span>
-                                    <button type="button" class="quantity-btn" onclick="changeQuantity(3, 1)">+</button>
+                            <!-- Quick Status -->
+                            <div class="bg-white rounded-lg shadow-lg p-6">
+                                <h3 class="text-lg font-medium text-gray-900 mb-4">Estado General del Local</h3>
+                                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                    <div class="text-center p-4 bg-green-50 rounded-lg">
+                                        <div class="text-2xl mb-2">🟢</div>
+                                        <div class="text-sm font-medium text-gray-900">Local Abierto</div>
+                                        <div class="text-xs text-gray-500">11:00 - 23:00</div>
+                                    </div>
+                                    <div class="text-center p-4 bg-blue-50 rounded-lg">
+                                        <div class="text-2xl mb-2">💳</div>
+                                        <div class="text-sm font-medium text-gray-900">3 Métodos Activos</div>
+                                        <div class="text-xs text-gray-500">Efectivo, Digital, Tarjeta</div>
+                                    </div>
+                                    <div class="text-center p-4 bg-yellow-50 rounded-lg">
+                                        <div class="text-2xl mb-2">🎯</div>
+                                        <div class="text-sm font-medium text-gray-900">2 Promociones</div>
+                                        <div class="text-xs text-gray-500">Activas hasta el viernes</div>
+                                    </div>
+                                    <div class="text-center p-4 bg-purple-50 rounded-lg">
+                                        <div class="text-2xl mb-2">📊</div>
+                                        <div class="text-sm font-medium text-gray-900">Meta: 85%</div>
+                                        <div class="text-xs text-gray-500">$12,400 de $14,600</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Gestión Usuarios Section -->
+                        <div id="usuarios" class="section hidden">
+                            <div class="mb-6">
+                                <div class="flex justify-between items-center">
+                                    <h2 class="text-xl font-semibold text-gray-900">Gestión de Usuarios y Empleados</h2>
+                                    <button onclick="showUserModal()" class="bg-primary hover:bg-yellow-600 text-white px-4 py-2 rounded-lg transition-colors duration-200 flex items-center space-x-2">
+                                        <span>➕</span>
+                                        <span>Nuevo Usuario</span>
+                                    </button>
                                 </div>
                             </div>
 
-                            <div class="product-card" data-category="bebidas" onclick="selectProduct(4, 'Coca Cola 1.5L', 320)">
-                                <h4>Coca Cola 1.5L</h4>
-                                <p style="color: #666; font-size: 0.9rem;">Gaseosa Coca Cola botella 1.5 litros</p>
-                                <p style="font-weight: bold; color: var(--primary-color);">$320</p>
-                                <div class="quantity-control" style="display: none;">
-                                    <button type="button" class="quantity-btn" onclick="changeQuantity(4, -1)">-</button>
-                                    <span class="quantity">1</span>
-                                    <button type="button" class="quantity-btn" onclick="changeQuantity(4, 1)">+</button>
+                            <div class="bg-white shadow-lg rounded-lg overflow-hidden">
+                                <div class="overflow-x-auto">
+                                    <table class="min-w-full divide-y divide-gray-200">
+                                        <thead class="bg-gray-50">
+                                            <tr>
+                                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Usuario</th>
+                                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rol</th>
+                                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Permisos</th>
+                                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Último Acceso</th>
+                                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
+                                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="bg-white divide-y divide-gray-200">
+                                            <tr class="hover:bg-gray-50">
+                                                <td class="px-6 py-4 whitespace-nowrap">
+                                                    <div class="flex items-center">
+                                                        <div class="h-10 w-10 flex-shrink-0">
+                                                            <div class="h-10 w-10 rounded-full bg-primary flex items-center justify-center">
+                                                                <span class="text-white font-medium text-sm">JP</span>
+                                                            </div>
+                                                        </div>
+                                                        <div class="ml-4">
+                                                            <div class="text-sm font-medium text-gray-900">Juan Pérez</div>
+                                                            <div class="text-sm text-gray-500">juan@rotiseria.com</div>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td class="px-6 py-4 whitespace-nowrap">
+                                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-purple-100 text-purple-800">Administrador</span>
+                                                </td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Total</td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Hoy 14:30</td>
+                                                <td class="px-6 py-4 whitespace-nowrap">
+                                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Activo</span>
+                                                </td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
+                                                    <button onclick="editUser(1)" class="text-indigo-600 hover:text-indigo-900">Editar</button>
+                                                    <button onclick="toggleUser(1)" class="text-yellow-600 hover:text-yellow-900">Suspender</button>
+                                                </td>
+                                            </tr>
+                                            <tr class="hover:bg-gray-50">
+                                                <td class="px-6 py-4 whitespace-nowrap">
+                                                    <div class="flex items-center">
+                                                        <div class="h-10 w-10 flex-shrink-0">
+                                                            <div class="h-10 w-10 rounded-full bg-green-500 flex items-center justify-center">
+                                                                <span class="text-white font-medium text-sm">MG</span>
+                                                            </div>
+                                                        </div>
+                                                        <div class="ml-4">
+                                                            <div class="text-sm font-medium text-gray-900">María García</div>
+                                                            <div class="text-sm text-gray-500">maria@rotiseria.com</div>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td class="px-6 py-4 whitespace-nowrap">
+                                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">Empleado</span>
+                                                </td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Pedidos + Cocina</td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Hoy 12:45</td>
+                                                <td class="px-6 py-4 whitespace-nowrap">
+                                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Activo</span>
+                                                </td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
+                                                    <button onclick="editUser(2)" class="text-indigo-600 hover:text-indigo-900">Editar</button>
+                                                    <button onclick="toggleUser(2)" class="text-yellow-600 hover:text-yellow-900">Suspender</button>
+                                                </td>
+                                            </tr>
+                                            <tr class="hover:bg-gray-50">
+                                                <td class="px-6 py-4 whitespace-nowrap">
+                                                    <div class="flex items-center">
+                                                        <div class="h-10 w-10 flex-shrink-0">
+                                                            <div class="h-10 w-10 rounded-full bg-blue-500 flex items-center justify-center">
+                                                                <span class="text-white font-medium text-sm">CL</span>
+                                                            </div>
+                                                        </div>
+                                                        <div class="ml-4">
+                                                            <div class="text-sm font-medium text-gray-900">Carlos López</div>
+                                                            <div class="text-sm text-gray-500">carlos@rotiseria.com</div>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td class="px-6 py-4 whitespace-nowrap">
+                                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-orange-100 text-orange-800">Delivery</span>
+                                                </td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Solo Entregas</td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Ayer 20:15</td>
+                                                <td class="px-6 py-4 whitespace-nowrap">
+                                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">Suspendido</span>
+                                                </td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
+                                                    <button onclick="editUser(3)" class="text-indigo-600 hover:text-indigo-900">Editar</button>
+                                                    <button onclick="toggleUser(3)" class="text-green-600 hover:text-green-900">Activar</button>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
                                 </div>
                             </div>
                         </div>
-                    </div>
 
-                    <!-- Order Summary -->
-                    <div class="order-summary">
-                        <h3 style="color: var(--tertiary-color); margin-bottom: 1rem;">Resumen del Pedido</h3>
-                        <div id="orderItems"></div>
-                        <div class="summary-line">
-                            <span>Subtotal:</span>
-                            <span id="subtotal">$0</span>
-                        </div>
-                        <div class="summary-line">
-                            <span>Delivery:</span>
-                            <span id="deliveryPrice">$0</span>
-                        </div>
-                        <div class="summary-line summary-total">
-                            <span>Total:</span>
-                            <span id="totalPrice">$0</span>
-                        </div>
-                    </div>
+                        <!-- Productos & Precios Section -->
+                        <div id="productos" class="section hidden">
+                            <div class="mb-6">
+                                <div class="flex justify-between items-center">
+                                    <h2 class="text-xl font-semibold text-gray-900">Gestión de Productos y Precios</h2>
+                                    <button onclick="showProductModal()" class="bg-primary hover:bg-yellow-600 text-white px-4 py-2 rounded-lg transition-colors duration-200 flex items-center space-x-2">
+                                        <span>➕</span>
+                                        <span>Nuevo Producto</span>
+                                    </button>
+                                </div>
+                            </div>
 
-                    <!-- Comments -->
-                    <div class="form-group">
-                        <label class="form-label" for="orderComments">Comentarios del Cliente</label>
-                        <textarea id="orderComments" class="form-control" rows="3" 
-                                  placeholder="Comentarios especiales, instrucciones de entrega, etc."></textarea>
-                    </div>
+                            <!-- Filter Bar -->
+                            <div class="bg-white p-4 rounded-lg shadow-lg mb-6">
+                                <div class="flex flex-wrap gap-4 items-center">
+                                    <div>
+                                        <label class="text-sm font-medium text-gray-700">Categoría:</label>
+                                        <select class="ml-2 border-gray-300 rounded-md text-sm">
+                                            <option>Todas</option>
+                                            <option>Minutas</option>
+                                            <option>Empanadas</option>
+                                            <option>Pastas</option>
+                                            <option>Bebidas</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="text-sm font-medium text-gray-700">Estado:</label>
+                                        <select class="ml-2 border-gray-300 rounded-md text-sm">
+                                            <option>Todos</option>
+                                            <option>Activos</option>
+                                            <option>Inactivos</option>
+                                        </select>
+                                    </div>
+                                    <button onclick="applyBulkPriceUpdate()" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg text-sm transition-colors duration-200">
+                                        Actualización Masiva
+                                    </button>
+                                </div>
+                            </div>
 
-                    <!-- Action Buttons -->
-                    <div style="display: flex; gap: 1rem; margin-top: 2rem; justify-content: flex-end;">
-                        <button type="button" class="btn btn-secondary" onclick="closePhoneOrderModal()">
-                            Cancelar
-                        </button>
-                        <button type="submit" class="btn btn-primary">
-                            📞 Confirmar Pedido
-                        </button>
+                            <div class="bg-white shadow-lg rounded-lg overflow-hidden">
+                                <div class="overflow-x-auto">
+                                    <table class="min-w-full divide-y divide-gray-200">
+                                        <thead class="bg-gray-50">
+                                            <tr>
+                                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Producto</th>
+                                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Categoría</th>
+                                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Precio Actual</th>
+                                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Costo</th>
+                                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Margen</th>
+                                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
+                                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="bg-white divide-y divide-gray-200">
+                                            <tr class="hover:bg-gray-50">
+                                                <td class="px-6 py-4 whitespace-nowrap">
+                                                    <div class="flex items-center">
+                                                        <div class="h-10 w-10 flex-shrink-0">
+                                                            <div class="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center">🍗</div>
+                                                        </div>
+                                                        <div class="ml-4">
+                                                            <div class="text-sm font-medium text-gray-900">Milanesa con Papas</div>
+                                                            <div class="text-sm text-gray-500">Porción individual</div>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Minutas</td>
+                                                <td class="px-6 py-4 whitespace-nowrap">
+                                                    <div class="flex items-center space-x-2">
+                                                        <span class="text-sm font-medium text-gray-900">$850</span>
+                                                        <button onclick="editPrice('milanesa', 850)" class="text-xs text-indigo-600 hover:text-indigo-800">✏️</button>
+                                                    </div>
+                                                </td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">$320</td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-green-600">165%</td>
+                                                <td class="px-6 py-4 whitespace-nowrap">
+                                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Activo</span>
+                                                </td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
+                                                    <button onclick="editProduct(1)" class="text-indigo-600 hover:text-indigo-900">Editar</button>
+                                                    <button onclick="toggleProduct(1)" class="text-red-600 hover:text-red-900">Desactivar</button>
+                                                </td>
+                                            </tr>
+                                            <tr class="hover:bg-gray-50">
+                                                <td class="px-6 py-4 whitespace-nowrap">
+                                                    <div class="flex items-center">
+                                                        <div class="h-10 w-10 flex-shrink-0">
+                                                            <div class="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center">🥟</div>
+                                                        </div>
+                                                        <div class="ml-4">
+                                                            <div class="text-sm font-medium text-gray-900">Empanadas de Carne (x6)</div>
+                                                            <div class="text-sm text-gray-500">Media docena</div>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Empanadas</td>
+                                                <td class="px-6 py-4 whitespace-nowrap">
+                                                    <div class="flex items-center space-x-2">
+                                                        <span class="text-sm font-medium text-gray-900">$480</span>
+                                                        <button onclick="editPrice('empanadas', 480)" class="text-xs text-indigo-600 hover:text-indigo-800">✏️</button>
+                                                    </div>
+                                                </td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">$180</td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-green-600">167%</td>
+                                                <td class="px-6 py-4 whitespace-nowrap">
+                                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Activo</span>
+                                                </td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
+                                                    <button onclick="editProduct(2)" class="text-indigo-600 hover:text-indigo-900">Editar</button>
+                                                    <button onclick="toggleProduct(2)" class="text-red-600 hover:text-red-900">Desactivar</button>
+                                                </td>
+                                            </tr>
+                                            <tr class="hover:bg-gray-50">
+                                                <td class="px-6 py-4 whitespace-nowrap">
+                                                    <div class="flex items-center">
+                                                        <div class="h-10 w-10 flex-shrink-0">
+                                                            <div class="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center">🥤</div>
+                                                        </div>
+                                                        <div class="ml-4">
+                                                            <div class="text-sm font-medium text-gray-900">Coca Cola 1.5L</div>
+                                                            <div class="text-sm text-gray-500">Botella grande</div>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Bebidas</td>
+                                                <td class="px-6 py-4 whitespace-nowrap">
+                                                    <div class="flex items-center space-x-2">
+                                                        <span class="text-sm font-medium text-gray-900">$320</span>
+                                                        <button onclick="editPrice('coca', 320)" class="text-xs text-indigo-600 hover:text-indigo-800">✏️</button>
+                                                    </div>
+                                                </td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">$180</td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-yellow-600">78%</td>
+                                                <td class="px-6 py-4 whitespace-nowrap">
+                                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">Sin Stock</span>
+                                                </td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
+                                                    <button onclick="editProduct(3)" class="text-indigo-600 hover:text-indigo-900">Editar</button>
+                                                    <button onclick="toggleProduct(3)" class="text-green-600 hover:text-green-900">Activar</button>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Reportes Financieros Section -->
+                        <div id="reportes" class="section hidden">
+                            <div class="mb-6">
+                                <div class="flex justify-between items-center">
+                                    <h2 class="text-xl font-semibold text-gray-900">Reportes Financieros</h2>
+                                    <div class="flex space-x-2">
+                                        <button onclick="exportReport('pdf')" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg text-sm transition-colors duration-200">
+                                            📄 Exportar PDF
+                                        </button>
+                                        <button onclick="exportReport('excel')" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg text-sm transition-colors duration-200">
+                                            📊 Exportar Excel
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Date Range Selector -->
+                            <div class="bg-white p-4 rounded-lg shadow-lg mb-6">
+                                <div class="flex flex-wrap gap-4 items-center">
+                                    <div>
+                                        <label class="text-sm font-medium text-gray-700">Desde:</label>
+                                        <input type="date" id="dateFrom" class="ml-2 border-gray-300 rounded-md text-sm" value="2025-09-01">
+                                    </div>
+                                    <div>
+                                        <label class="text-sm font-medium text-gray-700">Hasta:</label>
+                                        <input type="date" id="dateTo" class="ml-2 border-gray-300 rounded-md text-sm" value="2025-09-10">
+                                    </div>
+                                    <button onclick="updateFinancialReport()" class="bg-tertiary hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm transition-colors duration-200">
+                                        Actualizar Reporte
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Financial Summary Cards -->
+                            <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4 mb-8">
+                                <div class="bg-white overflow-hidden shadow-lg rounded-lg">
+                                    <div class="p-5">
+                                        <div class="flex items-center">
+                                            <div class="flex-shrink-0">
+                                                <div class="w-8 h-8 bg-green-500 rounded-md flex items-center justify-center">
+                                                    <span class="text-white text-sm">💰</span>
+                                                </div>
+                                            </div>
+                                            <div class="ml-5 w-0 flex-1">
+                                                <dl>
+                                                    <dt class="text-sm font-medium text-gray-500 truncate">Ingresos Brutos</dt>
+                                                    <dd class="text-2xl font-semibold text-gray-900">$145,600</dd>
+                                                </dl>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="bg-white overflow-hidden shadow-lg rounded-lg">
+                                    <div class="p-5">
+                                        <div class="flex items-center">
+                                            <div class="flex-shrink-0">
+                                                <div class="w-8 h-8 bg-blue-500 rounded-md flex items-center justify-center">
+                                                    <span class="text-white text-sm">🚗</span>
+                                                </div>
+                                            </div>
+                                            <div class="ml-5 w-0 flex-1">
+                                                <dl>
+                                                    <dt class="text-sm font-medium text-gray-500 truncate">Delivery</dt>
+                                                    <dd class="text-2xl font-semibold text-gray-900">$18,500</dd>
+                                                </dl>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="bg-white overflow-hidden shadow-lg rounded-lg">
+                                    <div class="p-5">
+                                        <div class="flex items-center">
+                                            <div class="flex-shrink-0">
+                                                <div class="w-8 h-8 bg-red-500 rounded-md flex items-center justify-center">
+                                                    <span class="text-white text-sm">📉</span>
+                                                </div>
+                                            </div>
+                                            <div class="ml-5 w-0 flex-1">
+                                                <dl>
+                                                    <dt class="text-sm font-medium text-gray-500 truncate">Costos</dt>
+                                                    <dd class="text-2xl font-semibold text-gray-900">$58,400</dd>
+                                                </dl>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="bg-white overflow-hidden shadow-lg rounded-lg">
+                                    <div class="p-5">
+                                        <div class="flex items-center">
+                                            <div class="flex-shrink-0">
+                                                <div class="w-8 h-8 bg-purple-500 rounded-md flex items-center justify-center">
+                                                    <span class="text-white text-sm">📈</span>
+                                                </div>
+                                            </div>
+                                            <div class="ml-5 w-0 flex-1">
+                                                <dl>
+                                                    <dt class="text-sm font-medium text-gray-500 truncate">Ganancia Neta</dt>
+                                                    <dd class="text-2xl font-semibold text-green-600">$87,200</dd>
+                                                </dl>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Financial Charts -->
+                            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                                <div class="bg-white p-6 rounded-lg shadow-lg">
+                                    <h3 class="text-lg font-medium text-gray-900 mb-4">Evolución Mensual</h3>
+                                    <canvas id="monthlyRevenueChart" width="400" height="200"></canvas>
+                                </div>
+                                <div class="bg-white p-6 rounded-lg shadow-lg">
+                                    <h3 class="text-lg font-medium text-gray-900 mb-4">Distribución de Ingresos</h3>
+                                    <canvas id="revenueBreakdownChart" width="400" height="200"></canvas>
+                                </div>
+                            </div>
+
+                            <!-- Detailed Financial Table -->
+                            <div class="bg-white shadow-lg rounded-lg overflow-hidden">
+                                <div class="px-6 py-4 border-b border-gray-200">
+                                    <h3 class="text-lg font-medium text-gray-900">Detalle Diario</h3>
+                                </div>
+                                <div class="overflow-x-auto">
+                                    <table class="min-w-full divide-y divide-gray-200">
+                                        <thead class="bg-gray-50">
+                                            <tr>
+                                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fecha</th>
+                                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Pedidos</th>
+                                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ingresos</th>
+                                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Delivery</th>
+                                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Costos</th>
+                                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ganancia</th>
+                                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Margen %</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="bg-white divide-y divide-gray-200">
+                                            <tr class="hover:bg-gray-50">
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Hoy - 10/09</td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">24</td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">$14,550</td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">$2,100</td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-red-600">$5,820</td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-green-600">$8,730</td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">60%</td>
+                                            </tr>
+                                            <tr class="hover:bg-gray-50">
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Ayer - 09/09</td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">21</td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">$13,050</td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">$1,850</td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-red-600">$5,220</td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-green-600">$7,830</td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">60%</td>
+                                            </tr>
+                                            <tr class="hover:bg-gray-50">
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">08/09</td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">18</td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">$11,400</td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">$1,600</td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-red-600">$4,560</td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-green-600">$6,840</td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">60%</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Configuración Local Section -->
+                        <div id="configuracion" class="section hidden">
+                            <div class="mb-6">
+                                <h2 class="text-xl font-semibold text-gray-900">Configuración del Local</h2>
+                            </div>
+
+                            <div class="space-y-6">
+                                <!-- General Settings -->
+                                <div class="bg-white shadow-lg rounded-lg p-6">
+                                    <h3 class="text-lg font-medium text-gray-900 mb-4">Información General</h3>
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700">Nombre del Local</label>
+                                            <input type="text" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary" value="Rotisería Del Barrio">
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700">Teléfono Principal</label>
+                                            <input type="tel" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary" value="+54 11 1234-5678">
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700">Email Contacto</label>
+                                            <input type="email" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary" value="info@rotiseria.com">
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700">Dirección</label>
+                                            <input type="text" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary" value="Av. Corrientes 1234, CABA">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Operating Hours -->
+                                <div class="bg-white shadow-lg rounded-lg p-6">
+                                    <h3 class="text-lg font-medium text-gray-900 mb-4">Horarios de Atención</h3>
+                                    <div class="space-y-4">
+                                        <div class="flex items-center justify-between">
+                                            <div class="flex items-center space-x-3">
+                                                <input type="checkbox" id="lunes" class="rounded border-gray-300" checked>
+                                                <label for="lunes" class="text-sm font-medium text-gray-700">Lunes</label>
+                                            </div>
+                                            <div class="flex space-x-2">
+                                                <input type="time" class="border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary text-sm" value="11:00">
+                                                <span class="text-gray-500 self-center">-</span>
+                                                <input type="time" class="border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary text-sm" value="23:00">
+                                            </div>
+                                        </div>
+                                        <div class="flex items-center justify-between">
+                                            <div class="flex items-center space-x-3">
+                                                <input type="checkbox" id="martes" class="rounded border-gray-300" checked>
+                                                <label for="martes" class="text-sm font-medium text-gray-700">Martes</label>
+                                            </div>
+                                            <div class="flex space-x-2">
+                                                <input type="time" class="border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary text-sm" value="11:00">
+                                                <span class="text-gray-500 self-center">-</span>
+                                                <input type="time" class="border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary text-sm" value="23:00">
+                                            </div>
+                                        </div>
+                                        <div class="flex items-center justify-between">
+                                            <div class="flex items-center space-x-3">
+                                                <input type="checkbox" id="sabado" class="rounded border-gray-300" checked>
+                                                <label for="sabado" class="text-sm font-medium text-gray-700">Sábado</label>
+                                            </div>
+                                            <div class="flex space-x-2">
+                                                <input type="time" class="border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary text-sm" value="12:00">
+                                                <span class="text-gray-500 self-center">-</span>
+                                                <input type="time" class="border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary text-sm" value="24:00">
+                                            </div>
+                                        </div>
+                                        <div class="flex items-center justify-between">
+                                            <div class="flex items-center space-x-3">
+                                                <input type="checkbox" id="domingo" class="rounded border-gray-300">
+                                                <label for="domingo" class="text-sm font-medium text-gray-700">Domingo</label>
+                                            </div>
+                                            <div class="flex space-x-2">
+                                                <input type="time" class="border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary text-sm" value="18:00" disabled>
+                                                <span class="text-gray-500 self-center">-</span>
+                                                <input type="time" class="border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary text-sm" value="23:00" disabled>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Delivery Zones -->
+                                <div class="bg-white shadow-lg rounded-lg p-6">
+                                    <h3 class="text-lg font-medium text-gray-900 mb-4">Zonas de Delivery</h3>
+                                    <div class="space-y-4">
+                                        <div class="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
+                                            <div>
+                                                <h4 class="font-medium text-gray-900">Zona Centro (0-2km)</h4>
+                                                <p class="text-sm text-gray-500">Barrios: Centro, Microcentro, San Telmo</p>
+                                            </div>
+                                            <div class="flex items-center space-x-3">
+                                                <input type="number" class="w-20 border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary text-sm" value="200">
+                                                <span class="text-sm text-gray-500">$</span>
+                                                <div class="flex items-center">
+                                                    <input type="checkbox" class="rounded border-gray-300" checked>
+                                                    <label class="ml-2 text-sm text-gray-700">Activa</label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
+                                            <div>
+                                                <h4 class="font-medium text-gray-900">Zona Norte (2-4km)</h4>
+                                                <p class="text-sm text-gray-500">Barrios: Palermo, Recoleta, Belgrano</p>
+                                            </div>
+                                            <div class="flex items-center space-x-3">
+                                                <input type="number" class="w-20 border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary text-sm" value="300">
+                                                <span class="text-sm text-gray-500">$</span>
+                                                <div class="flex items-center">
+                                                    <input type="checkbox" class="rounded border-gray-300" checked>
+                                                    <label class="ml-2 text-sm text-gray-700">Activa</label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
+                                            <div>
+                                                <h4 class="font-medium text-gray-900">Zona Sur (4-6km)</h4>
+                                                <p class="text-sm text-gray-500">Barrios: La Boca, Barracas, San Cristóbal</p>
+                                            </div>
+                                            <div class="flex items-center space-x-3">
+                                                <input type="number" class="w-20 border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary text-sm" value="400">
+                                                <span class="text-sm text-gray-500">$</span>
+                                                <div class="flex items-center">
+                                                    <input type="checkbox" class="rounded border-gray-300">
+                                                    <label class="ml-2 text-sm text-gray-700">Activa</label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="flex justify-end">
+                                    <button onclick="saveConfiguration()" class="bg-primary hover:bg-yellow-600 text-white px-6 py-2 rounded-lg transition-colors duration-200">
+                                        💾 Guardar Configuración
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Métodos de Pago Section -->
+                        <div id="pagos" class="section hidden">
+                            <div class="mb-6">
+                                <div class="flex justify-between items-center">
+                                    <h2 class="text-xl font-semibold text-gray-900">Gestión de Métodos de Pago</h2>
+                                    <button onclick="showPaymentModal()" class="bg-primary hover:bg-yellow-600 text-white px-4 py-2 rounded-lg transition-colors duration-200 flex items-center space-x-2">
+                                        <span>➕</span>
+                                        <span>Nuevo Método</span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                                <!-- Payment Method Cards -->
+                                <div class="bg-white rounded-lg shadow-lg p-6 border-l-4 border-green-500">
+                                    <div class="flex items-center justify-between mb-4">
+                                        <div class="flex items-center space-x-3">
+                                            <div class="h-12 w-12 bg-green-100 rounded-lg flex items-center justify-center">
+                                                <span class="text-2xl">💵</span>
+                                            </div>
+                                            <div>
+                                                <h3 class="font-semibold text-gray-900">Efectivo</h3>
+                                                <p class="text-sm text-gray-500">Pago tradicional</p>
+                                            </div>
+                                        </div>
+                                        <span class="px-3 py-1 bg-green-100 text-green-800 text-xs font-semibold rounded-full">ACTIVO</span>
+                                    </div>
+                                    <div class="space-y-2 text-sm">
+                                        <div class="flex justify-between">
+                                            <span class="text-gray-600">Comisión:</span>
+                                            <span class="font-medium">0%</span>
+                                        </div>
+                                        <div class="flex justify-between">
+                                            <span class="text-gray-600">Uso esta semana:</span>
+                                            <span class="font-medium">68%</span>
+                                        </div>
+                                    </div>
+                                    <div class="mt-4 flex space-x-2">
+                                        <button onclick="configurePayment('efectivo')" class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-800 px-3 py-2 rounded-md text-sm transition-colors">
+                                            Configurar
+                                        </button>
+                                        <button onclick="togglePayment('efectivo')" class="px-3 py-2 bg-red-100 hover:bg-red-200 text-red-800 rounded-md text-sm transition-colors">
+                                            Desactivar
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div class="bg-white rounded-lg shadow-lg p-6 border-l-4 border-blue-500">
+                                    <div class="flex items-center justify-between mb-4">
+                                        <div class="flex items-center space-x-3">
+                                            <div class="h-12 w-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                                                <span class="text-2xl">💳</span>
+                                            </div>
+                                            <div>
+                                                <h3 class="font-semibold text-gray-900">Tarjetas</h3>
+                                                <p class="text-sm text-gray-500">Débito y Crédito</p>
+                                            </div>
+                                        </div>
+                                        <span class="px-3 py-1 bg-green-100 text-green-800 text-xs font-semibold rounded-full">ACTIVO</span>
+                                    </div>
+                                    <div class="space-y-2 text-sm">
+                                        <div class="flex justify-between">
+                                            <span class="text-gray-600">Comisión:</span>
+                                            <span class="font-medium">2.8%</span>
+                                        </div>
+                                        <div class="flex justify-between">
+                                            <span class="text-gray-600">Uso esta semana:</span>
+                                            <span class="font-medium">25%</span>
+                                        </div>
+                                    </div>
+                                    <div class="mt-4 flex space-x-2">
+                                        <button onclick="configurePayment('tarjetas')" class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-800 px-3 py-2 rounded-md text-sm transition-colors">
+                                            Configurar
+                                        </button>
+                                        <button onclick="togglePayment('tarjetas')" class="px-3 py-2 bg-red-100 hover:bg-red-200 text-red-800 rounded-md text-sm transition-colors">
+                                            Desactivar
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div class="bg-white rounded-lg shadow-lg p-6 border-l-4 border-purple-500">
+                                    <div class="flex items-center justify-between mb-4">
+                                        <div class="flex items-center space-x-3">
+                                            <div class="h-12 w-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                                                <span class="text-2xl">📱</span>
+                                            </div>
+                                            <div>
+                                                <h3 class="font-semibold text-gray-900">Digital</h3>
+                                                <p class="text-sm text-gray-500">MercadoPago, Modo</p>
+                                            </div>
+                                        </div>
+                                        <span class="px-3 py-1 bg-green-100 text-green-800 text-xs font-semibold rounded-full">ACTIVO</span>
+                                    </div>
+                                    <div class="space-y-2 text-sm">
+                                        <div class="flex justify-between">
+                                            <span class="text-gray-600">Comisión:</span>
+                                            <span class="font-medium">3.2%</span>
+                                        </div>
+                                        <div class="flex justify-between">
+                                            <span class="text-gray-600">Uso esta semana:</span>
+                                            <span class="font-medium">7%</span>
+                                        </div>
+                                    </div>
+                                    <div class="mt-4 flex space-x-2">
+                                        <button onclick="configurePayment('digital')" class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-800 px-3 py-2 rounded-md text-sm transition-colors">
+                                            Configurar
+                                        </button>
+                                        <button onclick="togglePayment('digital')" class="px-3 py-2 bg-red-100 hover:bg-red-200 text-red-800 rounded-md text-sm transition-colors">
+                                            Desactivar
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div class="bg-white rounded-lg shadow-lg p-6 border-l-4 border-gray-300 opacity-60">
+                                    <div class="flex items-center justify-between mb-4">
+                                        <div class="flex items-center space-x-3">
+                                            <div class="h-12 w-12 bg-gray-100 rounded-lg flex items-center justify-center">
+                                                <span class="text-2xl">🏦</span>
+                                            </div>
+                                            <div>
+                                                <h3 class="font-semibold text-gray-900">Transferencia</h3>
+                                                <p class="text-sm text-gray-500">Bancaria</p>
+                                            </div>
+                                        </div>
+                                        <span class="px-3 py-1 bg-gray-100 text-gray-600 text-xs font-semibold rounded-full">INACTIVO</span>
+                                    </div>
+                                    <div class="space-y-2 text-sm">
+                                        <div class="flex justify-between">
+                                            <span class="text-gray-600">Comisión:</span>
+                                            <span class="font-medium">0%</span>
+                                        </div>
+                                        <div class="flex justify-between">
+                                            <span class="text-gray-600">Uso esta semana:</span>
+                                            <span class="font-medium">0%</span>
+                                        </div>
+                                    </div>
+                                    <div class="mt-4 flex space-x-2">
+                                        <button onclick="configurePayment('transferencia')" class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-800 px-3 py-2 rounded-md text-sm transition-colors">
+                                            Configurar
+                                        </button>
+                                        <button onclick="togglePayment('transferencia')" class="px-3 py-2 bg-green-100 hover:bg-green-200 text-green-800 rounded-md text-sm transition-colors">
+                                            Activar
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Payment Statistics -->
+                            <div class="bg-white rounded-lg shadow-lg p-6 mb-8">
+                                <h3 class="text-lg font-medium text-gray-900 mb-4">Estadísticas de Pagos</h3>
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                    <div class="text-center">
+                                        <div class="text-3xl font-bold text-gray-900">$14,550</div>
+                                        <div class="text-sm text-gray-500">Total procesado hoy</div>
+                                    </div>
+                                    <div class="text-center">
+                                        <div class="text-3xl font-bold text-gray-900">2.1%</div>
+                                        <div class="text-sm text-gray-500">Comisión promedio</div>
+                                    </div>
+                                    <div class="text-center">
+                                        <div class="text-3xl font-bold text-gray-900">24</div>
+                                        <div class="text-sm text-gray-500">Transacciones hoy</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Promociones Section -->
+                        <div id="promociones" class="section hidden">
+                            <div class="mb-6">
+                                <div class="flex justify-between items-center">
+                                    <h2 class="text-xl font-semibold text-gray-900">Gestión de Promociones</h2>
+                                    <button onclick="showPromotionModal()" class="bg-primary hover:bg-yellow-600 text-white px-4 py-2 rounded-lg transition-colors duration-200 flex items-center space-x-2">
+                                        <span>➕</span>
+                                        <span>Nueva Promoción</span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Active Promotions -->
+                            <div class="bg-white rounded-lg shadow-lg p-6 mb-8">
+                                <h3 class="text-lg font-medium text-gray-900 mb-4">Promociones Activas</h3>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div class="border border-green-200 rounded-lg p-4 bg-green-50">
+                                        <div class="flex items-center justify-between mb-3">
+                                            <h4 class="font-semibold text-gray-900">2x1 Empanadas Viernes</h4>
+                                            <span class="px-2 py-1 bg-green-100 text-green-800 text-xs font-semibold rounded-full">ACTIVA</span>
+                                        </div>
+                                        <p class="text-sm text-gray-600 mb-3">Por cada docena de empanadas, llevá otra gratis los viernes</p>
+                                        <div class="space-y-1 text-xs text-gray-500">
+                                            <div>Válida: Viernes 13/09</div>
+                                            <div>Usos esta semana: 12</div>
+                                            <div>Descuento aplicado: $2,880</div>
+                                        </div>
+                                        <div class="mt-3 flex space-x-2">
+                                            <button onclick="editPromotion(1)" class="text-xs bg-white border border-gray-300 text-gray-700 px-2 py-1 rounded hover:bg-gray-50">
+                                                Editar
+                                            </button>
+                                            <button onclick="pausePromotion(1)" class="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded hover:bg-yellow-200">
+                                                Pausar
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <div class="border border-blue-200 rounded-lg p-4 bg-blue-50">
+                                        <div class="flex items-center justify-between mb-3">
+                                            <h4 class="font-semibold text-gray-900">15% Descuento Delivery</h4>
+                                            <span class="px-2 py-1 bg-blue-100 text-blue-800 text-xs font-semibold rounded-full">ACTIVA</span>
+                                        </div>
+                                        <p class="text-sm text-gray-600 mb-3">15% de descuento en pedidos de delivery superiores a $1000</p>
+                                        <div class="space-y-1 text-xs text-gray-500">
+                                            <div>Válida: Hasta 15/09</div>
+                                            <div>Usos esta semana: 8</div>
+                                            <div>Descuento aplicado: $1,240</div>
+                                        </div>
+                                        <div class="mt-3 flex space-x-2">
+                                            <button onclick="editPromotion(2)" class="text-xs bg-white border border-gray-300 text-gray-700 px-2 py-1 rounded hover:bg-gray-50">
+                                                Editar
+                                            </button>
+                                            <button onclick="pausePromotion(2)" class="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded hover:bg-yellow-200">
+                                                Pausar
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Promotion History -->
+                            <div class="bg-white rounded-lg shadow-lg overflow-hidden">
+                                <div class="px-6 py-4 border-b border-gray-200">
+                                    <h3 class="text-lg font-medium text-gray-900">Historial de Promociones</h3>
+                                </div>
+                                <div class="overflow-x-auto">
+                                    <table class="min-w-full divide-y divide-gray-200">
+                                        <thead class="bg-gray-50">
+                                            <tr>
+                                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Promoción</th>
+                                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tipo</th>
+                                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Período</th>
+                                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Usos</th>
+                                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Descuento Total</th>
+                                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
+                                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="bg-white divide-y divide-gray-200">
+                                            <tr class="hover:bg-gray-50">
+                                                <td class="px-6 py-4 whitespace-nowrap">
+                                                    <div class="text-sm font-medium text-gray-900">2x1 Empanadas Viernes</div>
+                                                    <div class="text-sm text-gray-500">Docena gratis por docena comprada</div>
+                                                </td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">2x1</td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Todos los Viernes</td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">12</td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-red-600">$2,880</td>
+                                                <td class="px-6 py-4 whitespace-nowrap">
+                                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Activa</span>
+                                                </td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
+                                                    <button onclick="editPromotion(1)" class="text-indigo-600 hover:text-indigo-900">Editar</button>
+                                                    <button onclick="duplicatePromotion(1)" class="text-green-600 hover:text-green-900">Duplicar</button>
+                                                </td>
+                                            </tr>
+                                            <tr class="hover:bg-gray-50">
+                                                <td class="px-6 py-4 whitespace-nowrap">
+                                                    <div class="text-sm font-medium text-gray-900">15% Descuento Delivery</div>
+                                                    <div class="text-sm text-gray-500">Pedidos superiores a $1000</div>
+                                                </td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Porcentual</td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">01/09 - 15/09</td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">8</td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-red-600">$1,240</td>
+                                                <td class="px-6 py-4 whitespace-nowrap">
+                                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Activa</span>
+                                                </td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
+                                                    <button onclick="editPromotion(2)" class="text-indigo-600 hover:text-indigo-900">Editar</button>
+                                                    <button onclick="duplicatePromotion(2)" class="text-green-600 hover:text-green-900">Duplicar</button>
+                                                </td>
+                                            </tr>
+                                            <tr class="hover:bg-gray-50">
+                                                <td class="px-6 py-4 whitespace-nowrap">
+                                                    <div class="text-sm font-medium text-gray-900">Combo Familiar Agosto</div>
+                                                    <div class="text-sm text-gray-500">Milanesa + empanadas + bebida</div>
+                                                </td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Combo</td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">01/08 - 31/08</td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">45</td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-red-600">$6,750</td>
+                                                <td class="px-6 py-4 whitespace-nowrap">
+                                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">Finalizada</span>
+                                                </td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
+                                                    <button onclick="viewPromotionStats(3)" class="text-blue-600 hover:text-blue-900">Ver Stats</button>
+                                                    <button onclick="duplicatePromotion(3)" class="text-green-600 hover:text-green-900">Duplicar</button>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+
                     </div>
-                </form>
-            </div>
+                </div>
+            </main>
         </div>
     </div>
-
-    <script src="../js/admin.js"></script>
-        
+</body>
+<script src="../js/admin.js"></script>
+</html>
