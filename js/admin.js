@@ -1,315 +1,245 @@
-let selectedProducts = {};
-        let deliveryPrice = 0;
-
-        function openPhoneOrderModal() {
-            document.getElementById('phoneOrderModal').style.display = 'block';
-        }
-
-        function closePhoneOrderModal() {
-            document.getElementById('phoneOrderModal').style.display = 'none';
-            resetForm();
-        }
-
-        function resetForm() {
-            document.getElementById('phoneOrderForm').reset();
-            selectedProducts = {};
-            deliveryPrice = 0;
-            updateOrderSummary();
-            
-            // Reset product cards
-            document.querySelectorAll('.product-card').forEach(card => {
-                card.classList.remove('selected');
-                card.querySelector('.quantity-control').style.display = 'none';
-            });
-        }
-
-        function toggleScheduleTime() {
-            const orderType = document.getElementById('orderType').value;
-            const scheduleGroup = document.getElementById('scheduleTimeGroup');
-            
-            if (orderType === 'programado') {
-                scheduleGroup.style.display = 'block';
-                document.getElementById('scheduleTime').required = true;
-            } else {
-                scheduleGroup.style.display = 'none';
-                document.getElementById('scheduleTime').required = false;
+tailwind.config = {
+    theme: {
+        extend: {
+            colors: {
+                primary: '#f59e0b',
+                secondary: '#10b981',
+                tertiary: '#6366f1'
             }
         }
+    }
+}
 
-        function searchCustomer() {
-            const phone = document.getElementById('customerPhone').value;
-            if (phone.length >= 10) {
-                // Simulate customer search
-                // In real app, this would query the database
-                console.log('Searching customer with phone:', phone);
-            }
-        }
+let currentSection = 'metricas';
 
-        function updateDeliveryPrice() {
-            const zoneSelect = document.getElementById('deliveryZone');
-            const selectedOption = zoneSelect.options[zoneSelect.selectedIndex];
-            deliveryPrice = selectedOption.dataset.price ? parseInt(selectedOption.dataset.price) : 0;
-            updateOrderSummary();
-        }
+// Update current time
+function updateTime() {
+    const now = new Date();
+    document.getElementById('currentTime').textContent = 
+        now.toLocaleDateString('es-AR') + ' ' + now.toLocaleTimeString('es-AR', {hour: '2-digit', minute:'2-digit'});
+}
 
-        function filterProducts() {
-            const category = document.getElementById('categoryFilter').value;
-            const products = document.querySelectorAll('.product-card');
-            
-            products.forEach(product => {
-                if (!category || product.dataset.category === category) {
-                    product.style.display = 'block';
-                } else {
-                    product.style.display = 'none';
+// Navigation functions
+function showSection(sectionId, event) {
+    // Hide all sections
+    document.querySelectorAll('.section').forEach(section => {
+        section.classList.add('hidden');
+    });
+    
+    // Show selected section
+    document.getElementById(sectionId).classList.remove('hidden');
+    
+    // Update navigation
+    document.querySelectorAll('.nav-link').forEach(link => {
+        link.classList.remove('active', 'bg-indigo-700', 'text-white');
+        link.classList.add('text-indigo-100', 'hover:bg-indigo-700');
+    });
+    
+    if (event && event.target) {
+        event.target.classList.add('active', 'bg-indigo-700', 'text-white');
+        event.target.classList.remove('text-indigo-100', 'hover:bg-indigo-700');
+    }
+    
+    // Update page title
+    const titles = {
+        'metricas': 'Métricas & Dashboard',
+        'usuarios': 'Gestión de Usuarios',
+        'productos': 'Productos & Precios',
+        'reportes': 'Reportes Financieros',
+        'configuracion': 'Configuración del Local',
+        'pagos': 'Métodos de Pago',
+        'promociones': 'Promociones'
+    };
+    
+    document.getElementById('pageTitle').textContent = titles[sectionId];
+    currentSection = sectionId;
+}
+
+// Toast notification system
+function showToast(message, type = 'success') {
+    const toast = document.getElementById('toast');
+    const toastMessage = document.getElementById('toastMessage');
+    const toastIcon = document.getElementById('toastIcon');
+    
+    toastMessage.textContent = message;
+    
+    // Update icon based on type
+    if (type === 'success') {
+        toastIcon.innerHTML = '<div class="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center"><span class="text-white text-sm">✓</span></div>';
+    } else if (type === 'error') {
+        toastIcon.innerHTML = '<div class="w-8 h-8 bg-red-500 rounded-full flex items-center justify-center"><span class="text-white text-sm">✕</span></div>';
+    }
+    
+    toast.classList.remove('hidden');
+    
+    setTimeout(() => {
+        hideToast();
+    }, 4000);
+}
+
+function hideToast() {
+    document.getElementById('toast').classList.add('hidden');
+}
+
+// Chart initialization
+function initializeCharts() {
+    // Sales Chart
+    const salesCtx = document.getElementById('salesChart').getContext('2d');
+    new Chart(salesCtx, {
+        type: 'line',
+        data: {
+            labels: ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'],
+            datasets: [{
+                label: 'Ventas',
+                data: [11400, 13050, 12800, 14200, 15600, 18900, 14550],
+                borderColor: '#f59e0b',
+                backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return '$' + value.toLocaleString();
+                        }
+                    }
                 }
-            });
-        }
-
-        function selectProduct(id, name, price) {
-            const card = event.currentTarget;
-            const quantityControl = card.querySelector('.quantity-control');
-            
-            if (selectedProducts[id]) {
-                // Deselect product
-                delete selectedProducts[id];
-                card.classList.remove('selected');
-                quantityControl.style.display = 'none';
-            } else {
-                // Select product
-                selectedProducts[id] = {
-                    name: name,
-                    price: price,
-                    quantity: 1
-                };
-                card.classList.add('selected');
-                quantityControl.style.display = 'flex';
             }
-            
-            updateOrderSummary();
         }
-
-        function changeQuantity(id, change) {
-            event.stopPropagation();
-            
-            if (selectedProducts[id]) {
-                selectedProducts[id].quantity += change;
-                
-                if (selectedProducts[id].quantity <= 0) {
-                    delete selectedProducts[id];
-                    const card = document.querySelector(`[onclick*="${id}"]`);
-                    card.classList.remove('selected');
-                    card.querySelector('.quantity-control').style.display = 'none';
-                } else {
-                    const quantitySpan = event.target.parentNode.querySelector('.quantity');
-                    quantitySpan.textContent = selectedProducts[id].quantity;
+    });
+    
+    // Employee Chart
+    const employeeCtx = document.getElementById('employeeChart').getContext('2d');
+    new Chart(employeeCtx, {
+        type: 'bar',
+        data: {
+            labels: ['Juan P.', 'María G.', 'Carlos L.', 'Ana R.', 'Luis M.'],
+            datasets: [{
+                label: 'Pedidos Procesados',
+                data: [45, 38, 25, 42, 35],
+                backgroundColor: ['#6366f1', '#10b981', '#f59e0b', '#8b5cf6', '#ef4444']
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true
                 }
-                
-                updateOrderSummary();
             }
         }
-
-        function updateOrderSummary() {
-            const orderItems = document.getElementById('orderItems');
-            const subtotalElement = document.getElementById('subtotal');
-            const deliveryElement = document.getElementById('deliveryPrice');
-            const totalElement = document.getElementById('totalPrice');
-            
-            let subtotal = 0;
-            let itemsHtml = '';
-            
-            Object.entries(selectedProducts).forEach(([id, product]) => {
-                const itemTotal = product.price * product.quantity;
-                subtotal += itemTotal;
-                
-                itemsHtml += `
-                    <div class="summary-line">
-                        <span>${product.name} x${product.quantity}</span>
-                        <span>${itemTotal}</span>
-                    </div>
-                `;
-            });
-            
-            orderItems.innerHTML = itemsHtml;
-            subtotalElement.textContent = `${subtotal}`;
-            deliveryElement.textContent = `${deliveryPrice}`;
-            totalElement.textContent = `${subtotal + deliveryPrice}`;
-        }
-
-        // Form submission handler
-        document.getElementById('phoneOrderForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            // Validate form
-            if (Object.keys(selectedProducts).length === 0) {
-                alert('Por favor selecciona al menos un producto');
-                return;
-            }
-            
-            // Collect form data
-            const orderData = {
-                customer: {
-                    phone: document.getElementById('customerPhone').value,
-                    name: document.getElementById('customerName').value,
-                    email: document.getElementById('customerEmail').value,
-                    address: document.getElementById('deliveryAddress').value
-                },
-                orderType: document.getElementById('orderType').value,
-                scheduleTime: document.getElementById('scheduleTime').value,
-                paymentMethod: document.getElementById('paymentMethod').value,
-                deliveryZone: document.getElementById('deliveryZone').value,
-                products: selectedProducts,
-                comments: document.getElementById('orderComments').value,
-                subtotal: Object.values(selectedProducts).reduce((sum, p) => sum + (p.price * p.quantity), 0),
-                deliveryPrice: deliveryPrice,
-                total: Object.values(selectedProducts).reduce((sum, p) => sum + (p.price * p.quantity), 0) + deliveryPrice
-            };
-            
-            console.log('Order data:', orderData);
-            
-            // Show success message
-            alert('✅ Pedido registrado exitosamente!\n\nNúmero de pedido: #' + Math.floor(Math.random() * 10000));
-            
-            // Close modal and reset form
-            closePhoneOrderModal();
-        });
-
-        // Quick action functions
-        function toggleLocalStatus() {
-            if (confirm('¿Deseas cambiar el estado del local?')) {
-                alert('Estado del local actualizado');
-            }
-        }
-
-        function manageProducts() {
-            alert('Redirigiendo a gestión de productos...');
-        }
-
-        function viewReports() {
-            alert('Abriendo panel de reportes...');
-        }
-
-        function manageUsers() {
-            alert('Abriendo gestión de usuarios...');
-        }
-
-        // Navigation handler
-        document.querySelectorAll('.nav-link').forEach(link => {
-            link.addEventListener('click', function(e) {
-                e.preventDefault();
-                
-                // Remove active class from all links
-                document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
-                
-                // Add active class to clicked link
-                this.classList.add('active');
-                
-                // Here you would typically load the corresponding content
-                console.log('Navigating to:', this.textContent.trim());
-            });
-        });
-
-        // Close modal when clicking outside
-        window.onclick = function(event) {
-            const modal = document.getElementById('phoneOrderModal');
-            if (event.target === modal) {
-                closePhoneOrderModal();
-            }
-        }
-
-        // Set minimum datetime for scheduled orders
-        function setMinScheduleTime() {
-            const now = new Date();
-            now.setMinutes(now.getMinutes() + 30); // Minimum 30 minutes from now
-            const minDateTime = now.toISOString().slice(0, 16);
-            document.getElementById('scheduleTime').min = minDateTime;
-        }
-
-        // Initialize minimum schedule time
-        setMinScheduleTime();
-
-        // Real-time clock for admin panel
-        function updateClock() {
-            const now = new Date();
-            const timeString = now.toLocaleString('es-AR', {
-                year: 'numeric',
-                month: '2-digit',
-                day: '2-digit',
-                hour: '2-digit',
-                minute: '2-digit',
-                second: '2-digit'
-            });
-            
-            // You can add a clock element to display current time
-            console.log('Current time:', timeString);
-        }
-
-        // Update clock every second
-        setInterval(updateClock, 1000);
-
-        // Simulate real-time data updates
-        function simulateRealTimeUpdates() {
-            // This would typically connect to a WebSocket or use Server-Sent Events
-            // to receive real-time updates from the backend
-            
-            setInterval(() => {
-                // Update dashboard cards with new data
-                const activeOrdersCard = document.querySelector('.dashboard-card:nth-child(3) .card-value');
-                if (activeOrdersCard) {
-                    const currentValue = parseInt(activeOrdersCard.textContent);
-                    const variation = Math.floor(Math.random() * 3) - 1; // -1, 0, or 1
-                    activeOrdersCard.textContent = Math.max(0, currentValue + variation);
+    });
+    
+    // Monthly Revenue Chart (Financial Reports)
+    const monthlyCtx = document.getElementById('monthlyRevenueChart').getContext('2d');
+    new Chart(monthlyCtx, {
+        type: 'line',
+        data: {
+            labels: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep'],
+            datasets: [{
+                label: 'Ingresos',
+                data: [125000, 135000, 142000, 138000, 155000, 148000, 162000, 158000, 145600],
+                borderColor: '#10b981',
+                backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                tension: 0.4
+            }, {
+                label: 'Costos',
+                data: [52000, 56000, 59000, 57000, 64000, 61000, 67000, 65000, 58400],
+                borderColor: '#ef4444',
+                backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return '$' + value.toLocaleString();
+                        }
+                    }
                 }
-            }, 30000); // Update every 30 seconds
+            }
         }
-
-        // Start real-time updates simulation
-        simulateRealTimeUpdates();
-
-        // Keyboard shortcuts
-        document.addEventListener('keydown', function(e) {
-            // Ctrl/Cmd + N = New phone order
-            if ((e.ctrlKey || e.metaKey) && e.key === 'n') {
-                e.preventDefault();
-                openPhoneOrderModal();
-            }
-            
-            // Escape = Close modal
-            if (e.key === 'Escape') {
-                closePhoneOrderModal();
-            }
-        });
-
-        // Form auto-save (save to localStorage as draft)
-        function autoSaveForm() {
-            const formData = {
-                customerPhone: document.getElementById('customerPhone').value,
-                customerName: document.getElementById('customerName').value,
-                customerEmail: document.getElementById('customerEmail').value,
-                deliveryAddress: document.getElementById('deliveryAddress').value,
-                orderType: document.getElementById('orderType').value,
-                scheduleTime: document.getElementById('scheduleTime').value,
-                paymentMethod: document.getElementById('paymentMethod').value,
-                deliveryZone: document.getElementById('deliveryZone').value,
-                orderComments: document.getElementById('orderComments').value,
-                selectedProducts: selectedProducts
-            };
-            
-            // In a real app, you might want to save to localStorage or send to server
-            console.log('Auto-saving form data...', formData);
+    });
+    
+    // Revenue Breakdown Chart
+    const breakdownCtx = document.getElementById('revenueBreakdownChart').getContext('2d');
+    new Chart(breakdownCtx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Local', 'Delivery', 'Takeaway'],
+            datasets: [{
+                data: [127100, 18500, 0],
+                backgroundColor: ['#6366f1', '#f59e0b', '#10b981']
+            }]
+        },
+        options: {
+            responsive: true
         }
+    });
+}
 
-        // Auto-save every 30 seconds when modal is open
-        let autoSaveInterval;
+// Modal functions (placeholder)
+function showUserModal() {
+    showToast('Función de nuevo usuario en desarrollo');
+}
 
-        document.getElementById('phoneOrderModal').addEventListener('DOMNodeInserted', function() {
-            if (this.style.display === 'block') {
-                autoSaveInterval = setInterval(autoSaveForm, 30000);
-            }
-        });
+function showProductModal() {
+    showToast('Función de nuevo producto en desarrollo');
+}
 
-        document.getElementById('phoneOrderModal').addEventListener('DOMNodeRemoved', function() {
-            if (autoSaveInterval) {
-                clearInterval(autoSaveInterval);
-            }
-        });
-        
+function showPaymentModal() {
+    showToast('Función de nuevo método de pago en desarrollo');
+}
+
+function showPromotionModal() {
+    showToast('Función de nueva promoción en desarrollo');
+}
+
+// Action functions
+function editUser(id) {
+    showToast(`Editando usuario ID: ${id}`);
+}
+
+function toggleUser(id) {
+    showToast(`Estado de usuario ID: ${id} cambiado`);
+}
+
+function editProduct(id) {
+    showToast(`Editando producto ID: ${id}`);
+}
+
+function editPrice(product, price) {
+    const newPrice = prompt(`Nuevo precio para ${product}:`, price);
+    if (newPrice) {
+        showToast(`Precio de ${product} actualizado a ${newPrice}`);
+    }
+}
+
+function saveConfiguration() {
+    showToast('Configuración guardada exitosamente');
+}
+
+function exportReport(format) {
+    showToast(`Exportando reporte en formato ${format.toUpperCase()}`);
+}
+
+function updateFinancialReport() {
+    showToast('Reporte financiero actualizado');
+}
+
+// Initialize application
+document.addEventListener('DOMContentLoaded', function() {
+    updateTime();
+    setInterval(updateTime, 60000); // Update every minute
+    
+    // Initialize charts after page load
+    setTimeout(initializeCharts, 500);
+});
