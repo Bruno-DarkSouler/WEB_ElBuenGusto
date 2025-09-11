@@ -13,6 +13,13 @@
     height: 100%;
     width: 68%;
     background-color: white;
+    display: grid;
+  grid-template-areas:
+    "header header" /* El header ocupa ambas columnas */
+    "body pedidos_activos"
+    "body pedidos_confirmados";  /* El body a la izquierda y los pedidos a la derecha */
+  grid-template-rows: auto 1fr; /* Una fila para el header (automática) y una para el contenido (el resto del espacio) */
+  grid-template-columns: 1fr calc(50% -3rem) calc(50% -3rem); /* Dos columnas de igual tamaño */
 }
 .body_cocina{
     background-color: #F5EBD2;
@@ -29,6 +36,7 @@
     background-color: #C81E2D;
     align-items: center;
     gap: 3rem;
+    grid-area: header;
 }
 .logo_principal{
     width: 5rem;
@@ -45,4 +53,62 @@
 }
 h2{
     color: white;
+}
+.pedidos_confirmados{
+    height: calc(50% - 3rem);
+    background-color: #EAEAEA;
+    width: 26rem;
+    grid-area: pedidos_confirmados;
+}
+.pedidos_activos{
+    height: calc(50% - 3rem);
+    background-color: #EAEAEA;
+    width: 26rem;
+    grid-area: pedidos_activos;
+}
+.pedidos{
+    padding: 0.3rem;
+}
+.pedido{
+    border-radius: 0.5rem;
+    background-color: #FFFFFF;
+    height: 8rem;
+    border: solid #C9C9C9 0.5px;
+}
+.pedido_header{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 0.8rem;
+}
+.nombre_cliente{
+    font-size: 130%;
+}
+.tipo_pedido{
+    color: #503214;
+}
+.hr_pedido{
+    background-color: #503214;
+    margin-left: 1rem;
+    margin-right: 1rem;
+}
+.unidades{
+    color: #6B6B6B;
+    margin: 0.8rem;
+}
+.footer_pedido{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 0.8rem;
+}
+.precio_pedido{
+    font-size: 130%;
+}
+.n_pedido{
+    font-size: 130%;
+}
+.body{
+    background-color: #503214;
+    grid-area: body;
 }
