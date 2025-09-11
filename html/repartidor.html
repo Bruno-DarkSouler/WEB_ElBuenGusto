@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Panel Repartidor - El Buen Gusto</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="js/repartidor.js"></script>
-    <link rel="stylesheet" href="css/repartidor.css">
+    <script src="../js/repartidor.js"></script>
+    <link rel="stylesheet" href="../css/repartidor.css">
     <link href="https://fonts.googleapis.com/css2?family=Averia+Serif+Libre:wght@400;700&display=swap" rel="stylesheet">
 </head>
 <body class="font-averia bg-primary-cream min-h-screen">
@@ -14,7 +14,7 @@
         <div class="max-w-7xl mx-auto px-4 py-4">
             <div class="flex justify-between items-center">
                 <div class="flex items-center gap-4">
-                    <div class="text-3xl">🍗</div>
+                    <div class="text-3xl"><img class="h-[7vh]" src="../img/isotipo_sm.png" alt="Isotipo"></div>
                     <div>
                         <h1 class="text-white text-2xl font-bold">El Buen Gusto</h1>
                         <p class="text-primary-cream text-sm">Panel Repartidor</p>
@@ -48,8 +48,8 @@
     </header>
     <div id="notifications" class="fixed top-20 right-4 z-40 space-y-2"></div>
     <main class="max-w-7xl mx-auto px-4 py-6">
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-            <div class="bg-white rounded-xl shadow-md p-6 border-l-4 border-primary-red">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div class="bg-white rounded-xl shadow-md p-6 border-4 border-primary-red">
                 <div class="flex items-center justify-between">
                     <div>
                         <p class="text-primary-brown text-sm font-medium">Entregas Hoy</p>
@@ -58,16 +58,7 @@
                     <div class="text-4xl">📦</div>
                 </div>
             </div>
-            <div class="bg-white rounded-xl shadow-md p-6 border-l-4 border-green-500">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-primary-brown text-sm font-medium">Ganancia Hoy</p>
-                        <p class="text-3xl font-bold text-green-600" id="gananciaHoy">$4,800</p>
-                    </div>
-                    <div class="text-4xl">💰</div>
-                </div>
-            </div>
-            <div class="bg-white rounded-xl shadow-md p-6 border-l-4 border-blue-500">
+            <div class="bg-white rounded-xl shadow-md p-6 border-4 border-blue-500">
                 <div class="flex items-center justify-between">
                     <div>
                         <p class="text-primary-brown text-sm font-medium">Promedio Reseñas</p>
@@ -76,7 +67,7 @@
                     <div class="text-4xl">⭐</div>
                 </div>
             </div>
-            <div class="bg-white rounded-xl shadow-md p-6 border-l-4 border-orange-500">
+            <div class="bg-white rounded-xl shadow-md p-6 border-4 border-orange-500">
                 <div class="flex items-center justify-between">
                     <div>
                         <p class="text-primary-brown text-sm font-medium">Pendientes</p>
