@@ -235,6 +235,16 @@ function updateFinancialReport() {
     showToast('Reporte financiero actualizado');
 }
 
+function abrir_opciones() {
+    var opciones = document.getElementById("opciones");
+    opciones.classList.remove('hidden');
+    opciones.classList.add("flex");
+    opciones.classList.add("fixed");
+    opciones.classList.add("top-0");
+    opciones.classList.add("z-60");
+    opciones.classList.add("absolute");
+}
+
 // Initialize application
 document.addEventListener('DOMContentLoaded', function() {
     updateTime();

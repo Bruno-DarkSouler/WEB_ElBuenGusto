@@ -352,6 +352,17 @@ body {
     padding-top: 0.5rem;
 }
 
+.header{
+    height: 6rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.logo_principal{
+    width: 3rem;
+    height: 3rem;
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
     .admin-container {
