@@ -31,13 +31,13 @@ function showSection(sectionId, event) {
     
     // Update navigation
     document.querySelectorAll('.nav-link').forEach(link => {
-        link.classList.remove('active', 'bg-indigo-700', 'text-white');
-        link.classList.add('text-indigo-100', 'hover:bg-indigo-700');
+        link.classList.remove('active', 'bg-[#C91F2E]', 'text-white');
+        link.classList.add('text-indigo-100', 'hover:bg-[#AD1926]');
     });
     
     if (event && event.target) {
-        event.target.classList.add('active', 'bg-indigo-700', 'text-white');
-        event.target.classList.remove('text-indigo-100', 'hover:bg-indigo-700');
+        event.target.classList.add('active', 'bg-[#AD1926]', 'text-white');
+        event.target.classList.remove('text-indigo-100', 'hover:bg-[#AD1926]');
     }
     
     // Update page title

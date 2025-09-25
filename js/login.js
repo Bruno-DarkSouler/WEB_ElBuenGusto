@@ -23,7 +23,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     // Login exitoso - redirigir a inicio.html
                     showMessage('¡Bienvenido! Redirigiendo...', 'success');
                     setTimeout(() => {
-                        window.location.href = 'inicio.html';
+                        window.location.href = '/dashboard/WEB_elbuengusto/html/inicio.html';
                     }, 1000);
                 } else {
                     // Error en login
