@@ -1,73 +1,95 @@
 <?php
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
 session_start();
 header('Content-Type: application/json');
-header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Methods: POST');
-header('Access-Control-Allow-Headers: Content-Type');
+
+// Debug: ver qué está llegando
+file_put_contents('login_debug.log', 
+    "=== " . date('Y-m-d H:i:s') . " ===\n" .
+    "REQUEST_METHOD: " . $_SERVER['REQUEST_METHOD'] . "\n" .
+    "POST: " . print_r($_POST, true) . "\n" .
+    "GET: " . print_r($_GET, true) . "\n" .
+    "RAW INPUT: " . file_get_contents('php://input') . "\n\n",
+    FILE_APPEND
+);
+
+// Verificar método
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    echo json_encode(['success' => false, 'message' => 'Método no permitido. Método recibido: ' . $_SERVER['REQUEST_METHOD']]);
+    exit;
+}
+
+// Verificar datos
+if (empty($_POST['email']) || empty($_POST['password'])) {
+    echo json_encode([
+        'success' => false, 
+        'message' => 'Faltan datos',
+        'debug' => [
+            'post_keys' => array_keys($_POST),
+            'email_isset' => isset($_POST['email']),
+            'password_isset' => isset($_POST['password'])
+        ]
+    ]);
+    exit;
+}
 
 require_once 'conexion.php';
 
-if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    // Obtener datos del formulario
-    $email = trim($_POST['email']);
-    $password = $_POST['password'];
-    
-    // Validaciones básicas
-    if (empty($email) || empty($password)) {
-        echo json_encode(['success' => false, 'message' => 'Email y contraseña son obligatorios']);
-        exit;
-    }
-    
-    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-        echo json_encode(['success' => false, 'message' => 'El email no es válido']);
-        exit;
-    }
-    
-    // Buscar usuario en la base de datos
-    $stmt = $conexion->prepare("SELECT id, nombre, apellido, email, contraseña, rol, activo FROM usuarios WHERE email = ?");
-    $stmt->bind_param("s", $email);
-    $stmt->execute();
-    $resultado = $stmt->get_result();
-    
-    if ($resultado->num_rows == 0) {
-        echo json_encode(['success' => false, 'message' => 'Email o contraseña incorrectos']);
-        exit;
-    }
-    
-    $usuario = $resultado->fetch_assoc();
-    
-    // Verificar si el usuario está activo
-    if ($usuario['activo'] != 1) {
-        echo json_encode(['success' => false, 'message' => 'Usuario desactivado. Contacte al administrador']);
-        exit;
-    }
-    
-    // Verificar contraseña
-    if (password_verify($password, $usuario['contraseña'])) {
-        // Login exitoso - crear sesión
-        $_SESSION['user_id'] = $usuario['id'];
-        $_SESSION['user_name'] = $usuario['nombre'] . ' ' . $usuario['apellido'];
-        $_SESSION['user_email'] = $usuario['email'];
-        $_SESSION['user_rol'] = $usuario['rol'];
-        
-        echo json_encode([
-            'success' => true, 
-            'message' => 'Login exitoso',
-            'usuario' => [
-                'id' => $usuario['id'],
-                'nombre' => $usuario['nombre'],
-                'apellido' => $usuario['apellido'],
-                'email' => $usuario['email'],
-                'rol' => $usuario['rol']
-            ]
-        ]);
-    } else {
-        echo json_encode(['success' => false, 'message' => 'Email o contraseña incorrectos']);
-    }
-    
-    $stmt->close();
-    cerrarConexion($conexion);
-} else {
-    echo json_encode(['success' => false, 'message' => 'Método no permitido']);
+$email = trim($_POST['email']);
+$password = $_POST['password'];
+
+// Buscar usuario
+$stmt = $conexion->prepare("SELECT id, nombre, apellido, email, contraseña, rol, activo FROM usuarios WHERE email = ?");
+
+if (!$stmt) {
+    echo json_encode(['success' => false, 'message' => 'Error en consulta: ' . $conexion->error]);
+    exit;
 }
-?>
+
+$stmt->bind_param("s", $email);
+$stmt->execute();
+$resultado = $stmt->get_result();
+
+if ($resultado->num_rows == 0) {
+    echo json_encode(['success' => false, 'message' => 'Usuario no encontrado']);
+    exit;
+}
+
+$usuario = $resultado->fetch_assoc();
+
+if ($usuario['activo'] != 1) {
+    echo json_encode(['success' => false, 'message' => 'Usuario desactivado']);
+    exit;
+}
+
+if (!password_verify($password, $usuario['contraseña'])) {
+    echo json_encode(['success' => false, 'message' => 'Contraseña incorrecta']);
+    exit;
+}
+
+// Login exitoso
+$_SESSION['user_id'] = $usuario['id'];
+$_SESSION['user_name'] = $usuario['nombre'] . ' ' . $usuario['apellido'];
+$_SESSION['user_email'] = $usuario['email'];
+$_SESSION['user_rol'] = $usuario['rol'];
+
+// Usar rutas absolutas desde la raíz del servidor
+$redirect_url = '/dashboard/WEB_ElBuenGusto/html/inicio.html';
+if ($usuario['rol'] === 'administrador' || $usuario['email'] === 'admin@elbuengusto.com') {
+    $redirect_url = '/dashboard/WEB_ElBuenGusto/admin/admin.php';
+}
+
+echo json_encode([
+    'success' => true,
+    'message' => 'Login exitoso',
+    'redirect' => $redirect_url,
+    'usuario' => [
+        'nombre' => $usuario['nombre'],
+        'rol' => $usuario['rol']
+    ]
+]);
+
+$stmt->close();
+$conexion->close();

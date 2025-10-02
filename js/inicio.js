@@ -23,19 +23,19 @@ function initializeApp() {
 
 function checkUserSession() {
     // Verificar si hay una sesión activa
-    fetch('./php/check_session.php')
+    fetch('../php/check_session.php')
         .then(response => response.json())
         .then(data => {
             if (data.success) {
                 document.getElementById('userName').textContent = data.user.nombre;
             } else {
                 // Redirigir al login si no hay sesión
-                window.location.href = 'index.html';
+                window.location.href = '../index.html';
             }
         })
         .catch(error => {
             console.error('Error verificando sesión:', error);
-            // window.location.href = 'index.html';
+            window.location.href = '../index.html';
         });
 }
 
@@ -205,7 +205,7 @@ function logout() {
         // Limpiar carrito inmediatamente
         localStorage.removeItem('cart');
         
-        fetch('./php/logout.php', {
+        fetch('../php/logout.php', {
             method: 'POST',
             headers: {
                 'X-Requested-With': 'XMLHttpRequest'
@@ -213,12 +213,12 @@ function logout() {
         })
         .then(response => {
             // Siempre redirigir, independientemente de la respuesta
-            window.location.href = 'index.html';
+            window.location.href = '../index.html';
         })
         .catch(error => {
             // Incluso si hay error, redirigir al index
             console.log('Cerrando sesión...');
-            window.location.href = 'index.html';
+            window.location.href = '../index.html';
         });
     }
 }

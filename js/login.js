@@ -1,61 +1,94 @@
 document.addEventListener('DOMContentLoaded', function() {
-    const loginForm = document.querySelector('#loginForm');
+    console.log('Login.js cargado correctamente');
     
-    if (loginForm) {
-        loginForm.addEventListener('submit', function(e) {
-            e.preventDefault();
+    const loginForm = document.getElementById('loginForm');
+    
+    if (!loginForm) {
+        console.error('No se encontró el formulario loginForm');
+        return;
+    }
+    
+    console.log('Formulario encontrado, agregando event listener');
+    
+    loginForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        console.log('Submit interceptado');
+        
+        const formData = new FormData(this);
+        const submitBtn = this.querySelector('button[type="submit"]');
+        const originalText = submitBtn.textContent;
+        
+        // Deshabilitar botón
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Iniciando sesión...';
+        
+        console.log('Enviando datos:', {
+            email: formData.get('email'),
+            password: '***' // No loguear la contraseña real
+        });
+        
+        const baseUrl = window.location.pathname.includes('WEB_ElBuenGusto') 
+            ? '/dashboard/WEB_ElBuenGusto/php/login.php'
+            : '../php/login.php';
+
+        fetch(baseUrl, {
+            method: 'POST',
+            body: formData,
+            credentials: 'include'
+        })
+        .then(response => {
+            console.log('Respuesta recibida, status:', response.status);
+            return response.text();
+        })
+        .then(text => {
+            console.log('Texto recibido:', text);
             
-            const formData = new FormData(this);
-            const submitBtn = this.querySelector('button[type="submit"]');
-            const originalText = submitBtn.textContent;
-            
-            // Deshabilitar botón y mostrar loading
-            submitBtn.disabled = true;
-            submitBtn.textContent = 'Iniciando sesión...';
-            
-            fetch('./php/login.php', {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => response.json())
-            .then(data => {
+            try {
+                const data = JSON.parse(text);
+                console.log('JSON parseado:', data);
+                
                 if (data.success) {
-                    // Login exitoso - redirigir a inicio.html
                     showMessage('¡Bienvenido! Redirigiendo...', 'success');
                     setTimeout(() => {
-                        window.location.href = '/dashboard/WEB_elbuengusto/html/inicio.html';
+                        console.log('Redirigiendo a:', data.redirect);
+                        window.location.href = data.redirect;
                     }, 1000);
                 } else {
-                    // Error en login
                     showMessage(data.message || 'Error en el login', 'error');
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = originalText;
                 }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                showMessage('Error de conexión. Intente nuevamente.', 'error');
-            })
-            .finally(() => {
-                // Rehabilitar botón
+            } catch (jsonError) {
+                console.error('Error parseando JSON:', jsonError);
+                console.error('Texto recibido:', text);
+                showMessage('Error del servidor', 'error');
                 submitBtn.disabled = false;
                 submitBtn.textContent = originalText;
-            });
+            }
+        })
+        .catch(error => {
+            console.error('Error en fetch:', error);
+            showMessage('Error de conexión: ' + error.message, 'error');
+            submitBtn.disabled = false;
+            submitBtn.textContent = originalText;
         });
-    }
+        
+        return false;
+    });
 });
 
 function showMessage(message, type = 'info') {
-    // Remover mensaje anterior si existe
     const existingMessage = document.querySelector('.message');
     if (existingMessage) {
         existingMessage.remove();
     }
     
-    // Crear nuevo mensaje
     const messageDiv = document.createElement('div');
     messageDiv.className = `message ${type}`;
     messageDiv.textContent = message;
     
-    // Estilos para el mensaje
     messageDiv.style.cssText = `
         position: fixed;
         top: 20px;
@@ -73,12 +106,10 @@ function showMessage(message, type = 'info') {
     
     document.body.appendChild(messageDiv);
     
-    // Mostrar mensaje
     setTimeout(() => {
         messageDiv.style.transform = 'translateX(0)';
     }, 100);
     
-    // Ocultar mensaje después de 3 segundos
     setTimeout(() => {
         messageDiv.style.transform = 'translateX(100%)';
         setTimeout(() => {

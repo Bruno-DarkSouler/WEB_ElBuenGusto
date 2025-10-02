@@ -1,3 +1,19 @@
+<?php
+session_start();
+
+// Incluir conexión
+require_once '../php/conexion.php';
+
+// Verificar sesión
+if (!isset($_SESSION['user_id']) || ($_SESSION['user_rol'] !== 'administrador' && $_SESSION['user_email'] !== 'admin@elbuengusto.com')) {
+    header('Location: ../html/login.html');
+    exit;
+}
+
+// Obtener nombre del usuario
+$nombre_usuario = $_SESSION['user_name'];
+$rol_usuario = $_SESSION['user_rol'];
+?>
 <!DOCTYPE html>
 <html lang="es" class="h-full bg-gray-50">
 <head>
@@ -33,7 +49,7 @@
             </div>
             <button onclick="hideToast()" class="ml-auto text-gray-400 hover:text-gray-600">
                 <span class="sr-only">Cerrar</span>
-                <svg class="w-4 h-4" onclick="abrir_opciones()" fill="currentColor" viewBox="0 0 20 20">
+                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                     <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path>
                 </svg>
             </button>
@@ -88,8 +104,8 @@
                             <span class="text-white text-sm font-medium">AU</span>
                         </div>
                         <div class="ml-3">
-                            <p class="text-sm font-medium text-white">Admin Usuario</p>
-                            <p class="text-xs text-indigo-200">Administrador</p>
+                            <p class="text-sm font-medium text-white"><?php echo htmlspecialchars($nombre_usuario); ?></p>
+                            <p class="text-xs text-indigo-200"><?php echo ucfirst($rol_usuario); ?></p>
                         </div>
                     </div>
                 </div>
@@ -106,7 +122,7 @@
                         <div class="text-sm text-gray-500">
                             <span id="currentTime"></span>
                         </div>
-                        <button class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg text-sm transition-colors duration-200">
+                        <button onclick="cerrarSesion()" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg text-sm transition-colors duration-200">
                             Cerrar Sesión
                         </button>
                     </div>
@@ -213,14 +229,14 @@
 
                             <!-- Charts Row -->
                             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-                                <div class="bg-white p-6 rounded-lg shadow-lg">
+                                <div class="bg-white p-6 rounded-lg shadow-lg"style="min-height: 300px;">
                                     <div class="flex justify-between items-center mb-4">
                                         <h3 class="text-lg font-medium text-gray-900">Ventas de la Semana</h3>
                                         <button class="text-sm text-indigo-600 hover:text-indigo-800">Ver detalles</button>
                                     </div>
-                                    <canvas id="salesChart" width="400" height="200"></canvas>
+                                    <canvas id="salesChart" width="400" height="200" ></canvas>
                                 </div>
-                                <div class="bg-white p-6 rounded-lg shadow-lg">
+                                <div class="bg-white p-6 rounded-lg shadow-lg"style="min-height: 300px;">
                                     <div class="flex justify-between items-center mb-4">
                                         <h3 class="text-lg font-medium text-gray-900">Performance por Empleado</h3>
                                         <button class="text-sm text-indigo-600 hover:text-indigo-800">Gestionar</button>
@@ -262,7 +278,7 @@
                             <div class="mb-6">
                                 <div class="flex justify-between items-center">
                                     <h2 class="text-xl font-semibold text-gray-900">Gestión de Usuarios y Empleados</h2>
-                                    <button onclick="showUserModal()" class="bg-primary hover:bg-yellow-600 text-white px-4 py-2 rounded-lg transition-colors duration-200 flex items-center space-x-2">
+                                    <button onclick="showUserModal()" class="bg-primary hover:bg-yellow-600 text-white px-4 py-2 rounded-lg...">
                                         <span>➕</span>
                                         <span>Nuevo Usuario</span>
                                     </button>
@@ -375,8 +391,7 @@
                             <div class="mb-6">
                                 <div class="flex justify-between items-center">
                                     <h2 class="text-xl font-semibold text-gray-900">Gestión de Productos y Precios</h2>
-                                    <button onclick="showProductModal()" class="bg-primary hover:bg-yellow-600 text-white px-4 py-2 rounded-lg transition-colors duration-200 flex items-center space-x-2">
-                                        <span>➕</span>
+                                    <button onclick="showProductModal()" class="bg-primary hover:bg-yellow-600 text-white px-4 py-2 rounded-lg...">
                                         <span>Nuevo Producto</span>
                                     </button>
                                 </div>
@@ -627,11 +642,11 @@
 
                             <!-- Financial Charts -->
                             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-                                <div class="bg-white p-6 rounded-lg shadow-lg">
+                                <div class="bg-white p-6 rounded-lg shadow-lg"style="min-height: 300px;">
                                     <h3 class="text-lg font-medium text-gray-900 mb-4">Evolución Mensual</h3>
                                     <canvas id="monthlyRevenueChart" width="400" height="200"></canvas>
                                 </div>
-                                <div class="bg-white p-6 rounded-lg shadow-lg">
+                                <div class="bg-white p-6 rounded-lg shadow-lg"style="min-height: 300px;">
                                     <h3 class="text-lg font-medium text-gray-900 mb-4">Distribución de Ingresos</h3>
                                     <canvas id="revenueBreakdownChart" width="400" height="200"></canvas>
                                 </div>
@@ -999,8 +1014,7 @@
                             <div class="mb-6">
                                 <div class="flex justify-between items-center">
                                     <h2 class="text-xl font-semibold text-gray-900">Gestión de Promociones</h2>
-                                    <button onclick="showPromotionModal()" class="bg-primary hover:bg-yellow-600 text-white px-4 py-2 rounded-lg transition-colors duration-200 flex items-center space-x-2">
-                                        <span>➕</span>
+                                    <button onclick="showPromotionModal()" class="bg-primary hover:bg-yellow-600 text-white px-4 py-2 rounded-lg...">
                                         <span>Nueva Promoción</span>
                                     </button>
                                 </div>
@@ -1135,6 +1149,195 @@
             </main>
         </div>
     </div>
+<!-- MODALES - Agregar antes del script admin.js -->
+
+<!-- Modal Usuario -->
+<div id="modalUsuario" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+    <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+        <div class="mt-3">
+            <h3 class="text-lg font-medium text-gray-900 mb-4" id="tituloModalUsuario">Nuevo Usuario</h3>
+            <form id="formUsuario" onsubmit="guardarUsuario(event)">
+                <input type="hidden" id="usuario_id" name="id">
+                
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Nombre</label>
+                    <input type="text" id="usuario_nombre" name="nombre" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C81E2D]">
+                </div>
+                
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Apellido</label>
+                    <input type="text" id="usuario_apellido" name="apellido" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C81E2D]">
+                </div>
+                
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                    <input type="email" id="usuario_email" name="email" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C81E2D]">
+                </div>
+                
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Teléfono</label>
+                    <input type="tel" id="usuario_telefono" name="telefono" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C81E2D]">
+                </div>
+                
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Dirección</label>
+                    <input type="text" id="usuario_direccion" name="direccion" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C81E2D]">
+                </div>
+                
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Rol</label>
+                    <select id="usuario_rol" name="rol" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C81E2D]">
+                        <option value="cliente">Cliente</option>
+                        <option value="cajero">Cajero</option>
+                        <option value="cocinero">Cocinero</option>
+                        <option value="repartidor">Repartidor</option>
+                        <option value="administrador">Administrador</option>
+                    </select>
+                </div>
+                
+                <div class="mb-4" id="campo_password">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Contraseña</label>
+                    <input type="password" id="usuario_password" name="password" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C81E2D]">
+                    <p class="text-xs text-gray-500 mt-1">Dejar en blanco para mantener la actual (solo al editar)</p>
+                </div>
+                
+                <div class="flex justify-end space-x-2 mt-6">
+                    <button type="button" onclick="cerrarModalUsuario()" class="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400">
+                        Cancelar
+                    </button>
+                    <button type="submit" class="px-4 py-2 bg-[#C81E2D] text-white rounded-md hover:bg-[#AD1926]">
+                        Guardar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Producto -->
+<div id="modalProducto" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+    <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+        <div class="mt-3">
+            <h3 class="text-lg font-medium text-gray-900 mb-4" id="tituloModalProducto">Nuevo Producto</h3>
+            <form id="formProducto" onsubmit="guardarProducto(event)" enctype="multipart/form-data">
+                <input type="hidden" id="producto_id" name="id">
+                
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Nombre</label>
+                    <input type="text" id="producto_nombre" name="nombre" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C81E2D]">
+                </div>
+                
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Descripción</label>
+                    <textarea id="producto_descripcion" name="descripcion" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C81E2D]"></textarea>
+                </div>
+                
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Precio</label>
+                    <input type="number" id="producto_precio" name="precio" step="0.01" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C81E2D]">
+                </div>
+                
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Categoría</label>
+                    <select id="producto_categoria" name="categoria_id" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C81E2D]">
+                        <option value="">Seleccione una categoría</option>
+                    </select>
+                </div>
+                
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Ingredientes</label>
+                    <textarea id="producto_ingredientes" name="ingredientes" rows="2" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C81E2D]"></textarea>
+                </div>
+                
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Tiempo de Preparación (minutos)</label>
+                    <input type="number" id="producto_tiempo" name="tiempo_preparacion" value="20" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C81E2D]">
+                </div>
+                
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Imagen</label>
+                    <input type="file" id="producto_imagen" name="imagen" accept="image/*" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C81E2D]">
+                </div>
+                
+                <div class="mb-4">
+                    <label class="flex items-center">
+                        <input type="checkbox" id="producto_disponible" name="disponible" checked class="rounded border-gray-300 text-[#C81E2D] focus:ring-[#C81E2D]">
+                        <span class="ml-2 text-sm text-gray-700">Disponible</span>
+                    </label>
+                </div>
+                
+                <div class="flex justify-end space-x-2 mt-6">
+                    <button type="button" onclick="cerrarModalProducto()" class="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400">
+                        Cancelar
+                    </button>
+                    <button type="submit" class="px-4 py-2 bg-[#C81E2D] text-white rounded-md hover:bg-[#AD1926]">
+                        Guardar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Promoción -->
+<div id="modalPromocion" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+    <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+        <div class="mt-3">
+            <h3 class="text-lg font-medium text-gray-900 mb-4" id="tituloModalPromocion">Nueva Promoción</h3>
+            <form id="formPromocion" onsubmit="guardarPromocion(event)">
+                <input type="hidden" id="promocion_id" name="id">
+                
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Nombre</label>
+                    <input type="text" id="promocion_nombre" name="nombre" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C81E2D]">
+                </div>
+                
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Descripción</label>
+                    <textarea id="promocion_descripcion" name="descripcion" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C81E2D]"></textarea>
+                </div>
+                
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Tipo</label>
+                    <select id="promocion_tipo" name="tipo" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C81E2D]">
+                        <option value="descuento_porcentaje">Descuento Porcentual</option>
+                        <option value="descuento_fijo">Descuento Fijo</option>
+                    </select>
+                </div>
+                
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Valor</label>
+                    <input type="number" id="promocion_valor" name="valor" step="0.01" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C81E2D]">
+                    <p class="text-xs text-gray-500 mt-1">Porcentaje o monto según el tipo seleccionado</p>
+                </div>
+                
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Monto Mínimo</label>
+                    <input type="number" id="promocion_monto_minimo" name="monto_minimo" step="0.01" value="0" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C81E2D]">
+                </div>
+                
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Fecha Inicio</label>
+                    <input type="date" id="promocion_fecha_inicio" name="fecha_inicio" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C81E2D]">
+                </div>
+                
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Fecha Fin</label>
+                    <input type="date" id="promocion_fecha_fin" name="fecha_fin" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C81E2D]">
+                </div>
+                
+                <div class="flex justify-end space-x-2 mt-6">
+                    <button type="button" onclick="cerrarModalPromocion()" class="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400">
+                        Cancelar
+                    </button>
+                    <button type="submit" class="px-4 py-2 bg-[#C81E2D] text-white rounded-md hover:bg-[#AD1926]">
+                        Guardar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 </body>
 <script src="../js/admin.js"></script>
-</html>
+¿</html>
