@@ -83,3 +83,17 @@ document.getElementById('checkoutForm').addEventListener('submit', function(e) {
 // Establecer fecha mínima
 const today = new Date().toISOString().split('T')[0];
 document.getElementById('delivery_date').setAttribute('min', today);
+
+function abrir_modal(){
+    const modal = document.getElementById("modal-compra");
+    modal.style.display= "flex";
+    const cartSidebar = document.getElementById('cartSidebar');
+    const cartOverlay = document.getElementById('cartOverlay');
+    
+    cartSidebar.classList.toggle('open');
+    cartOverlay.classList.toggle('active');
+}
+function cerrar_modal(){
+    const modal = document.getElementById("modal-compra");
+    modal.style.display= "none";
+}

@@ -9,7 +9,7 @@
             width: 100%;
             min-height: 100vh;
             position: fixed;
-            display: none;
+            display: flex;
             top: 0;
             left: 0;
             justify-content: center;
@@ -19,7 +19,7 @@
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     color: #503214;
     line-height: 1.6;
-    z-index: 8;
+    z-index: 101;
 }
 
 .container {
@@ -35,6 +35,7 @@
     border-radius: 15px 15px 0 0;
     text-align: center;
     box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    position: relative;
 }
 
 .header h1 {
