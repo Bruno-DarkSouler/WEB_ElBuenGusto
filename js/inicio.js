@@ -277,3 +277,4 @@ document.addEventListener('click', function(event) {
 document.getElementById('cartSidebar').addEventListener('click', function(event) {
     event.stopPropagation();
 });
+

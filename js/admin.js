@@ -592,6 +592,7 @@ function updateFinancialReport() {
     cargarReportes();
 }
 
+
 function exportReport(tipo) {
     if (tipo === 'pdf') {
         window.print(); // Abre el diálogo de impresión
@@ -612,6 +613,13 @@ async function cargarConfiguracion() {
         console.error('Error al cargar configuración:', error);
         showToast('Error al cargar configuración', 'error');
     }
+}
+
+function abrir_opciones() {
+    var opciones = document.getElementById("opciones");
+    opciones.classList.remove('hidden');
+    opciones.classList.add('flex', 'fixed', 'top-0', 'z-60', 'absolute');
+    f24d15e7758cf2f2fa4fc4878adebb07c467c09d
 }
 
 async function saveConfiguration() {

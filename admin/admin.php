@@ -28,10 +28,10 @@ $rol_usuario = $_SESSION['user_rol'];
     <div class="h-24 bg-[#C81E2D] flex justify-between items-center md:hidden">
         <div class="flex justify-between items-center ml-3">
             <img src="../img/Logotipo_sin_fondo.png" alt="" class="h-12 w-12">
-            <span class="text-white">El buen gusto - administración</span>
+            <span class="text-white">El Buen Gusto - administración</span>
         </div>
         
-        <svg class="text-white h-12 w-12 mr-3" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-list" viewBox="0 0 16 16">
+        <svg onclick="abrir_opciones()" class="text-white h-12 w-12 mr-3" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-list" viewBox="0 0 16 16">
             <path fill-rule="evenodd" d="M2.5 12a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5m0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5m0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5"/>
           </svg>
     </div>

@@ -64,7 +64,7 @@
             <div class="cart-total">
                 <strong>Total: $<span id="cartTotal">0</span></strong>
             </div>
-            <button class="checkout-btn" onclick="checkout()">Finalizar Pedido</button>
+            <button class="checkout-btn" onclick="abrir_modal()" onclick="checkout()">Finalizar Pedido</button>
         </div>
     </div>
 
@@ -204,9 +204,14 @@
     </main>
 
     <!--modal-compra-->
-    <div class="body">
+    <div id="modal-compra" class="body">
         <div class="container">
             <div class="header">
+                <button class="close-modal" onclick="cerrar_modal()">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                    <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/>
+                </svg>
+            </button>
                 <h1>🍽️ Finalizar Pedido</h1>
                 <p>Complete sus datos para procesar la entrega</p>
             </div>
