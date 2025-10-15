@@ -113,6 +113,7 @@ document.addEventListener('DOMContentLoaded', function() {
             })
             .then(response => response.json())
             .then(data => {
+                console.log(data);
                 if (data.success) {
                     mostrarMensaje(data.message, 'success');
                     registroForm.reset();

@@ -1514,3 +1514,17 @@ GET: Array
 
 RAW INPUT: 
 
+=== 2025-10-15 23:43:05 ===
+REQUEST_METHOD: POST
+POST: Array
+(
+    [email] => b3140269@gmail.com
+    [password] => 111111
+)
+
+GET: Array
+(
+)
+
+RAW INPUT: 
+

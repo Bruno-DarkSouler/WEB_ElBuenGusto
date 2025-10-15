@@ -41,3 +41,32 @@
 .progress-bar {
     background: linear-gradient(90deg, #10b981 0%, #10b981 var(--progress, 0%), #e5e7eb var(--progress, 0%), #e5e7eb 100%);
 }
+
+/* perfil.css */
+.bg-primary-cream {
+    background-color: #f5f5f5;
+}
+
+.bg-primary-red {
+    background-color: #e53e3e;
+}
+
+.bg-primary-brown {
+    background-color: #8b5c40;
+}
+
+.text-primary-cream {
+    color: #f5f5f5;
+}
+
+.text-primary-red {
+    color: #e53e3e;
+}
+
+.text-primary-brown {
+    color: #8b5c40;
+}
+
+.font-averia {
+    font-family: 'Averia Serif Libre', serif;
+}
