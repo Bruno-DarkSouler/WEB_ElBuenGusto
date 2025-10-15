@@ -78,7 +78,7 @@ $_SESSION['user_rol'] = $usuario['rol'];
 // Usar rutas absolutas desde la raíz del servidor
 $redirect_url = '/dashboard/WEB_ElBuenGusto/html/inicio.html';
 if ($usuario['rol'] === 'administrador' || $usuario['email'] === 'admin@elbuengusto.com') {
-    $redirect_url = '/dashboard/WEB_ElBuenGusto/admin/admin.php';
+$redirect_url = '/dashboard/WEB_ElBuenGusto/admin/admin.php';
 }
 
 echo json_encode([
