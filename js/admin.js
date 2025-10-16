@@ -294,6 +294,7 @@ async function cargarCategorias() {
     }
 }
 
+
 async function cargarProductos() {
     try {
         const response = await fetch(API_BASE + 'productos.php');
@@ -326,7 +327,7 @@ function renderizarProductos() {
                 <div class="flex items-center">
                     <div class="h-10 w-10 flex-shrink-0">
                         <div class="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center">
-                            ${producto.imagen ? `<img src="../${producto.imagen}" class="h-10 w-10 rounded-full object-cover">` : '🍽️'}
+                            ${producto.imagen ? `<img src="${producto.imagen}" class="h-10 w-10 rounded-full object-cover">` : '🍽️'}
                         </div>
                     </div>
                     <div class="ml-4">
@@ -359,6 +360,7 @@ function renderizarProductos() {
         tbody.appendChild(tr);
     });
 }
+
 
 function calcularMargen(precio, costo) {
     const ganancia = precio - costo;

@@ -439,6 +439,7 @@ $rol_usuario = $_SESSION['user_rol'];
                                             </tr>
                                         </thead>
                                         <tbody class="bg-white divide-y divide-gray-200">
+                                            <!--
                                             <tr class="hover:bg-gray-50">
                                                 <td class="px-6 py-4 whitespace-nowrap">
                                                     <div class="flex items-center">
@@ -526,6 +527,7 @@ $rol_usuario = $_SESSION['user_rol'];
                                                     <button onclick="toggleProduct(3)" class="text-green-600 hover:text-green-900">Activar</button>
                                                 </td>
                                             </tr>
+-->
                                         </tbody>
                                     </table>
                                 </div>

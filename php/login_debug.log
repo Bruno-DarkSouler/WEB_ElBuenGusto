@@ -1514,3 +1514,199 @@ GET: Array
 
 RAW INPUT: 
 
+=== 2025-10-15 22:56:44 ===
+REQUEST_METHOD: POST
+POST: Array
+(
+    [email] => admin@elbuengusto.com
+    [password] => admin123
+)
+
+GET: Array
+(
+)
+
+RAW INPUT: 
+
+=== 2025-10-15 22:57:49 ===
+REQUEST_METHOD: POST
+POST: Array
+(
+    [email] => admin@elbuengusto.com
+    [password] => ADMIN123
+)
+
+GET: Array
+(
+)
+
+RAW INPUT: 
+
+=== 2025-10-15 22:57:49 ===
+REQUEST_METHOD: POST
+POST: Array
+(
+    [email] => admin@elbuengusto.com
+    [password] => ADMIN123
+)
+
+GET: Array
+(
+)
+
+RAW INPUT: 
+
+=== 2025-10-15 22:57:57 ===
+REQUEST_METHOD: POST
+POST: Array
+(
+    [email] => admin@elbuengusto.com
+    [password] => admin123
+)
+
+GET: Array
+(
+)
+
+RAW INPUT: 
+
+=== 2025-10-15 22:57:57 ===
+REQUEST_METHOD: POST
+POST: Array
+(
+    [email] => admin@elbuengusto.com
+    [password] => admin123
+)
+
+GET: Array
+(
+)
+
+RAW INPUT: 
+
+=== 2025-10-15 22:58:26 ===
+REQUEST_METHOD: POST
+POST: Array
+(
+    [email] => admin@elbuengusto.com
+    [password] => admin123
+)
+
+GET: Array
+(
+)
+
+RAW INPUT: 
+
+=== 2025-10-15 22:58:56 ===
+REQUEST_METHOD: POST
+POST: Array
+(
+    [email] => admin@elbuengusto.com
+    [password] => admin123
+)
+
+GET: Array
+(
+)
+
+RAW INPUT: 
+
+=== 2025-10-15 22:58:56 ===
+REQUEST_METHOD: POST
+POST: Array
+(
+    [email] => admin@elbuengusto.com
+    [password] => admin123
+)
+
+GET: Array
+(
+)
+
+RAW INPUT: 
+
+=== 2025-10-16 00:17:13 ===
+REQUEST_METHOD: POST
+POST: Array
+(
+    [email] => prueba@gmail.com
+    [password] => 123456
+)
+
+GET: Array
+(
+)
+
+RAW INPUT: 
+
+=== 2025-10-16 00:18:05 ===
+REQUEST_METHOD: POST
+POST: Array
+(
+    [email] => prueba@gmail.com
+    [password] => 123456
+)
+
+GET: Array
+(
+)
+
+RAW INPUT: 
+
+=== 2025-10-16 00:18:05 ===
+REQUEST_METHOD: POST
+POST: Array
+(
+    [email] => prueba@gmail.com
+    [password] => 123456
+)
+
+GET: Array
+(
+)
+
+RAW INPUT: 
+
+=== 2025-10-16 00:34:06 ===
+REQUEST_METHOD: POST
+POST: Array
+(
+    [email] => prueba@gmail.com
+    [password] => 123456
+)
+
+GET: Array
+(
+)
+
+RAW INPUT: 
+
+=== 2025-10-16 00:56:40 ===
+REQUEST_METHOD: POST
+POST: Array
+(
+    [email] => admin@elbuengusto.com
+    [password] => admin123
+)
+
+GET: Array
+(
+)
+
+RAW INPUT: 
+
+=== 2025-10-16 00:56:40 ===
+REQUEST_METHOD: POST
+POST: Array
+(
+    [email] => admin@elbuengusto.com
+    [password] => admin123
+)
+
+GET: Array
+(
+)
+
+RAW INPUT: 
+
