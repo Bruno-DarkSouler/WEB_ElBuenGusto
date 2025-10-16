@@ -93,23 +93,12 @@ function cancelarCambios() {
     showNotification('Cambios cancelados', 'info');
 }
 
-// Función para eliminar tarjeta
-function eliminarTarjeta(id) {
-    if (confirm('¿Estás seguro de que quieres eliminar esta tarjeta?')) {
-        showNotification('Tarjeta eliminada correctamente', 'success');
-        // Aquí iría la lógica para eliminar la tarjeta
-    }
-}
 
-// Función para agregar tarjeta
-function agregarTarjeta() {
-    document.getElementById('modalTarjeta').classList.remove('hidden');
-}
 
-function cerrarModalTarjeta() {
-    document.getElementById('modalTarjeta').classList.add('hidden');
-    document.getElementById('formTarjeta').reset();
-}
+
+
+
+//funcion Direccion ALL
 
 // Función para eliminar dirección
 function eliminarDireccion(id) {
@@ -118,34 +107,36 @@ function eliminarDireccion(id) {
         // Aquí iría la lógica para eliminar la dirección
     }
 }
-
 // Función para editar dirección
 function editarDireccion(id) {
     document.getElementById('modalDireccion').classList.remove('hidden');
     // Aquí se cargarían los datos de la dirección para editar
 }
-
 // Función para agregar dirección
 function agregarDireccion() {
     document.getElementById('modalDireccion').classList.remove('hidden');
 }
-
 function cerrarModalDireccion() {
     document.getElementById('modalDireccion').classList.add('hidden');
     document.getElementById('formDireccion').reset();
 }
 
+
+
+
 // Función para repetir pedido
 function repetirPedido(id) {
     showNotification(`Pedido #${id} agregado al carrito`, 'success');
-    // Aquí iría la lógica para agregar el pedido al carrito
 }
-
 // Función para ver todos los pedidos
 function verTodosLosPedidos() {
-    showNotification('Redirigiendo a historial de pedidos...', 'info');
-    // Aquí iría la navegación a la sección de pedidos
+    document.getElementById('verTodosLosPedidos').classList.remove('hidden');
 }
+function cerrarModalPedidos() {
+    document.getElementById('verTodosLosPedidos').classList.add('hidden');
+    document.getElementById('formDireccion').reset();
+}
+
 
 // Formatear número de tarjeta
 document.getElementById('numeroTarjeta').addEventListener('input', function(e) {
@@ -249,3 +240,16 @@ document.getElementById('formDireccion').addEventListener('submit', function(e) 
 document.addEventListener('DOMContentLoaded', function() {
     guardarDatosOriginales();
 });
+
+// perfil.js
+function cambiarFoto(input) {
+    if (input.files && input.files[0]) {
+        var reader = new FileReader();
+
+        reader.onload = function(e) {
+            document.getElementById('fotoPerfilGrande').src = e.target.result;
+        }
+
+        reader.readAsDataURL(input.files[0]);
+    }
+}

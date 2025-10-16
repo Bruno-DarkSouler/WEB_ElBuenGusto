@@ -1,0 +1,91 @@
+/* daltonismo.css */
+
+/* Estilos para daltonismo normal */
+.normal-bg {
+    background-color: #ffffff;
+}
+
+.normal-text {
+    color: #000000;
+}
+
+.normal-button {
+    background-color: #007bff;
+    color: #ffffff;
+}
+
+.normal-header {
+    background-color: #007bff;
+}
+
+/* Estilos para daltonismo monocromático */
+.monocromatico-bg {
+    background-color: #f0f0f0;
+}
+
+.monocromatico-text {
+    color: #333333;
+}
+
+.monocromatico-button {
+    background-color: #6c757d;
+    color: #ffffff;
+}
+
+.monocromatico-header {
+    background-color: #6c757d;
+}
+
+/* Estilos para deuteranopia */
+.deuteranopia-bg {
+    background-color: #fff5e1;
+}
+
+.deuteranopia-text {
+    color: #333333;
+}
+
+.deuteranopia-button {
+    background-color: #ffc107;
+    color: #ffffff;
+}
+
+.deuteranopia-header {
+    background-color: #ffc107;
+}
+
+/* Estilos para protanopia */
+.protanopia-bg {
+    background-color: #e3f2fd;
+}
+
+.protanopia-text {
+    color: #333333;
+}
+
+.protanopia-button {
+    background-color: #1976d2;
+    color: #ffffff;
+}
+
+.protanopia-header {
+    background-color: #1976d2;
+}
+
+/* Estilos para tritanopia */
+.tritanopia-bg {
+    background-color: #fce4ec;
+}
+
+.tritanopia-text {
+    color: #333333;
+}
+
+.tritanopia-button {
+    background-color: #ec407a;
+    color: #ffffff;
+}
+
+.tritanopia-header {
+    background-color: #ec407a;
+}

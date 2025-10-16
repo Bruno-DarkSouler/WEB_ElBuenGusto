@@ -1,3 +1,171 @@
+<?php
+session_start();
+
+// Verificar si hay sesión activa
+if (!isset($_SESSION['user_id'])) {
+    header('Location: ../index.html');
+    exit;
+}
+
+require_once '../php/conexion.php';
+
+// Obtener información del usuario
+$usuario_nombre = isset($_SESSION['user_name']) ? $_SESSION['user_name'] : 'Usuario';
+$usuario_email = isset($_SESSION['user_email']) ? $_SESSION['user_email'] : '';
+
+// ========== MANEJO DE PETICIONES AJAX ==========
+if (isset($_GET['action'])) {
+    header('Content-Type: application/json');
+    
+    switch ($_GET['action']) {
+        case 'get_productos':
+            try {
+                $query = "SELECT p.*, c.nombre as categoria_nombre 
+                          FROM productos p 
+                          INNER JOIN categorias c ON p.categoria_id = c.id 
+                          WHERE p.activo = 1 AND p.disponible = 1
+                          ORDER BY c.id, p.nombre";
+                
+                $resultado = $conexion->query($query);
+                
+                $productos = [];
+                while ($row = $resultado->fetch_assoc()) {
+                    $productos[] = [
+                        'id' => $row['id'],
+                        'nombre' => $row['nombre'],
+                        'descripcion' => $row['descripcion'],
+                        'precio' => $row['precio'],
+                        'imagen' => $row['imagen'],
+                        'categoria_id' => $row['categoria_id'],
+                        'categoria_nombre' => strtolower($row['categoria_nombre']),
+                        'ingredientes' => $row['ingredientes'],
+                        'valoracion_promedio' => $row['valoracion_promedio']
+                    ];
+                }
+                
+                echo json_encode(['success' => true, 'productos' => $productos]);
+            } catch (Exception $e) {
+                echo json_encode(['success' => false, 'message' => 'Error al obtener productos: ' . $e->getMessage()]);
+            }
+            exit;
+            
+        case 'get_zonas':
+            try {
+                $query = "SELECT id, nombre, precio_delivery, tiempo_estimado 
+                          FROM zonas_delivery 
+                          WHERE activa = 1 
+                          ORDER BY nombre";
+                
+                $resultado = $conexion->query($query);
+                
+                $zonas = [];
+                while ($row = $resultado->fetch_assoc()) {
+                    $zonas[] = $row;
+                }
+                
+                echo json_encode(['success' => true, 'zonas' => $zonas]);
+            } catch (Exception $e) {
+                echo json_encode(['success' => false, 'message' => 'Error al obtener zonas: ' . $e->getMessage()]);
+            }
+            exit;
+            
+        case 'procesar_pedido':
+            // Obtener datos del POST
+            $data = json_decode(file_get_contents('php://input'), true);
+            
+            if (!$data) {
+                echo json_encode(['success' => false, 'message' => 'Datos inválidos']);
+                exit;
+            }
+            
+            try {
+                $conexion->begin_transaction();
+                
+                // Generar número de pedido único
+                $numero_pedido = 'PED' . str_pad(rand(1, 99999), 5, '0', STR_PAD_LEFT);
+                
+                // Determinar estado según tipo de pedido
+                $estado = ($data['tipo_pedido'] === 'programado') ? 'pendiente' : 'confirmado';
+                
+                // Insertar pedido
+                $stmt = $conexion->prepare("INSERT INTO pedidos 
+                    (numero_pedido, usuario_id, tipo_pedido, fecha_entrega_programada, 
+                     direccion_entrega, telefono_contacto, metodo_pago, estado, 
+                     subtotal, precio_delivery, total, zona_delivery_id, comentarios_cliente) 
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+                
+                $fecha_entrega = ($data['tipo_pedido'] === 'programado') 
+                    ? $data['fecha_entrega'] . ' ' . $data['hora_entrega'] 
+                    : null;
+                
+                $metodo_pago = 'digital'; // Ambos métodos son digitales
+                
+                $stmt->bind_param(
+                    "sissssssdddis",
+                    $numero_pedido,
+                    $_SESSION['user_id'],
+                    $data['tipo_pedido'],
+                    $fecha_entrega,
+                    $data['direccion'],
+                    $data['telefono'],
+                    $metodo_pago,
+                    $estado,
+                    $data['subtotal'],
+                    $data['precio_delivery'],
+                    $data['total'],
+                    $data['zona_id'],
+                    $data['comentarios']
+                );
+                
+                $stmt->execute();
+                $pedido_id = $conexion->insert_id;
+                
+                // Insertar items del pedido
+                $stmt_items = $conexion->prepare("INSERT INTO pedido_items 
+                    (pedido_id, producto_id, cantidad, precio_unitario, precio_total) 
+                    VALUES (?, ?, ?, ?, ?)");
+                
+                foreach ($data['productos'] as $producto) {
+                    $precio_total = $producto['precio'] * $producto['cantidad'];
+                    $stmt_items->bind_param(
+                        "iiidd",
+                        $pedido_id,
+                        $producto['id'],
+                        $producto['cantidad'],
+                        $producto['precio'],
+                        $precio_total
+                    );
+                    $stmt_items->execute();
+                }
+                
+                // Insertar seguimiento
+                $stmt_seguimiento = $conexion->prepare("INSERT INTO seguimiento_pedidos 
+                    (pedido_id, estado_anterior, estado_nuevo, usuario_cambio_id, comentarios) 
+                    VALUES (?, NULL, ?, ?, ?)");
+                
+                $comentario_seguimiento = 'Pedido creado por el cliente';
+                $stmt_seguimiento->bind_param("isis", $pedido_id, $estado, $_SESSION['user_id'], $comentario_seguimiento);
+                $stmt_seguimiento->execute();
+                
+                $conexion->commit();
+                
+                echo json_encode([
+                    'success' => true, 
+                    'message' => 'Pedido creado exitosamente',
+                    'numero_pedido' => $numero_pedido,
+                    'pedido_id' => $pedido_id
+                ]);
+                
+            } catch (Exception $e) {
+                $conexion->rollback();
+                echo json_encode(['success' => false, 'message' => 'Error al procesar pedido: ' . $e->getMessage()]);
+            }
+            exit;
+    }
+}
+
+$conexion->close();
+?>
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -29,12 +197,19 @@
             </div>
             
             <div class="user-section">
-                <span class="welcome-text text-yellow-500">Bienvenido, <span id="userName">Usuario</span></span>
+                <span class="welcome-text">Bienvenido, <span id="userName"><?php echo htmlspecialchars($usuario_nombre); ?></span></span>
                 <button class="cart-btn" onclick="toggleCart()">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 16 16">
                         <path d="M0 1.5A.5.5 0 0 1 .5 1H2a.5.5 0 0 1 .485.379L2.89 3H14.5a.5.5 0 0 1 .491.592l-1.5 8A.5.5 0 0 1 13 12H4a.5.5 0 0 1-.491-.408L2.01 3.607 1.61 2H.5a.5.5 0 0 1-.5-.5zM3.102 4l1.313 7h8.17l1.313-7H3.102zM5 12a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm7 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm-7 1a1 1 0 1 1 0 2 1 1 0 0 1 0-2zm7 0a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/>
                     </svg>
                     <span class="cart-count" id="cartCount">0</span>
+                </button>
+                <button class="profile-btn" onclick="window.location.href='perfil.html'">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="currentColor" viewBox="0 0 16 16">
+                        <path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/>
+                        <path fill-rule="evenodd" d="M14 14s-1-1.5-6-1.5S2 14 2 14s1-4 6-4 6 4 6 4z"/>
+                    </svg>
+                    
                 </button>
                 <button class="logout-btn" onclick="logout()">
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
@@ -64,7 +239,7 @@
             <div class="cart-total">
                 <strong>Total: $<span id="cartTotal">0</span></strong>
             </div>
-            <button class="checkout-btn" onclick="abrir_modal()" onclick="checkout()">Finalizar Pedido</button>
+            <button class="checkout-btn" onclick="abrirModalPedido()">Finalizar Pedido</button>
         </div>
     </div>
 
@@ -89,129 +264,23 @@
             </div>
         </section>
 
-        <!-- Productos -->
+        <!-- Productos (se cargarán dinámicamente) -->
         <section class="products-section">
             <div class="products-grid" id="productsGrid">
-                <!-- Minutas -->
-                <div class="product-card" data-category="minutas">
-                    <img src="https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=300&h=200&fit=crop" alt="Hamburguesa Completa" class="product-image">
-                    <div class="product-info">
-                        <h3 class="product-name">Hamburguesa Completa</h3>
-                        <p class="product-description">Carne, lechuga, tomate, queso, huevo, jamón</p>
-                        <div class="product-price">$2500</div>
-                        <button class="add-to-cart-btn" onclick="addToCart('hamburguesa-completa', 'Hamburguesa Completa', 2500, 'https\://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=300&h=200&fit=crop')">Agregar al Carrito</button>
-                    </div>
-                </div>
-
-                <div class="product-card" data-category="minutas">
-                    <img src="https://media.istockphoto.com/id/1905645778/es/foto/vista-a%C3%A9rea-de-un-plato-de-milanesa-con-papas-fritas-concepto-de-comida-argentina-comida.jpg?s=612x612&w=0&k=20&c=ZbnQfEOs6vxEj1NMw77Cn6LlW7GPCPJl44Ip-TGy2sM=" alt="Milanesa con Papas" class="product-image">
-                    <div class="product-info">
-                        <h3 class="product-name">Milanesa con Papas</h3>
-                        <p class="product-description">Milanesa de carne con papas fritas caseras</p>
-                        <div class="product-price">$3200</div>
-                        <button class="add-to-cart-btn" onclick="addToCart('milanesa-papas', 'Milanesa con Papas', 3200, 'https\://media.istockphoto.com/id/1905645778/es/foto/vista-a%C3%A9rea-de-un-plato-de-milanesa-con-papas-fritas-concepto-de-comida-argentina-comida.jpg?s=612x612&w=0&k=20&c=ZbnQfEOs6vxEj1NMw77Cn6LlW7GPCPJl44Ip-TGy2sM=')">Agregar al Carrito</button>
-                    </div>
-                </div>
-
-                <!-- Pastas -->
-                <div class="product-card" data-category="pastas">
-                    <img src="https://images.unsplash.com/photo-1645087177483-f760329f470f?q=80&w=870&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" alt="Ñoquis con Salsa" class="product-image">
-                    <div class="product-info">
-                        <h3 class="product-name">Ñoquis con Salsa</h3>
-                        <p class="product-description">Ñoquis caseros con salsa de tomate y albahaca</p>
-                        <div class="product-price">$2800</div>
-                        <button class="add-to-cart-btn" onclick="addToCart('noquis-salsa', 'Ñoquis con Salsa', 2800, 'https\://images.unsplash.com/photo-1645087177483-f760329f470f?q=80&w=870&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D')">Agregar al Carrito</button>
-                    </div>
-                </div>
-
-                <div class="product-card" data-category="pastas">
-                    <img src="https://images.unsplash.com/photo-1551183053-bf91a1d81141?w=300&h=200&fit=crop" alt="Ravioles de Ricota" class="product-image">
-                    <div class="product-info">
-                        <h3 class="product-name">Ravioles de Ricota</h3>
-                        <p class="product-description">Ravioles caseros rellenos de ricota y espinaca</p>
-                        <div class="product-price">$3000</div>
-                        <button class="add-to-cart-btn" onclick="addToCart('ravioles-ricota', 'Ravioles de Ricota', 3000, 'https\://images.unsplash.com/photo-1551183053-bf91a1d81141?w=300&h=200&fit=crop')">Agregar al Carrito</button>
-                    </div>
-                </div>
-
-                <!-- Guisos -->
-                <div class="product-card" data-category="guisos">
-                    <img src="https://images.unsplash.com/photo-1574484284002-952d92456975?w=300&h=200&fit=crop" alt="Locro Criollo" class="product-image">
-                    <div class="product-info">
-                        <h3 class="product-name">Locro Criollo</h3>
-                        <p class="product-description">Locro tradicional argentino con chorizo y panceta</p>
-                        <div class="product-price">$3500</div>
-                        <button class="add-to-cart-btn" onclick="addToCart('locro-criollo', 'Locro Criollo', 3500, 'https\://images.unsplash.com/photo-1574484284002-952d92456975?w=300&h=200&fit=crop')">Agregar al Carrito</button>
-                    </div>
-                </div>
-
-                <!-- Tartas -->
-                <div class="product-card" data-category="tartas">
-                    <img src="https://images.unsplash.com/photo-1565299507177-b0ac66763828?w=300&h=200&fit=crop" alt="Tarta de Jamón y Queso" class="product-image">
-                    <div class="product-info">
-                        <h3 class="product-name">Tarta de Jamón y Queso</h3>
-                        <p class="product-description">Tarta casera con jamón cocido y queso cremoso</p>
-                        <div class="product-price">$2200</div>
-                        <button class="add-to-cart-btn" onclick="addToCart('tarta-jamon-queso', 'Tarta de Jamón y Queso', 2200, 'https\://images.unsplash.com/photo-1565299507177-b0ac66763828?w=300&h=200&fit=crop')">Agregar al Carrito</button>
-                    </div>
-                </div>
-
-                <!-- Empanadas -->
-                <div class="product-card" data-category="empanadas">
-                    <img src="https://images.unsplash.com/photo-1601050690597-df0568f70950?w=300&h=200&fit=crop" alt="Empanadas de Carne" class="product-image">
-                    <div class="product-info">
-                        <h3 class="product-name">Empanadas de Carne</h3>
-                        <p class="product-description">Empanadas criollas de carne cortada a cuchillo (docena)</p>
-                        <div class="product-price">$4800</div>
-                        <button class="add-to-cart-btn" onclick="addToCart('empanadas-carne', 'Empanadas de Carne', 4800, 'https\://images.unsplash.com/photo-1601050690597-df0568f70950?w=300&h=200&fit=crop')">Agregar al Carrito</button>
-                    </div>
-                </div>
-
-                <!-- Postres -->
-                <div class="product-card" data-category="postres">
-                    <img src="https://images.unsplash.com/photo-1551024506-0bccd828d307?w=300&h=200&fit=crop" alt="Flan Casero" class="product-image">
-                    <div class="product-info">
-                        <h3 class="product-name">Flan Casero</h3>
-                        <p class="product-description">Flan casero con dulce de leche y crema</p>
-                        <div class="product-price">$1800</div>
-                        <button class="add-to-cart-btn" onclick="addToCart('flan-casero', 'Flan Casero', 1800, 'https\://images.unsplash.com/photo-1551024506-0bccd828d307?w=300&h=200&fit=crop')">Agregar al Carrito</button>
-                    </div>
-                </div>
-
-                <!-- Bebidas -->
-                <div class="product-card" data-category="bebidas">
-                    <img src="https://images.unsplash.com/photo-1544145945-f90425340c7e?w=300&h=200&fit=crop" alt="Coca Cola 500ml" class="product-image">
-                    <div class="product-info">
-                        <h3 class="product-name">Coca Cola 500ml</h3>
-                        <p class="product-description">Gaseosa Coca Cola 500ml</p>
-                        <div class="product-price">$800</div>
-                        <button class="add-to-cart-btn" onclick="addToCart('coca-cola-500', 'Coca Cola 500ml', 800, 'https\://images.unsplash.com/photo-1544145945-f90425340c7e?w=300&h=200&fit=crop')">Agregar al Carrito</button>
-                    </div>
-                </div>
-
-                <!-- Embutidos -->
-                <div class="product-card" data-category="embutidos">
-                    <img src="https://images.unsplash.com/photo-1544025162-d76694265947?w=300&h=200&fit=crop" alt="Jamón Crudo" class="product-image">
-                    <div class="product-info">
-                        <h3 class="product-name">Jamón Crudo (100g)</h3>
-                        <p class="product-description">Jamón crudo premium cortado al momento</p>
-                        <div class="product-price">$1200</div>
-                        <button class="add-to-cart-btn" onclick="addToCart('jamon-crudo-100g', 'Jamón Crudo (100g)', 1200, 'https\://images.unsplash.com/photo-1544025162-d76694265947?w=300&h=200&fit=crop')">Agregar al Carrito</button>
-                    </div>
-                </div>
+                <!-- Los productos se cargarán aquí con JavaScript -->
             </div>
         </section>
     </main>
 
     <!--modal-compra-->
-    <div id="modal-compra" class="body">
-        <div class="container">
+    <div id="modal-compra" class="body" style="display: none;">
+        <div class="container" style="max-height: 90vh; overflow-y: auto;">
             <div class="header">
                 <button class="close-modal" onclick="cerrar_modal()">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
-                    <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/>
-                </svg>
-            </button>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                        <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/>
+                    </svg>
+                </button>
                 <h1>🍽️ Finalizar Pedido</h1>
                 <p>Complete sus datos para procesar la entrega</p>
             </div>
@@ -228,7 +297,7 @@
                         <div class="form-row">
                             <div class="form-group">
                                 <label for="name">Nombre Completo <span class="required">*</span></label>
-                                <input type="text" id="name" name="name" required placeholder="Ingrese su nombre completo">
+                                <input type="text" id="name" name="name" required placeholder="Ingrese su nombre completo" value="<?php echo htmlspecialchars($usuario_nombre); ?>">
                             </div>
                             <div class="form-group">
                                 <label for="phone">Teléfono <span class="required">*</span></label>
@@ -238,7 +307,7 @@
 
                         <div class="form-group">
                             <label for="email">Email <span class="required">*</span></label>
-                            <input type="email" id="email" name="email" required placeholder="su.email@ejemplo.com">
+                            <input type="email" id="email" name="email" required placeholder="su.email@ejemplo.com" value="<?php echo htmlspecialchars($usuario_email); ?>">
                             <div class="info-text">Se enviará la factura a este email</div>
                         </div>
                     </div>
@@ -253,6 +322,15 @@
                         <div class="form-group">
                             <label for="address">Dirección Completa <span class="required">*</span></label>
                             <input type="text" id="address" name="address" required placeholder="Calle, número, barrio">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="zona">Zona de Entrega <span class="required">*</span></label>
+                            <select id="zona" name="zona" required onchange="actualizarPrecioDelivery()">
+                                <option value="">Seleccione una zona</option>
+                                <!-- Las zonas se cargarán dinámicamente -->
+                            </select>
+                            <div class="info-text">Costo de envío: $<span id="costoEnvio">0</span></div>
                         </div>
 
                         <div class="form-row">
@@ -279,14 +357,14 @@
                         </div>
 
                         <div class="delivery-options">
-                            <div class="delivery-option" onclick="selectDeliveryOption('immediate')">
-                                <input type="radio" name="delivery_type" value="immediate" id="immediate">
+                            <div class="delivery-option" onclick="selectDeliveryOption('inmediato')">
+                                <input type="radio" name="delivery_type" value="inmediato" id="immediate" required>
                                 <div class="delivery-option-title">🕐 Entrega Inmediata</div>
                                 <div class="delivery-option-desc">En el próximo turno disponible (solo en horario de atención)</div>
                             </div>
 
-                            <div class="delivery-option" onclick="selectDeliveryOption('scheduled')">
-                                <input type="radio" name="delivery_type" value="scheduled" id="scheduled">
+                            <div class="delivery-option" onclick="selectDeliveryOption('programado')">
+                                <input type="radio" name="delivery_type" value="programado" id="scheduled">
                                 <div class="delivery-option-title">📅 Programar Entrega</div>
                                 <div class="delivery-option-desc">Elija fecha y hora específica</div>
                             </div>
@@ -333,7 +411,7 @@
                         
                         <div class="payment-methods">
                             <div class="payment-method" onclick="selectPaymentMethod('mercadopago')">
-                                <input type="radio" name="payment_method" value="mercadopago" id="mercadopago">
+                                <input type="radio" name="payment_method" value="mercadopago" id="mercadopago" required>
                                 <div class="payment-icon"><img class="metodo-pago" src="../img/mp-logo.png" alt="MP"></div>
                                 <div>Mercado Pago</div>
                             </div>
@@ -344,6 +422,7 @@
                                 <div>Cuenta DNI</div>
                             </div>
                         </div>
+                    </div>
 
                     <!-- Comentarios -->
                     <div class="section">
@@ -364,15 +443,15 @@
                         
                         <div class="summary-row">
                             <span>Subtotal productos:</span>
-                            <span>$12.450</span>
+                            <span>$<span id="resumenSubtotal">0</span></span>
                         </div>
                         <div class="summary-row">
                             <span>Costo de envío:</span>
-                            <span>$850</span>
+                            <span>$<span id="resumenDelivery">0</span></span>
                         </div>
                         <div class="summary-row summary-total">
                             <span>TOTAL A PAGAR:</span>
-                            <span>$13.300</span>
+                            <span>$<span id="resumenTotal">0</span></span>
                         </div>
                     </div>
 
@@ -389,9 +468,9 @@
             </div>
         </div>
     </div>
+    <?php include '../php/footer.php'; ?>
 
     <script src="../js/pedido.js"></script>
-
     <script src="../js/inicio.js"></script>
 </body>
 </html>
