@@ -30,7 +30,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         
         const baseUrl = window.location.pathname.includes('WEB_ElBuenGusto') 
-            ? '/dashboard/WEB_ElBuenGusto/php/login.php'
+            ? '/php/login.php'
             : '../php/login.php';
 
         fetch(baseUrl, {

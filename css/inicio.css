@@ -458,7 +458,13 @@ body {
 }
 
 /* Responsive */
+
 @media (max-width: 768px) {
+
+    .logo-section{
+        display:none;
+    }
+
     .navbar {
         flex-direction: column;
         gap: 1rem;
@@ -472,6 +478,7 @@ body {
     
     .user-section {
         order: 2;
+        display: none;
     }
     
     .cart-sidebar {
@@ -492,6 +499,10 @@ body {
         justify-content: flex-start;
         overflow-x: auto;
         padding-bottom: 1rem;
+    }
+
+    .categories-section h2{
+        display: none;
     }
     
     .category-btn {
