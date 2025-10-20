@@ -9,6 +9,7 @@
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
+SET FOREIGN_KEY_CHECKS = 0;  -- <-- AGREGAR ESTA LÍNEA
 SET time_zone = "+00:00";
 
 
@@ -59,6 +60,10 @@ CREATE TABLE `categorias` (
   `activa` tinyint(1) DEFAULT 1
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='Categorías: Minutas, Pastas, Guisos, Bebidas';
 
+--
+-- Volcado de datos para la tabla `categorias`
+--
+
 INSERT INTO `categorias` (`id`, `nombre`, `descripcion`, `activa`) VALUES
 (1, 'Minutas', 'Comidas rápidas y sencillas como hamburguesas, milanesas, sándwiches', 1),
 (2, 'Pastas', 'Variedades de pastas: ravioles, ñoquis, tallarines', 1),
@@ -68,8 +73,8 @@ INSERT INTO `categorias` (`id`, `nombre`, `descripcion`, `activa`) VALUES
 (6, 'Postres', 'Dulces como flanes, budines y tortas', 1),
 (7, 'Bebidas', 'Gaseosas, jugos, aguas y bebidas calientes', 1),
 (8, 'Embutidos', 'Fiambres y embutidos por porción de 100 gramos', 1),
-(9, 'Otros', 'Productos variados o especiales', 1),
-(10, 'Panificados y Ensaladas', 'Pan casero, ensaladas y otros acompañamientos', 1); -- 👈 categoría agregada
+(9, 'Otros', 'Productos variados o especiales', 1);
+
 -- --------------------------------------------------------
 
 --
@@ -163,7 +168,7 @@ INSERT INTO `item_condimentos` (`id`, `pedido_item_id`, `condimento_id`) VALUES
 CREATE TABLE `pedidos` (
   `id` int(11) NOT NULL,
   `numero_pedido` varchar(20) NOT NULL,
-  `usuario_id` int(11) NOT NULL,
+  `usuario_id` int(11) DEFAULT NULL,
   `tipo_pedido` enum('inmediato','programado') NOT NULL,
   `fecha_pedido` timestamp NOT NULL DEFAULT current_timestamp(),
   `fecha_entrega_programada` datetime DEFAULT NULL,
@@ -327,7 +332,7 @@ CREATE TABLE `seguimiento_pedidos` (
   `pedido_id` int(11) NOT NULL,
   `estado_anterior` enum('pendiente','confirmado','en_preparacion','listo','en_camino','entregado','cancelado') DEFAULT NULL,
   `estado_nuevo` enum('pendiente','confirmado','en_preparacion','listo','en_camino','entregado','cancelado') NOT NULL,
-  `usuario_cambio_id` int(11) NOT NULL,
+  `usuario_cambio_id` int(11) DEFAULT NULL,
   `fecha_cambio` timestamp NOT NULL DEFAULT current_timestamp(),
   `comentarios` text DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='Historial de cambios de estado del pedido';
@@ -591,50 +596,51 @@ ALTER TABLE `zonas_delivery`
 -- Filtros para la tabla `calificaciones`
 --
 ALTER TABLE `calificaciones`
-  ADD CONSTRAINT `calificaciones_ibfk_1` FOREIGN KEY (`pedido_id`) REFERENCES `pedidos` (`id`),
-  ADD CONSTRAINT `calificaciones_ibfk_2` FOREIGN KEY (`usuario_id`) REFERENCES `usuarios` (`id`),
-  ADD CONSTRAINT `calificaciones_ibfk_3` FOREIGN KEY (`repartidor_id`) REFERENCES `usuarios` (`id`);
+  ADD CONSTRAINT `calificaciones_ibfk_1` FOREIGN KEY (`pedido_id`) REFERENCES `pedidos` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT `calificaciones_ibfk_2` FOREIGN KEY (`usuario_id`) REFERENCES `usuarios` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT `calificaciones_ibfk_3` FOREIGN KEY (`repartidor_id`) REFERENCES `usuarios` (`id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 --
 -- Filtros para la tabla `direcciones_cliente`
 --
 ALTER TABLE `direcciones_cliente`
-  ADD CONSTRAINT `direcciones_cliente_ibfk_1` FOREIGN KEY (`usuario_id`) REFERENCES `usuarios` (`id`);
-
+  ADD CONSTRAINT `direcciones_cliente_ibfk_1` FOREIGN KEY (`usuario_id`) REFERENCES `usuarios` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 --
 -- Filtros para la tabla `item_condimentos`
 --
 ALTER TABLE `item_condimentos`
-  ADD CONSTRAINT `item_condimentos_ibfk_1` FOREIGN KEY (`pedido_item_id`) REFERENCES `pedido_items` (`id`),
-  ADD CONSTRAINT `item_condimentos_ibfk_2` FOREIGN KEY (`condimento_id`) REFERENCES `condimentos` (`id`);
-
+  ADD CONSTRAINT `item_condimentos_ibfk_1` FOREIGN KEY (`pedido_item_id`) REFERENCES `pedido_items` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT `item_condimentos_ibfk_2` FOREIGN KEY (`condimento_id`) REFERENCES `condimentos` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 --
 -- Filtros para la tabla `pedidos`
 --
 ALTER TABLE `pedidos`
-  ADD CONSTRAINT `pedidos_ibfk_1` FOREIGN KEY (`usuario_id`) REFERENCES `usuarios` (`id`),
-  ADD CONSTRAINT `pedidos_ibfk_2` FOREIGN KEY (`zona_delivery_id`) REFERENCES `zonas_delivery` (`id`),
-  ADD CONSTRAINT `pedidos_ibfk_3` FOREIGN KEY (`repartidor_id`) REFERENCES `usuarios` (`id`),
-  ADD CONSTRAINT `pedidos_ibfk_4` FOREIGN KEY (`cajero_id`) REFERENCES `usuarios` (`id`);
-
+  ADD CONSTRAINT `pedidos_ibfk_1` FOREIGN KEY (`usuario_id`) REFERENCES `usuarios` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT `pedidos_ibfk_2` FOREIGN KEY (`zona_delivery_id`) REFERENCES `zonas_delivery` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  ADD CONSTRAINT `pedidos_ibfk_3` FOREIGN KEY (`repartidor_id`) REFERENCES `usuarios` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  ADD CONSTRAINT `pedidos_ibfk_4` FOREIGN KEY (`cajero_id`) REFERENCES `usuarios` (`id`) ON DELETE SET NULL ON UPDATE CASCADE;
 --
 -- Filtros para la tabla `pedido_items`
 --
 ALTER TABLE `pedido_items`
-  ADD CONSTRAINT `pedido_items_ibfk_1` FOREIGN KEY (`pedido_id`) REFERENCES `pedidos` (`id`),
-  ADD CONSTRAINT `pedido_items_ibfk_2` FOREIGN KEY (`producto_id`) REFERENCES `productos` (`id`);
+  ADD CONSTRAINT `pedido_items_ibfk_1` FOREIGN KEY (`pedido_id`) REFERENCES `pedidos` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT `pedido_items_ibfk_2` FOREIGN KEY (`producto_id`) REFERENCES `productos` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
 
 --
 -- Filtros para la tabla `productos`
 --
 ALTER TABLE `productos`
-  ADD CONSTRAINT `productos_ibfk_1` FOREIGN KEY (`categoria_id`) REFERENCES `categorias` (`id`);
+  ADD CONSTRAINT `productos_ibfk_1` FOREIGN KEY (`categoria_id`) REFERENCES `categorias` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
 --
 -- Filtros para la tabla `seguimiento_pedidos`
 --
 ALTER TABLE `seguimiento_pedidos`
-  ADD CONSTRAINT `seguimiento_pedidos_ibfk_1` FOREIGN KEY (`pedido_id`) REFERENCES `pedidos` (`id`),
-  ADD CONSTRAINT `seguimiento_pedidos_ibfk_2` FOREIGN KEY (`usuario_cambio_id`) REFERENCES `usuarios` (`id`);
+  ADD CONSTRAINT `seguimiento_pedidos_ibfk_1` FOREIGN KEY (`pedido_id`) REFERENCES `pedidos` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT `seguimiento_pedidos_ibfk_2` FOREIGN KEY (`usuario_cambio_id`) REFERENCES `usuarios` (`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+SET FOREIGN_KEY_CHECKS = 1;  -- <-- AGREGAR ESTA LÍNEA ANTES DEL COMMIT
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

@@ -1920,3 +1920,213 @@ GET: Array
 
 RAW INPUT: 
 
+=== 2025-10-20 23:12:54 ===
+REQUEST_METHOD: POST
+POST: Array
+(
+    [email] => mateo.silvero.t1vl@gmail.com
+    [password] => 123456
+)
+
+GET: Array
+(
+)
+
+RAW INPUT: 
+
+=== 2025-10-20 23:14:06 ===
+REQUEST_METHOD: POST
+POST: Array
+(
+    [email] => cliente2@gmail.com
+    [password] => cliente456
+)
+
+GET: Array
+(
+)
+
+RAW INPUT: 
+
+=== 2025-10-20 23:14:08 ===
+REQUEST_METHOD: POST
+POST: Array
+(
+    [email] => cliente2@gmail.com
+    [password] => cliente456
+)
+
+GET: Array
+(
+)
+
+RAW INPUT: 
+
+=== 2025-10-20 23:14:08 ===
+REQUEST_METHOD: POST
+POST: Array
+(
+    [email] => cliente2@gmail.com
+    [password] => cliente456
+)
+
+GET: Array
+(
+)
+
+RAW INPUT: 
+
+=== 2025-10-20 23:14:08 ===
+REQUEST_METHOD: POST
+POST: Array
+(
+    [email] => cliente2@gmail.com
+    [password] => cliente456
+)
+
+GET: Array
+(
+)
+
+RAW INPUT: 
+
+=== 2025-10-20 23:14:08 ===
+REQUEST_METHOD: POST
+POST: Array
+(
+    [email] => cliente2@gmail.com
+    [password] => cliente456
+)
+
+GET: Array
+(
+)
+
+RAW INPUT: 
+
+=== 2025-10-20 23:14:08 ===
+REQUEST_METHOD: POST
+POST: Array
+(
+    [email] => cliente2@gmail.com
+    [password] => cliente456
+)
+
+GET: Array
+(
+)
+
+RAW INPUT: 
+
+=== 2025-10-20 23:14:08 ===
+REQUEST_METHOD: POST
+POST: Array
+(
+    [email] => cliente2@gmail.com
+    [password] => cliente456
+)
+
+GET: Array
+(
+)
+
+RAW INPUT: 
+
+=== 2025-10-20 23:14:09 ===
+REQUEST_METHOD: POST
+POST: Array
+(
+    [email] => cliente2@gmail.com
+    [password] => cliente456
+)
+
+GET: Array
+(
+)
+
+RAW INPUT: 
+
+=== 2025-10-20 23:14:09 ===
+REQUEST_METHOD: POST
+POST: Array
+(
+    [email] => cliente2@gmail.com
+    [password] => cliente456
+)
+
+GET: Array
+(
+)
+
+RAW INPUT: 
+
+=== 2025-10-20 23:14:09 ===
+REQUEST_METHOD: POST
+POST: Array
+(
+    [email] => cliente2@gmail.com
+    [password] => cliente456
+)
+
+GET: Array
+(
+)
+
+RAW INPUT: 
+
+=== 2025-10-20 23:14:09 ===
+REQUEST_METHOD: POST
+POST: Array
+(
+    [email] => cliente2@gmail.com
+    [password] => cliente456
+)
+
+GET: Array
+(
+)
+
+RAW INPUT: 
+
+=== 2025-10-20 23:14:09 ===
+REQUEST_METHOD: POST
+POST: Array
+(
+    [email] => cliente2@gmail.com
+    [password] => cliente456
+)
+
+GET: Array
+(
+)
+
+RAW INPUT: 
+
+=== 2025-10-20 23:14:10 ===
+REQUEST_METHOD: POST
+POST: Array
+(
+    [email] => cliente2@gmail.com
+    [password] => cliente456
+)
+
+GET: Array
+(
+)
+
+RAW INPUT: 
+
+=== 2025-10-20 23:34:01 ===
+REQUEST_METHOD: POST
+POST: Array
+(
+    [email] => luchocampanelli1@gmail.com
+    [password] => drysda08
+)
+
+GET: Array
+(
+)
+
+RAW INPUT: 
+
