@@ -59,10 +59,6 @@ CREATE TABLE `categorias` (
   `activa` tinyint(1) DEFAULT 1
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='Categorías: Minutas, Pastas, Guisos, Bebidas';
 
---
--- Volcado de datos para la tabla `categorias`
---
-
 INSERT INTO `categorias` (`id`, `nombre`, `descripcion`, `activa`) VALUES
 (1, 'Minutas', 'Comidas rápidas y sencillas como hamburguesas, milanesas, sándwiches', 1),
 (2, 'Pastas', 'Variedades de pastas: ravioles, ñoquis, tallarines', 1),
@@ -72,8 +68,8 @@ INSERT INTO `categorias` (`id`, `nombre`, `descripcion`, `activa`) VALUES
 (6, 'Postres', 'Dulces como flanes, budines y tortas', 1),
 (7, 'Bebidas', 'Gaseosas, jugos, aguas y bebidas calientes', 1),
 (8, 'Embutidos', 'Fiambres y embutidos por porción de 100 gramos', 1),
-(9, 'Otros', 'Productos variados o especiales', 1);
-
+(9, 'Otros', 'Productos variados o especiales', 1),
+(10, 'Panificados y Ensaladas', 'Pan casero, ensaladas y otros acompañamientos', 1); -- 👈 categoría agregada
 -- --------------------------------------------------------
 
 --
@@ -633,7 +629,6 @@ ALTER TABLE `pedido_items`
 --
 ALTER TABLE `productos`
   ADD CONSTRAINT `productos_ibfk_1` FOREIGN KEY (`categoria_id`) REFERENCES `categorias` (`id`);
-
 --
 -- Filtros para la tabla `seguimiento_pedidos`
 --
