@@ -22,13 +22,11 @@ header{
 }
 .navbar{
     display: flex;
-    width: auto;
-    height: 6rem;
-    border-radius: 30px;
-    background-color: #F5EBD2;
+    background-color: #C81E2D;
     align-items: center;
     justify-content: space-between;
     font-size: 160%;
+    min-height: 10vh;
 }
 .nombre_sitio{
     display: flex;
