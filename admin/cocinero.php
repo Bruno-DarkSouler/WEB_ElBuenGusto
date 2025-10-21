@@ -23,11 +23,12 @@ if (isset($_GET['action'])) {
                           FROM pedidos p
                           LEFT JOIN usuarios u ON p.usuario_id = u.id
                           LEFT JOIN zonas_delivery z ON p.zona_delivery_id = z.id
-                          WHERE p.estado IN ('confirmado', 'en_preparacion', 'listo')
-                          AND p.activo = 1
-                          ORDER BY 
-                            CASE 
-                                WHEN p.tipo_pedido = 'inmediato' THEN 1
+                          WHERE p.estado IN ('en_preparacion', 'listo')
+                            WHERE p.estado IN ('en_preparacion', 'listo')
+                            AND p.activo = 1
+                            ORDER BY 
+                                CASE 
+                                    WHEN p.tipo_pedido = 'inmediato' THEN 1
                                 WHEN p.tipo_pedido = 'programado' THEN 2
                             END,
                             p.fecha_pedido ASC";

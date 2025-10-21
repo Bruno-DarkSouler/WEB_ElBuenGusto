@@ -15,13 +15,14 @@ try {
     $pedidos_procesados = 0;
     
     // Buscar pedidos programados que deben pasar a preparación
+    // Buscar pedidos programados que deben pasar a preparación
     $query = "SELECT p.id, p.numero_pedido, p.fecha_entrega_programada, 
               MAX(pr.tiempo_preparacion) as tiempo_preparacion
               FROM pedidos p
               INNER JOIN pedido_items pi ON p.id = pi.pedido_id
               INNER JOIN productos pr ON pi.producto_id = pr.id
               WHERE p.tipo_pedido = 'programado'
-              AND p.estado = 'confirmado'
+              AND p.estado = 'pendiente'
               AND p.activo = 1
               GROUP BY p.id, p.numero_pedido, p.fecha_entrega_programada";
     
@@ -45,14 +46,15 @@ try {
                 
                 try {
                     // Cambiar estado a en_preparacion
-                    $stmt = $conexion->prepare("UPDATE pedidos SET estado = 'en_preparacion' WHERE id = ?");
+                    $stmt = $conexion->prepare("UPDATE pedidos SET estado = 'en_preparacion', updated_at = CURRENT_TIMESTAMP WHERE id = ?");
                     $stmt->bind_param("i", $pedido['id']);
                     $stmt->execute();
                     
-                    // Registrar en seguimiento
+                    ¿
+                    // Registrar en seguimiento (sin usuario_cambio_id porque es automático)
                     $stmt = $conexion->prepare("INSERT INTO seguimiento_pedidos 
-                        (pedido_id, estado_anterior, estado_nuevo, comentarios)
-                        VALUES (?, 'confirmado', 'en_preparacion', 'Pedido programado listo para preparar (automático)')");
+                        (pedido_id, estado_anterior, estado_nuevo, usuario_cambio_id, comentarios)
+                        VALUES (?, 'pendiente', 'en_preparacion', 1, 'Pedido programado activado automáticamente - Listo para preparar')");
                     $stmt->bind_param("i", $pedido['id']);
                     $stmt->execute();
                     
