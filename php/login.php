@@ -83,6 +83,12 @@ $redirect_url = '/dashboard/WEB_ElBuenGusto/admin/admin.php';
 if ($usuario['rol'] === 'cocinero'){
     $redirect_url = '/dashboard/WEB_ElBuenGusto/admin/cocinero.php';
 }
+if ($usuario['rol'] === 'repartidor'){
+    $redirect_url = '/dashboard/WEB_ElBuenGusto/admin/repartidor.php';
+}
+if ($usuario['rol'] === 'cajero'){
+    $redirect_url = '/dashboard/WEB_ElBuenGusto/admin/cajero.php';
+}
 
 echo json_encode([
     'success' => true,

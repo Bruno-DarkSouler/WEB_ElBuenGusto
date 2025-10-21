@@ -14,8 +14,7 @@ try {
     $ahora = new DateTime();
     $pedidos_procesados = 0;
     
-    // Buscar pedidos programados que deben pasar a preparación
-    // Buscar pedidos programados que deben pasar a preparación
+    // Buscar pedidos programados que deben pasar a en_preparación
     $query = "SELECT p.id, p.numero_pedido, p.fecha_entrega_programada, 
               MAX(pr.tiempo_preparacion) as tiempo_preparacion
               FROM pedidos p
@@ -24,6 +23,7 @@ try {
               WHERE p.tipo_pedido = 'programado'
               AND p.estado = 'pendiente'
               AND p.activo = 1
+              AND p.fecha_entrega_programada IS NOT NULL
               GROUP BY p.id, p.numero_pedido, p.fecha_entrega_programada";
     
     $resultado = $conexion->query($query);
@@ -39,8 +39,8 @@ try {
             $inicio_preparacion->modify("-{$tiempo_preparacion} minutes");
             $inicio_preparacion->modify("-5 minutes"); // 5 minutos de margen
             
-            // Si ya es hora de empezar a preparar
-            if ($ahora >= $inicio_preparacion) {
+            // Si la hora de entrega programada ya pasó, cambiar a en_preparacion
+            if ($ahora >= $fecha_entrega) {
                 // Iniciar transacción
                 $conexion->begin_transaction();
                 
@@ -50,12 +50,15 @@ try {
                     $stmt->bind_param("i", $pedido['id']);
                     $stmt->execute();
                     
-                    ¿
-                    // Registrar en seguimiento (sin usuario_cambio_id porque es automático)
+                    // Registrar en seguimiento (usuario_id = 1 para procesos automáticos del sistema)
+                    $comentario = ($ahora >= $fecha_entrega) 
+                        ? 'Pedido programado activado automáticamente - Hora de entrega alcanzada'
+                        : 'Pedido programado activado automáticamente - Listo para preparar';
+                    
                     $stmt = $conexion->prepare("INSERT INTO seguimiento_pedidos 
                         (pedido_id, estado_anterior, estado_nuevo, usuario_cambio_id, comentarios)
-                        VALUES (?, 'pendiente', 'en_preparacion', 1, 'Pedido programado activado automáticamente - Listo para preparar')");
-                    $stmt->bind_param("i", $pedido['id']);
+                        VALUES (?, 'pendiente', 'en_preparacion', 1, ?)");
+                    $stmt->bind_param("is", $pedido['id'], $comentario);
                     $stmt->execute();
                     
                     $conexion->commit();

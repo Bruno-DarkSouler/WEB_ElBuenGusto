@@ -13,7 +13,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Actualizar datos cada 30 segundos
     intervaloActualizacion = setInterval(() => {
         cargarDatos();
-        }, 30000);
+    }, 30000);
     });
     // Función principal de inicialización
     // Función principal de inicialización
@@ -39,12 +39,12 @@ function cargarPedidos() {
                 renderPedidos();
                 actualizarContador();
             } else {
-                mostrarError('Error al cargar pedidos: ' + data.message);
+                notify.error('Error al cargar ...: ' + data.message);
             }
         })
         .catch(error => {
             console.error('Error:', error);
-            mostrarError('Error de conexión al cargar pedidos');
+            notify.error('Error de conexión al cargar ...');
         });
 }
 
@@ -57,12 +57,12 @@ function cargarRepartidores() {
                 repartidoresDisponibles = data.repartidores;
                 renderRepartidores();
             } else {
-                mostrarError('Error al cargar repartidores: ' + data.message);
+                notify.error('Error al cargar ...: ' + data.message);
             }
         })
         .catch(error => {
             console.error('Error:', error);
-            mostrarError('Error de conexión al cargar repartidores');
+            notify.error('Error de conexión al cargar repartidores ...');
         });
 }
     // Cargar reseñas recientes
@@ -74,12 +74,12 @@ function cargarResenas() {
                 resenasRecientes = data.resenas;
                 renderResenas();
             } else {
-                mostrarError('Error al cargar reseñas: ' + data.message);
+                notify.error('Error al cargar ...: ' + data.message);
             }
         })
         .catch(error => {
             console.error('Error:', error);
-            mostrarError('Error de conexión al cargar reseñas');
+            notify.error('Error de conexión al cargar reseñas ...');
         });
 }
 
@@ -92,12 +92,12 @@ function cargarEstadisticas() {
                 estadisticas = data.estadisticas;
                 renderEstadisticas();
             } else {
-                mostrarError('Error al cargar estadísticas: ' + data.message);
+                notify.error('Error al cargar ...: ' + data.message);
             }
         })
         .catch(error => {
             console.error('Error:', error);
-            mostrarError('Error de conexión al cargar estadísticas');
+            notify.error('Error de conexión al cargar estadísticas ...');
         });
 }
 
@@ -316,9 +316,12 @@ function renderEstadisticas() {
 
 // Cambiar estado del pedido
 function cambiarEstadoPedido(pedidoId, nuevoEstado) {
-    if (!confirm('¿Confirmar cambio de estado del pedido?')) {
-        return;
-    }
+    customConfirm('¿Confirmar cambio de estado del pedido?', () => {
+        ejecutarCambioEstado(pedidoId, nuevoEstado);
+    });
+}
+
+function ejecutarCambioEstado(pedidoId, nuevoEstado) {
     
     fetch('cocinero.php?action=cambiar_estado', {
         method: 'POST',
@@ -333,15 +336,15 @@ function cambiarEstadoPedido(pedidoId, nuevoEstado) {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            mostrarNotificacion('✅ Estado actualizado correctamente');
+            notify.success('Estado actualizado correctamente');
             cargarDatos();
         } else {
-            mostrarError('Error al actualizar estado: ' + data.message);
+            notify.error('Error al actualizar estado: ' + data.message);
         }
     })
     .catch(error => {
         console.error('Error:', error);
-        mostrarError('Error de conexión al actualizar estado');
+        notify.error('Error de conexión al actualizar estado');
     });
 }
 
@@ -349,9 +352,12 @@ function cambiarEstadoPedido(pedidoId, nuevoEstado) {
 function asignarRepartidor(pedidoId, repartidorId) {
     const repartidor = repartidoresDisponibles.find(r => r.id == repartidorId);
     
-    if (!confirm(`¿Asignar pedido a ${repartidor.nombre} ${repartidor.apellido}?`)) {
-        return;
-    }
+    customConfirm(`¿Asignar pedido a ${repartidor.nombre} ${repartidor.apellido}?`, () => {
+        ejecutarAsignacion(pedidoId, repartidorId, repartidor);
+    });
+}
+
+function ejecutarAsignacion(pedidoId, repartidorId, repartidor) {
     
     fetch('cocinero.php?action=asignar_repartidor', {
         method: 'POST',
@@ -366,15 +372,15 @@ function asignarRepartidor(pedidoId, repartidorId) {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            mostrarNotificacion(`✅ Pedido asignado a ${repartidor.nombre}`);
+            notify.success(`Pedido asignado a ${repartidor.nombre}`);
             cargarDatos();
         } else {
-            mostrarError('Error al asignar repartidor: ' + data.message);
+            notify.error('Error al asignar repartidor: ' + data.message);
         }
     })
     .catch(error => {
         console.error('Error:', error);
-        mostrarError('Error de conexión al asignar repartidor');
+        notify.error('Error de conexión al asignar repartidor');
     });
 }
 
@@ -423,33 +429,9 @@ function actualizarContador() {
     document.getElementById('pedidos-count').textContent = pedidosActivos.length;
 }
 
-function mostrarNotificacion(mensaje) {
-    const notif = document.createElement('div');
-    notif.className = 'notificacion';
-    notif.textContent = mensaje;
-    document.body.appendChild(notif);
-    
-    setTimeout(() => {
-        notif.classList.add('show');
-    }, 100);
-    
-    setTimeout(() => {
-        notif.classList.remove('show');
-        setTimeout(() => {
-            if (document.body.contains(notif)) {
-                document.body.removeChild(notif);
-            }
-        }, 300);
-    }, 3000);
-}
-
-function mostrarError(mensaje) {
-    console.error(mensaje);
-    alert(mensaje);
-}
 
 function logout() {
-    if (confirm('¿Está seguro que desea cerrar sesión?')) {
+    if(customConfirm('¿Está seguro que desea cerrar sesión?',)) () => {
         clearInterval(intervaloActualizacion);
         
         fetch('../php/logout.php', {
@@ -464,5 +446,5 @@ function logout() {
         .catch(() => {
             window.location.href = '../index.html';
         });
-    }
+    }    
 }

@@ -300,7 +300,7 @@ function actualizarResumenPedido() {
 }
 
 function logout() {
-    if (confirm('¿Estás seguro que deseas cerrar sesión?')) {
+    if(customConfirm('¿Estás seguro que deseas cerrar sesión?', 'confirm')) {
         localStorage.removeItem('cart');
         
         fetch('../php/logout.php', {
@@ -320,37 +320,13 @@ function logout() {
 }
 
 function showNotification(message, type = 'success') {
-    const notification = document.createElement('div');
-    notification.className = `notification ${type}`;
-    notification.textContent = message;
-    
-    notification.style.cssText = `
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        background-color: ${type === 'error' ? '#C81E2D' : '#28a745'};
-        color: white;
-        padding: 15px 20px;
-        border-radius: 5px;
-        z-index: 10000;
-        font-family: inherit;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        transform: translateX(100%);
-        transition: transform 0.3s ease;
-    `;
-    
-    document.body.appendChild(notification);
-    
-    setTimeout(() => {
-        notification.style.transform = 'translateX(0)';
-    }, 100);
-    
-    setTimeout(() => {
-        notification.style.transform = 'translateX(100%)';
-        setTimeout(() => {
-            document.body.removeChild(notification);
-        }, 300);
-    }, 3000);
+    if (type === 'success') {
+        notify.success(message);
+    } else if (type === 'error') {
+        notify.error(message);
+    } else {
+        notify.info(message);
+    }
 }
 
 document.addEventListener('click', function(event) {

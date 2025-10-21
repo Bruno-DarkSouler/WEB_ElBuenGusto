@@ -9,6 +9,8 @@ if (!isset($_SESSION['user_id']) || $_SESSION['user_rol'] !== 'cocinero') {
 
 require_once '../php/conexion.php';
 
+
+
 $usuario_nombre = isset($_SESSION['user_name']) ? $_SESSION['user_name'] : 'Cocinero';
 
 // Manejar peticiones AJAX
@@ -23,15 +25,19 @@ if (isset($_GET['action'])) {
                           FROM pedidos p
                           LEFT JOIN usuarios u ON p.usuario_id = u.id
                           LEFT JOIN zonas_delivery z ON p.zona_delivery_id = z.id
-                          WHERE p.estado IN ('en_preparacion', 'listo')
-                            WHERE p.estado IN ('en_preparacion', 'listo')
-                            AND p.activo = 1
-                            ORDER BY 
-                                CASE 
-                                    WHEN p.tipo_pedido = 'inmediato' THEN 1
-                                WHEN p.tipo_pedido = 'programado' THEN 2
-                            END,
-                            p.fecha_pedido ASC";
+                          WHERE p.estado IN ('en_preparacion', 'listo', 'pendiente')
+                          AND p.activo = 1
+                          ORDER BY 
+                              CASE p.estado
+                                  WHEN 'pendiente' THEN 1
+                                  WHEN 'en_preparacion' THEN 2
+                                  WHEN 'listo' THEN 3
+                              END,
+                              CASE 
+                                  WHEN p.tipo_pedido = 'inmediato' THEN 1
+                                  WHEN p.tipo_pedido = 'programado' THEN 2
+                              END,
+                              p.fecha_pedido ASC";
                 
                 $resultado = $conexion->query($query);
                 $pedidos = [];
@@ -297,6 +303,7 @@ $conexion->close();
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Panel de Cocinero - El Buen Gusto</title>
+    <link rel="stylesheet" href="../css/notifications.css">
     <style>
         * {
             margin: 0;
@@ -944,5 +951,41 @@ $conexion->close();
               }
           });
     </script>
+        <script>
+        // Ejecutar cron cada 30 segundos
+        setInterval(function() {
+            fetch('../php/cron_pedidos_programados.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success && data.procesados > 0) {
+                    console.log(`✅ ${data.procesados} pedido(s) activado(s) automáticamente`);
+                    cargarDatos(); // Recargar pedidos
+                }
+            })
+            .catch(error => console.error('Error en cron:', error));
+        }, 30000); // Cada 30 segundos
+
+        // Ejecutar inmediatamente al cargar
+        fetch('../php/cron_pedidos_programados.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        }).then(response => response.json())
+          .then(data => {
+              if (data.success && data.procesados > 0) {
+                  console.log('✅ Cron ejecutado al inicio');
+                  cargarDatos();
+              }
+          });
+    </script>
+    <script src="../js/notifications.js"></script>
 </body>
 </html>
