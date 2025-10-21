@@ -61,9 +61,17 @@ document.addEventListener('DOMContentLoaded', function() {
         checkoutForm.addEventListener('submit', function(e) {
             e.preventDefault();
             
+            // Evitar múltiples envíos
+            const submitBtn = this.querySelector('button[type="submit"]');
+            if (submitBtn.disabled) return;
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Procesando...';
+            
             // Validar que hay productos en el carrito
             if (typeof cart === 'undefined' || cart.length === 0) {
-                alert('No hay productos en el carrito');
+                notify.warning('No hay productos en el carrito');
+                submitBtn.disabled = false;
+                submitBtn.textContent = '✅ Confirmar Pedido';
                 return;
             }
             
@@ -82,21 +90,27 @@ document.addEventListener('DOMContentLoaded', function() {
             });
             
             if (!isValid) {
-                alert('Por favor complete todos los campos obligatorios');
+                notify.warning('Por favor complete todos los campos obligatorios');
+                submitBtn.disabled = false;
+                submitBtn.textContent = '✅ Confirmar Pedido';
                 return;
             }
             
             // Validar tipo de entrega
             const deliveryType = document.querySelector('input[name="delivery_type"]:checked');
             if (!deliveryType) {
-                alert('Por favor seleccione un tipo de entrega');
+                notify.warning('Por favor seleccione un tipo de entrega');
+                submitBtn.disabled = false;
+                submitBtn.textContent = '✅ Confirmar Pedido';
                 return;
             }
             
             // Validar método de pago
             const paymentMethod = document.querySelector('input[name="payment_method"]:checked');
             if (!paymentMethod) {
-                alert('Por favor seleccione un método de pago');
+                notify.warning('Por favor seleccione un método de pago');
+                submitBtn.disabled = false;
+                submitBtn.textContent = '✅ Confirmar Pedido';
                 return;
             }
             
@@ -106,14 +120,18 @@ document.addEventListener('DOMContentLoaded', function() {
                 const time = document.getElementById('delivery_time').value;
                 
                 if (!date || !time) {
-                    alert('Por favor complete la fecha y hora de entrega');
+                    notify.warning('Por favor complete la fecha y hora de entrega');
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = '✅ Confirmar Pedido';
                     return;
                 }
             }
             
             // Validar zona seleccionada
             if (typeof zonaSeleccionada === 'undefined' || !zonaSeleccionada) {
-                alert('Por favor seleccione una zona de entrega');
+                notify.warning('Por favor seleccione una zona de entrega');
+                submitBtn.disabled = false;
+                submitBtn.textContent = '✅ Confirmar Pedido';
                 return;
             }
             
@@ -235,11 +253,24 @@ document.addEventListener('DOMContentLoaded', function() {
                     });
                 } else {
                     showNotification('Error al procesar el pedido: ' + data.message, 'error');
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = '✅ Confirmar Pedido';
                 }
             })
             .catch(error => {
                 console.error('Error:', error);
                 showNotification('Error al procesar el pedido. Intente nuevamente.', 'error');
+                submitBtn.disabled = false;
+                submitBtn.textContent = '✅ Confirmar Pedido';
+            })
+            .finally(() => {
+                // Rehabilitar el botón en caso de cualquier error no capturado
+                setTimeout(() => {
+                    if (submitBtn.disabled) {
+                        submitBtn.disabled = false;
+                        submitBtn.textContent = '✅ Confirmar Pedido';
+                    }
+                }, 3000);
             });
             
         });

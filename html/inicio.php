@@ -85,7 +85,7 @@ if (isset($_GET['action'])) {
                 $numero_pedido = 'PED' . str_pad(rand(1, 99999), 5, '0', STR_PAD_LEFT);
                 
                 // Determinar estado según tipo de pedido
-                $estado = ($data['tipo_pedido'] === 'programado') ? 'pendiente' : 'confirmado';
+                $estado = ($data['tipo_pedido'] === 'programado') ? 'pendiente' : 'en_preparacion';
                 
                 // Insertar pedido
                 $stmt = $conexion->prepare("INSERT INTO pedidos 
@@ -171,11 +171,11 @@ $conexion->close();
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <title>El Buen Gusto - Inicio</title>
     <link rel="stylesheet" href="../css/inicio.css">
     <link rel="stylesheet" href="../css/style.css">
     <link rel="stylesheet" href="../css/pedido.css">
+    <link rel="stylesheet" href="../css/notifications.css">
 </head>
 <body>
     <!-- Header con navegación -->
@@ -473,5 +473,6 @@ $conexion->close();
 
     <script src="../js/pedido.js"></script>
     <script src="../js/inicio.js"></script>
+    <script src="../js/notifications.js"></script>
 </body>
 </html>

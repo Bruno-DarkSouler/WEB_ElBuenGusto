@@ -1,205 +1,144 @@
-tailwind.config = {
-    theme: {
-        extend: {
-            colors: {
-                'primary-brown': 'rgb(80, 50, 20)',
-                'primary-cream': 'rgb(245, 235, 210)',
-                'primary-red': 'rgb(200, 30, 45)'
-            },
-            fontFamily: {
-                'averia': ['"Averia Serif Libre"', 'serif']
-            }
-        }
-    }
-}
-// Estado del repartidor
+// Variables globales
 let isAvailable = false;
-let pedidos = [
-    {
-        id: 1,
-        cliente: "María González",
-        direccion: "Av. Libertador 1234, San Isidro",
-        telefono: "11-1234-5678",
-        total: 12500,
-        items: ["2x Pollo Entero", "1x Pizza Muzzarella", "2x Coca Cola"],
-        estado: "listo",
-        tiempoEstimado: "15 min",
-        distancia: "2.3 km",
-        reseñas: {
-            entrega: { puntuacion: 5, comentario: "Llegó súper rápido y caliente!" }
-        }
-    },
-    {
-        id: 2,
-        cliente: "Carlos Ruiz",
-        direccion: "Mitre 567, Vicente López",
-        telefono: "11-8765-4321",
-        total: 8700,
-        items: ["1x Empanadas x12", "1x Flan Casero"],
-        estado: "listo",
-        tiempoEstimado: "20 min",
-        distancia: "1.8 km"
-    },
-    {
-        id: 3,
-        cliente: "Ana Torres",
-        direccion: "Belgrano 890, Villa Adelina",
-        telefono: "11-5555-1234",
-        total: 15300,
-        items: ["4x Milanesas", "1x Tarta J&Q", "3x Agua"],
-        estado: "enCamino",
-        tiempoEstimado: "10 min",
-        distancia: "0.9 km"
-    }
-];
+let pedidos = [];
+let historial = [];
 
-let historial = [
-    {
-        id: 10,
-        cliente: "Luis Pérez",
-        direccion: "San Martín 123",
-        total: 9500,
-        horaEntrega: "14:30",
-        reseñas: {
-            entrega: { puntuacion: 4, comentario: "Muy buen servicio" }
-        }
-    },
-    {
-        id: 11,
-        cliente: "Sofia Mendez",
-        direccion: "Rivadavia 456",
-        total: 7200,
-        horaEntrega: "13:15",
-        reseñas: {
-            entrega: { puntuacion: 5, comentario: "Excelente atención!" }
-        }
-    }
-];
+// Inicialización
+document.addEventListener('DOMContentLoaded', function() {
+    init();
+});
+
+function init() {
+    cargarDisponibilidad();
+    cargarDatos();
+    
+    // Actualizar datos cada 30 segundos
+    setInterval(() => {
+        cargarDatos();
+    }, 30000);
+}
+
+// Cargar disponibilidad actual
+function cargarDisponibilidad() {
+    fetch('repartidor.php?action=get_disponibilidad')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                isAvailable = data.disponible;
+                actualizarEstadoBoton();
+            }
+        })
+        .catch(error => console.error('Error:', error));
+}
 
 // Función para alternar estado
 function toggleStatus() {
     isAvailable = !isAvailable;
+    
+    fetch('repartidor.php?action=toggle_disponibilidad', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            disponible: isAvailable
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            actualizarEstadoBoton();
+            showNotification(isAvailable ? 'Estado cambiado a Disponible' : 'Estado cambiado a No Disponible', 'success');
+        } else {
+            isAvailable = !isAvailable; // Revertir
+            showNotification('Error al cambiar estado', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        isAvailable = !isAvailable; // Revertir
+        showNotification('Error de conexión', 'error');
+    });
+}
+
+function actualizarEstadoBoton() {
     const statusButton = document.getElementById('statusToggle');
     const statusText = document.getElementById('statusText');
     
     if (isAvailable) {
         statusButton.className = 'px-4 py-2 rounded-full text-sm font-bold bg-green-500 text-white status-animation';
         statusText.textContent = 'Disponible';
-        console.log("1")
     } else {
         statusButton.className = 'px-4 py-2 rounded-full text-sm font-bold bg-gray-500 text-white';
         statusText.textContent = 'No Disponible';
-        console.log("0")
-    }
-    
-    showNotification(isAvailable ? 'Estado cambiado a Disponible' : 'Estado cambiado a No Disponible');
-}
-
-// Función para mostrar notificaciones
-function showNotification(message, type = 'info') {
-    const notification = document.createElement('div');
-    const colors = {
-        success: 'bg-green-500',
-        error: 'bg-red-500',
-        info: 'bg-blue-500'
-    };
-    
-    notification.className = `${colors[type]} text-white px-6 py-3 rounded-lg shadow-lg notification-slide`;
-    notification.innerHTML = `
-        <div class="flex items-center gap-3">
-            <span>${message}</span>
-            <button onclick="this.parentElement.parentElement.remove()" class="text-white hover:bg-black hover:bg-opacity-20 p-1 rounded">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                </svg>
-            </button>
-        </div>
-    `;
-    
-    document.getElementById('notifications').appendChild(notification);
-    
-    setTimeout(() => {
-        if (notification.parentElement) {
-            notification.remove();
-        }
-    }, 5000);
-}
-
-// Función para marcar pedido como en camino
-function marcarEnCamino(pedidoId) {
-    const pedido = pedidos.find(p => p.id === pedidoId);
-    if (pedido) {
-        pedido.estado = 'enCamino';
-        renderPedidos();
-        showNotification(`Pedido #${pedidoId} marcado como "En Camino"`, 'success');
     }
 }
 
-// Función para marcar pedido como entregado
-function marcarEntregado(pedidoId) {
-    const pedido = pedidos.find(p => p.id === pedidoId);
-    if (pedido) {
-        pedido.estado = 'entregado';
-        pedido.horaEntrega = new Date().toLocaleTimeString('es-AR', {hour: '2-digit', minute:'2-digit'});
-        
-        // Mover al historial
-        historial.unshift(pedido);
-        pedidos = pedidos.filter(p => p.id !== pedidoId);
-        
-        // Actualizar estadísticas
-        updateStats();
-        renderPedidos();
-        renderHistorial();
-        
-        showNotification(`Pedido #${pedidoId} entregado correctamente`, 'success');
-    }
+// Cargar todos los datos
+function cargarDatos() {
+    cargarPedidos();
+    cargarHistorial();
+    cargarEstadisticas();
 }
 
-// Función para ver reseñas
-function verReseñas(pedidoId) {
-    const pedido = [...pedidos, ...historial].find(p => p.id === pedidoId);
-    if (pedido && pedido.reseñas) {
-        const modal = document.getElementById('reviewModal');
-        const content = document.getElementById('reviewContent');
-        
-        content.innerHTML = `
-            <div class="space-y-4">
-                <div class="text-center">
-                    <h4 class="text-lg font-bold text-primary-brown">Pedido #${pedido.id}</h4>
-                    <p class="text-gray-600">${pedido.cliente}</p>
-                </div>
-                
-                ${pedido.reseñas.entrega ? `
-                <div class="bg-blue-50 p-4 rounded-lg">
-                    <h5 class="font-bold text-blue-800 mb-2">Reseña del Servicio de Entrega</h5>
-                    <div class="flex items-center gap-2 mb-2">
-                        <span class="text-yellow-500">${'⭐'.repeat(pedido.reseñas.entrega.puntuacion)}</span>
-                        <span class="text-gray-600">(${pedido.reseñas.entrega.puntuacion}/5)</span>
-                    </div>
-                    <p class="text-gray-700">"${pedido.reseñas.entrega.comentario}"</p>
-                </div>
-                ` : '<p class="text-gray-500 text-center">Aún no hay reseñas para este pedido</p>'}
-            </div>
-        `;
-        
-        modal.classList.remove('hidden');
-    }
+// Cargar pedidos asignados
+function cargarPedidos() {
+    fetch('repartidor.php?action=get_pedidos_asignados')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                pedidos = data.pedidos;
+                renderPedidos();
+            } else {
+                console.error('Error:', data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
 }
 
-// Función para cerrar modal de reseñas
-function closeReviewModal() {
-    document.getElementById('reviewModal').classList.add('hidden');
+// Cargar historial
+function cargarHistorial() {
+    fetch('repartidor.php?action=get_historial')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                historial = data.historial;
+                renderHistorial();
+            } else {
+                console.error('Error:', data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
 }
 
-// Función para renderizar pedidos
+// Cargar estadísticas
+function cargarEstadisticas() {
+    fetch('repartidor.php?action=get_estadisticas')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const stats = data.estadisticas;
+                document.getElementById('entregasHoy').textContent = stats.entregas_hoy;
+                document.getElementById('gananciaHoy').textContent = '$' + stats.ganancia_hoy.toLocaleString();
+                document.getElementById('promedioReseñas').textContent = stats.promedio_resenas;
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
+}
+
+// Renderizar pedidos
 function renderPedidos() {
     const pendientes = pedidos.filter(p => p.estado === 'listo');
-    const enCamino = pedidos.filter(p => p.estado === 'enCamino');
+    const enCamino = pedidos.filter(p => p.estado === 'en_camino');
     
-    // Actualizar contadores
     document.getElementById('pendingCount').textContent = pendientes.length;
     document.getElementById('enCaminoCount').textContent = enCamino.length;
-    document.getElementById('pedidosPendientes').textContent = pendientes.length;
     
     // Renderizar pendientes
     const pendientesContainer = document.getElementById('pedidosPendientesContainer');
@@ -207,20 +146,19 @@ function renderPedidos() {
         <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow duration-300 fade-in">
             <div class="flex justify-between items-start mb-3">
                 <div>
-                    <h4 class="font-bold text-primary-brown">Pedido #${pedido.id}</h4>
-                    <p class="text-gray-600">${pedido.cliente}</p>
+                    <h4 class="font-bold text-primary-brown">Pedido #${pedido.numero_pedido}</h4>
+                    <p class="text-gray-600">${pedido.cliente_nombre} ${pedido.cliente_apellido}</p>
                 </div>
                 <span class="bg-orange-100 text-orange-800 px-3 py-1 rounded-full text-sm font-medium">
-                    Listo
+                    Listo para retirar
                 </span>
             </div>
             
             <div class="space-y-2 text-sm text-gray-700 mb-4">
-                <p><strong>📍 Dirección:</strong> ${pedido.direccion}</p>
-                <p><strong>📞 Teléfono:</strong> ${pedido.telefono}</p>
-                <p><strong>🕒 Tiempo est.:</strong> ${pedido.tiempoEstimado}</p>
-                <p><strong>📏 Distancia:</strong> ${pedido.distancia}</p>
-                <p><strong>💰 Total:</strong> $${pedido.total.toLocaleString()}</p>
+                <p><strong>📍 Dirección:</strong> ${pedido.direccion_entrega}</p>
+                <p><strong>📞 Teléfono:</strong> ${pedido.telefono_contacto}</p>
+                ${pedido.zona_nombre ? `<p><strong>🗺️ Zona:</strong> ${pedido.zona_nombre}</p>` : ''}
+                <p><strong>💰 Total:</strong> $${parseFloat(pedido.total).toLocaleString('es-AR', {minimumFractionDigits: 2})}</p>
             </div>
             
             <div class="mb-4">
@@ -230,18 +168,17 @@ function renderPedidos() {
                 </ul>
             </div>
             
-            <div class="flex gap-2">
-                <button onclick="marcarEnCamino(${pedido.id})" 
-                        class="flex-1 bg-primary-red hover:bg-red-600 text-white py-2 px-4 rounded-lg transition-colors duration-300">
-                    🚚 Salir a Entregar
-                </button>
-                ${pedido.reseñas ? `
-                <button onclick="verReseñas(${pedido.id})" 
-                        class="bg-gray-100 hover:bg-gray-200 text-gray-700 py-2 px-4 rounded-lg transition-colors duration-300">
-                    📝
-                </button>
-                ` : ''}
-            </div>
+            ${pedido.comentarios_cliente ? `
+                <div class="mb-4 bg-yellow-50 p-3 rounded-lg border-l-4 border-yellow-400">
+                    <p class="font-medium text-yellow-800 mb-1">💬 Comentarios del cliente:</p>
+                    <p class="text-sm text-yellow-700">${pedido.comentarios_cliente}</p>
+                </div>
+            ` : ''}
+            
+            <button onclick="marcarEnCamino(${pedido.id})" 
+                    class="w-full bg-primary-red hover:bg-red-600 text-white py-2 px-4 rounded-lg transition-colors duration-300 font-medium">
+                🚚 Salir a Entregar
+            </button>
         </div>
     `).join('') : '<p class="text-gray-500 text-center py-8">No hay entregas pendientes</p>';
     
@@ -251,8 +188,8 @@ function renderPedidos() {
         <div class="border border-blue-200 rounded-lg p-4 bg-blue-50 fade-in">
             <div class="flex justify-between items-start mb-3">
                 <div>
-                    <h4 class="font-bold text-primary-brown">Pedido #${pedido.id}</h4>
-                    <p class="text-gray-600">${pedido.cliente}</p>
+                    <h4 class="font-bold text-primary-brown">Pedido #${pedido.numero_pedido}</h4>
+                    <p class="text-gray-600">${pedido.cliente_nombre} ${pedido.cliente_apellido}</p>
                 </div>
                 <span class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
                     En Camino
@@ -260,17 +197,90 @@ function renderPedidos() {
             </div>
             
             <div class="space-y-2 text-sm text-gray-700 mb-4">
-                <p><strong>📍 Dirección:</strong> ${pedido.direccion}</p>
-                <p><strong>📞 Teléfono:</strong> ${pedido.telefono}</p>
-                <p><strong>💰 Total:</strong> $${pedido.total.toLocaleString()}</p>
+                <p><strong>📍 Dirección:</strong> ${pedido.direccion_entrega}</p>
+                <p><strong>📞 Teléfono:</strong> ${pedido.telefono_contacto}</p>
+                <p><strong>💰 Total:</strong> $${parseFloat(pedido.total).toLocaleString('es-AR', {minimumFractionDigits: 2})}</p>
             </div>
             
+            ${pedido.comentarios_cliente ? `
+                <div class="mb-4 bg-yellow-50 p-3 rounded-lg border-l-4 border-yellow-400">
+                    <p class="font-medium text-yellow-800 mb-1">💬 Comentarios:</p>
+                    <p class="text-sm text-yellow-700">${pedido.comentarios_cliente}</p>
+                </div>
+            ` : ''}
+            
             <button onclick="marcarEntregado(${pedido.id})" 
-                    class="w-full bg-green-500 hover:bg-green-600 text-white py-2 px-4 rounded-lg transition-colors duration-300">
+                    class="w-full bg-green-500 hover:bg-green-600 text-white py-2 px-4 rounded-lg transition-colors duration-300 font-medium">
                 ✅ Marcar como Entregado
             </button>
         </div>
     `).join('') : '<p class="text-gray-500 text-center py-8">No hay entregas en camino</p>';
+}
+
+// Función para marcar pedido como en camino
+function marcarEnCamino(pedidoId) {
+    customConfirm('¿Confirmar que sales a entregar este pedido?', () => {
+        ejecutarMarcarEnCamino(pedidoId);
+    });
+}
+
+function ejecutarMarcarEnCamino(pedidoId) {
+    
+    fetch('repartidor.php?action=marcar_en_camino', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            pedido_id: pedidoId
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification('Pedido marcado como "En Camino"', 'success');
+            cargarDatos();
+        } else {
+            showNotification('Error: ' + data.message, 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification('Error de conexión', 'error');
+    });
+}
+
+// Función para marcar pedido como entregado
+function marcarEntregado(pedidoId) {
+    customConfirm('¿Confirmar que el pedido fue entregado al cliente?', () => {
+        ejecutarMarcarEntregado(pedidoId);
+    });
+}
+
+function ejecutarMarcarEntregado(pedidoId) {
+    
+    fetch('repartidor.php?action=marcar_entregado', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            pedido_id: pedidoId
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification('Pedido entregado correctamente. El cliente debe confirmar la recepción.', 'success');
+            cargarDatos();
+        } else {
+            showNotification('Error: ' + data.message, 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification('Error de conexión', 'error');
+    });
 }
 
 // Función para renderizar historial
@@ -279,62 +289,88 @@ function renderHistorial() {
     historialContainer.innerHTML = historial.length > 0 ? historial.map(pedido => `
         <div class="flex justify-between items-center p-3 bg-green-50 rounded-lg">
             <div>
-                <p class="font-medium text-gray-800">Pedido #${pedido.id} - ${pedido.cliente}</p>
-                <p class="text-sm text-gray-600">${pedido.direccion}</p>
-                <p class="text-sm text-green-600">Entregado a las ${pedido.horaEntrega}</p>
+                <p class="font-medium text-gray-800">Pedido #${pedido.numero_pedido} - ${pedido.cliente_nombre} ${pedido.cliente_apellido}</p>
+                <p class="text-sm text-gray-600">${pedido.direccion_entrega}</p>
+                <p class="text-sm text-green-600">Entregado${pedido.horaEntrega ? ' a las ' + pedido.horaEntrega : ''}</p>
             </div>
             <div class="text-right">
-                <p class="font-bold text-green-600">$${pedido.total.toLocaleString()}</p>
+                <p class="font-bold text-green-600">$${parseFloat(pedido.total).toLocaleString('es-AR', {minimumFractionDigits: 2})}</p>
                 ${pedido.reseñas ? `
                 <button onclick="verReseñas(${pedido.id})" 
                         class="text-sm bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-1 rounded-full mt-1">
                     Ver Reseña
                 </button>
-                ` : ''}
+                ` : '<p class="text-xs text-gray-500 mt-1">Sin reseña aún</p>'}
             </div>
         </div>
     `).join('') : '<p class="text-gray-500 text-center py-4">No hay entregas completadas hoy</p>';
 }
 
-// Función para actualizar estadísticas
-function updateStats() {
-    const entregasHoy = historial.length;
-    const gananciaHoy = historial.reduce((total, pedido) => total + (pedido.total * 0.1), 0); // 10% por entrega
-    const promedioReseñas = historial
-        .filter(p => p.reseñas && p.reseñas.entrega)
-        .reduce((avg, p, _, arr) => avg + p.reseñas.entrega.puntuacion / arr.length, 0);
+// Función para ver reseñas
+function verReseñas(pedidoId) {
+    const pedido = historial.find(p => p.id == pedidoId);
+    if (!pedido || !pedido.reseñas) {
+        showNotification('No hay reseñas disponibles para este pedido', 'info');
+        return;
+    }
     
-    document.getElementById('entregasHoy').textContent = entregasHoy;
-    document.getElementById('gananciaHoy').textContent = `$${gananciaHoy.toLocaleString()}`;
-    document.getElementById('promedioReseñas').textContent = promedioReseñas.toFixed(1);
+    const modal = document.getElementById('reviewModal');
+    const content = document.getElementById('reviewContent');
+    
+    content.innerHTML = `
+        <div class="space-y-4">
+            <div class="text-center">
+                <h4 class="text-lg font-bold text-primary-brown">Pedido #${pedido.numero_pedido}</h4>
+                <p class="text-gray-600">${pedido.cliente_nombre} ${pedido.cliente_apellido}</p>
+            </div>
+            
+            ${pedido.reseñas.entrega ? `
+            <div class="bg-blue-50 p-4 rounded-lg">
+                <h5 class="font-bold text-blue-800 mb-2">Reseña del Servicio de Entrega</h5>
+                <div class="flex items-center gap-2 mb-2">
+                    <span class="text-yellow-500">${'⭐'.repeat(pedido.reseñas.entrega.puntuacion)}</span>
+                    <span class="text-gray-600">(${pedido.reseñas.entrega.puntuacion}/5)</span>
+                </div>
+                ${pedido.reseñas.entrega.comentario ? `
+                    <p class="text-gray-700">"${pedido.reseñas.entrega.comentario}"</p>
+                ` : '<p class="text-gray-500 italic">Sin comentarios</p>'}
+            </div>
+            ` : '<p class="text-gray-500 text-center">Aún no hay reseñas para este pedido</p>'}
+        </div>
+    `;
+    
+    modal.classList.remove('hidden');
 }
 
-// Inicializar la aplicación
-function init() {
-    renderPedidos();
-    renderHistorial();
-    updateStats();
-    
-    // Simular nuevos pedidos cada 30 segundos (para demostración)
-    setInterval(() => {
-        if (Math.random() > 0.7) { // 30% de probabilidad
-            const nuevoId = Math.max(...pedidos.map(p => p.id)) + 1;
-            pedidos.push({
-                id: nuevoId,
-                cliente: "Cliente Nuevo",
-                direccion: "Dirección Nueva 123",
-                telefono: "11-0000-0000",
-                total: Math.floor(Math.random() * 15000) + 5000,
-                items: ["Producto Nuevo"],
-                estado: "listo",
-                tiempoEstimado: "20 min",
-                distancia: "1.5 km"
-            });
-            renderPedidos();
-            showNotification('¡Nuevo pedido asignado!', 'success');
-        }
-    }, 30000);
+// Función para cerrar modal de reseñas
+function closeReviewModal() {
+    document.getElementById('reviewModal').classList.add('hidden');
 }
 
-// Inicializar cuando se carga la página
-document.addEventListener('DOMContentLoaded', init);
+// Función para mostrar notificaciones
+function showNotification(message, type = 'info') {
+    if (type === 'success') {
+        notify.success(message);
+    } else if (type === 'error') {
+        notify.error(message);
+    } else {
+        notify.info(message);
+    }
+}
+// Función de logout
+function logout() {
+    if (customConfirm('¿Está seguro que desea cerrar sesión?')) {
+        fetch('../php/logout.php', {
+            method: 'POST',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(() => {
+            window.location.href = '../index.html';
+        })
+        .catch(() => {
+            window.location.href = '../index.html';
+        });
+    }
+}
