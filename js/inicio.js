@@ -26,6 +26,25 @@ function initializeApp() {
     // Cargar zonas de delivery
     cargarZonas();
 }
+// Verificar si hay pedidos pendientes de confirmar
+function verificarPedidosPendientes() {
+    if (!window.location.pathname.includes('confirmar_pedido.php')) {
+        fetch('confirmar_pedido.php?action=verificar_pedidos_pendientes')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success && data.pedidos.length > 0) {
+                    // Redirigir a confirmación
+                    window.location.href = 'confirmar_pedido.php';
+                }
+            })
+            .catch(error => console.error('Error:', error));
+    }
+}
+
+// Verificar cada 15 segundos
+setInterval(verificarPedidosPendientes, 15000);
+// Verificar al cargar
+verificarPedidosPendientes();
 
 function checkUserSession() {
     fetch('../php/check_session.php')
@@ -300,9 +319,10 @@ function actualizarResumenPedido() {
 }
 
 function logout() {
-    if(customConfirm('¿Estás seguro que deseas cerrar sesión?', 'confirm')) {
+    customConfirm('¿Estás seguro que deseas cerrar sesión?', () => {
+        // Si el usuario confirma, se ejecuta esto:
         localStorage.removeItem('cart');
-        
+
         fetch('../php/logout.php', {
             method: 'POST',
             headers: {
@@ -316,8 +336,9 @@ function logout() {
             console.log('Cerrando sesión...');
             window.location.href = '../index.html';
         });
-    }
+    });
 }
+
 
 function showNotification(message, type = 'success') {
     if (type === 'success') {

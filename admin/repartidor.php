@@ -67,15 +67,16 @@ if (isset($_GET['action'])) {
                 $hoy = date('Y-m-d');
                 
                 $query = "SELECT p.*, u.nombre as cliente_nombre, u.apellido as cliente_apellido,
-                          c.calificacion_delivery, c.comentario as comentario_delivery
-                          FROM pedidos p
-                          LEFT JOIN usuarios u ON p.usuario_id = u.id
-                          LEFT JOIN calificaciones c ON p.id = c.pedido_id
-                          WHERE p.repartidor_id = ? 
-                          AND p.estado = 'entregado'
-                          AND DATE(p.fecha_pedido) = ?
-                          AND p.activo = 1
-                          ORDER BY p.fecha_pedido DESC";
+                        c.calificacion_delivery, c.comentario as comentario_delivery,
+                        c.calificacion_comida
+                        FROM pedidos p
+                        LEFT JOIN usuarios u ON p.usuario_id = u.id
+                        LEFT JOIN calificaciones c ON p.id = c.pedido_id
+                        WHERE p.repartidor_id = ? 
+                        AND p.estado = 'entregado'
+                        AND DATE(p.fecha_pedido) = ?
+                        AND p.activo = 1
+                        ORDER BY p.fecha_pedido DESC";
                 
                 $stmt = $conexion->prepare($query);
                 $stmt->bind_param("is", $repartidor_id, $hoy);
@@ -86,27 +87,39 @@ if (isset($_GET['action'])) {
                 while ($pedido = $resultado->fetch_assoc()) {
                     // Obtener hora de entrega del seguimiento
                     $query_entrega = "SELECT fecha_cambio 
-                                     FROM seguimiento_pedidos 
-                                     WHERE pedido_id = ? AND estado_nuevo = 'entregado'";
+                                    FROM seguimiento_pedidos 
+                                    WHERE pedido_id = ? AND estado_nuevo = 'entregado'
+                                    ORDER BY fecha_cambio DESC LIMIT 1";
                     $stmt_entrega = $conexion->prepare($query_entrega);
                     $stmt_entrega->bind_param("i", $pedido['id']);
                     $stmt_entrega->execute();
                     $hora_entrega = $stmt_entrega->get_result()->fetch_assoc();
                     
+                    $pedido['horaEntrega'] = null;
                     if ($hora_entrega) {
                         $fecha = new DateTime($hora_entrega['fecha_cambio']);
                         $pedido['horaEntrega'] = $fecha->format('H:i');
                     }
                     
-                    $pedido['reseñas'] = null;
-                    if ($pedido['calificacion_delivery']) {
-                        $pedido['reseñas'] = [
-                            'entrega' => [
-                                'puntuacion' => $pedido['calificacion_delivery'],
-                                'comentario' => $pedido['comentario_delivery']
+                    // Armar objeto de reseñas solo si existe calificación
+                    $pedido['tiene_resena'] = false;
+                    if ($pedido['calificacion_delivery'] || $pedido['calificacion_comida']) {
+                        $pedido['tiene_resena'] = true;
+                        $pedido['resena'] = [
+                            'delivery' => [
+                                'puntuacion' => $pedido['calificacion_delivery'] ?? 0,
+                                'comentario' => $pedido['comentario_delivery'] ?? ''
+                            ],
+                            'comida' => [
+                                'puntuacion' => $pedido['calificacion_comida'] ?? 0
                             ]
                         ];
                     }
+                    
+                    // Limpiar campos innecesarios
+                    unset($pedido['calificacion_delivery']);
+                    unset($pedido['comentario_delivery']);
+                    unset($pedido['calificacion_comida']);
                     
                     $historial[] = $pedido;
                 }
@@ -121,38 +134,41 @@ if (isset($_GET['action'])) {
             try {
                 $hoy = date('Y-m-d');
                 
-                // Entregas completadas hoy
+                // DEBUG: Verificar repartidor_id
+                error_log("DEBUG - Repartidor ID: " . $repartidor_id);
+                error_log("DEBUG - Fecha hoy: " . $hoy);
+
+                // 1. ENTREGAS COMPLETADAS HOY - Solo del día actual
                 $query_entregas = "SELECT COUNT(*) as total FROM pedidos 
-                                  WHERE repartidor_id = ? 
-                                  AND estado = 'entregado' 
-                                  AND DATE(fecha_pedido) = ?";
+                                WHERE repartidor_id = ? 
+                                AND estado = 'entregado' 
+                                AND DATE(fecha_pedido) = ?";
                 $stmt = $conexion->prepare($query_entregas);
                 $stmt->bind_param("is", $repartidor_id, $hoy);
                 $stmt->execute();
                 $entregas = $stmt->get_result()->fetch_assoc()['total'];
                 
-                // Ganancia del día (10% del total de pedidos)
-                $query_ganancia = "SELECT SUM(total) * 0.10 as ganancia FROM pedidos 
-                                  WHERE repartidor_id = ? 
-                                  AND estado = 'entregado' 
-                                  AND DATE(fecha_pedido) = ?";
+                // 2. GANANCIA DEL DÍA - Suma del precio_delivery de pedidos entregados HOY
+                $query_ganancia = "SELECT COALESCE(SUM(precio_delivery), 0) as ganancia FROM pedidos 
+                                WHERE repartidor_id = ? 
+                                AND estado = 'entregado' 
+                                AND DATE(fecha_pedido) = ?";
                 $stmt = $conexion->prepare($query_ganancia);
                 $stmt->bind_param("is", $repartidor_id, $hoy);
                 $stmt->execute();
-                $ganancia = $stmt->get_result()->fetch_assoc()['ganancia'] ?? 0;
+                $ganancia = $stmt->get_result()->fetch_assoc()['ganancia'];
                 
-                // Promedio de reseñas
+                // 3. PROMEDIO DE RESEÑAS - De TODOS los pedidos del repartidor (histórico completo)
                 $query_resenas = "SELECT AVG(c.calificacion_delivery) as promedio
-                                 FROM calificaciones c
-                                 INNER JOIN pedidos p ON c.pedido_id = p.id
-                                 WHERE p.repartidor_id = ? 
-                                 AND DATE(p.fecha_pedido) = ?";
+                                FROM calificaciones c
+                                INNER JOIN pedidos p ON c.pedido_id = p.id
+                                WHERE p.repartidor_id = ?";
                 $stmt = $conexion->prepare($query_resenas);
-                $stmt->bind_param("is", $repartidor_id, $hoy);
+                $stmt->bind_param("i", $repartidor_id);
                 $stmt->execute();
                 $promedio = $stmt->get_result()->fetch_assoc()['promedio'] ?? 0;
                 
-                // Pedidos pendientes
+                // 4. Pedidos pendientes (sin cambios)
                 $query_pendientes = "SELECT COUNT(*) as total FROM pedidos 
                                     WHERE repartidor_id = ? 
                                     AND estado IN ('listo', 'en_camino')
@@ -161,11 +177,15 @@ if (isset($_GET['action'])) {
                 $stmt->bind_param("i", $repartidor_id);
                 $stmt->execute();
                 $pendientes = $stmt->get_result()->fetch_assoc()['total'];
+                // DEBUG: Mostrar valores antes de enviar
+                error_log("DEBUG - Entregas: " . $entregas);
+                error_log("DEBUG - Ganancia: " . $ganancia);
+                error_log("DEBUG - Promedio: " . $promedio);
                 
                 echo json_encode([
                     'success' => true,
                     'estadisticas' => [
-                        'entregas_hoy' => $entregas,
+                        'entregas_hoy' => (int)$entregas,
                         'ganancia_hoy' => round($ganancia, 2),
                         'promedio_resenas' => round($promedio, 1),
                         'pendientes' => $pendientes
@@ -305,6 +325,37 @@ if (isset($_GET['action'])) {
                 ]);
             } catch (Exception $e) {
                 echo json_encode(['success' => false, 'message' => 'Error: ' . $e->getMessage()]);
+            }
+            exit;
+
+            case 'verificar_pedidos_entregados':
+            try {
+                // Buscar pedidos entregados pero no confirmados por el cliente
+                $query = "SELECT p.id, p.numero_pedido, p.usuario_id
+                         FROM pedidos p
+                         LEFT JOIN calificaciones c ON p.id = c.pedido_id
+                         WHERE p.estado = 'entregado'
+                         AND p.activo = 1
+                         AND c.id IS NULL
+                         AND TIMESTAMPDIFF(MINUTE, 
+                             (SELECT fecha_cambio FROM seguimiento_pedidos 
+                              WHERE pedido_id = p.id AND estado_nuevo = 'entregado' 
+                              ORDER BY fecha_cambio DESC LIMIT 1), 
+                             NOW()) <= 30";
+                
+                $resultado = $conexion->query($query);
+                $pedidos_pendientes = [];
+                
+                while ($row = $resultado->fetch_assoc()) {
+                    $pedidos_pendientes[] = $row;
+                }
+                
+                echo json_encode([
+                    'success' => true,
+                    'pedidos' => $pedidos_pendientes
+                ]);
+            } catch (Exception $e) {
+                echo json_encode(['success' => false, 'message' => $e->getMessage()]);
             }
             exit;
     }

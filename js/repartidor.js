@@ -5,6 +5,7 @@ let historial = [];
 
 // Inicialización
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('🚀 Iniciando aplicación repartidor');
     init();
 });
 
@@ -20,15 +21,17 @@ function init() {
 
 // Cargar disponibilidad actual
 function cargarDisponibilidad() {
+    console.log('📡 Cargando disponibilidad...');
     fetch('repartidor.php?action=get_disponibilidad')
         .then(response => response.json())
         .then(data => {
+            console.log('✅ Disponibilidad:', data);
             if (data.success) {
                 isAvailable = data.disponible;
                 actualizarEstadoBoton();
             }
         })
-        .catch(error => console.error('Error:', error));
+        .catch(error => console.error('❌ Error disponibilidad:', error));
 }
 
 // Función para alternar estado
@@ -50,13 +53,13 @@ function toggleStatus() {
             actualizarEstadoBoton();
             showNotification(isAvailable ? 'Estado cambiado a Disponible' : 'Estado cambiado a No Disponible', 'success');
         } else {
-            isAvailable = !isAvailable; // Revertir
+            isAvailable = !isAvailable;
             showNotification('Error al cambiar estado', 'error');
         }
     })
     .catch(error => {
         console.error('Error:', error);
-        isAvailable = !isAvailable; // Revertir
+        isAvailable = !isAvailable;
         showNotification('Error de conexión', 'error');
     });
 }
@@ -76,6 +79,7 @@ function actualizarEstadoBoton() {
 
 // Cargar todos los datos
 function cargarDatos() {
+    console.log('📊 Cargando datos...');
     cargarPedidos();
     cargarHistorial();
     cargarEstadisticas();
@@ -83,52 +87,60 @@ function cargarDatos() {
 
 // Cargar pedidos asignados
 function cargarPedidos() {
+    console.log('📦 Cargando pedidos asignados...');
     fetch('repartidor.php?action=get_pedidos_asignados')
         .then(response => response.json())
         .then(data => {
+            console.log('✅ Pedidos recibidos:', data);
             if (data.success) {
                 pedidos = data.pedidos;
                 renderPedidos();
             } else {
-                console.error('Error:', data.message);
+                console.error('❌ Error en pedidos:', data.message);
             }
         })
         .catch(error => {
-            console.error('Error:', error);
+            console.error('❌ Error fetch pedidos:', error);
         });
 }
 
 // Cargar historial
 function cargarHistorial() {
+    console.log('📜 Cargando historial...');
     fetch('repartidor.php?action=get_historial')
         .then(response => response.json())
         .then(data => {
+            console.log('✅ Historial recibido:', data);
             if (data.success) {
                 historial = data.historial;
                 renderHistorial();
             } else {
-                console.error('Error:', data.message);
+                console.error('❌ Error en historial:', data.message);
             }
         })
         .catch(error => {
-            console.error('Error:', error);
+            console.error('❌ Error fetch historial:', error);
         });
 }
 
 // Cargar estadísticas
 function cargarEstadisticas() {
+    console.log('📈 Cargando estadísticas...');
     fetch('repartidor.php?action=get_estadisticas')
         .then(response => response.json())
         .then(data => {
+            console.log('✅ Estadísticas recibidas:', data);
             if (data.success) {
                 const stats = data.estadisticas;
                 document.getElementById('entregasHoy').textContent = stats.entregas_hoy;
-                document.getElementById('gananciaHoy').textContent = '$' + stats.ganancia_hoy.toLocaleString();
-                document.getElementById('promedioReseñas').textContent = stats.promedio_resenas;
+                document.getElementById('gananciaHoy').textContent = '$' + parseFloat(stats.ganancia_hoy).toLocaleString('es-AR', {minimumFractionDigits: 2});
+                document.getElementById('promedioReseñas').textContent = stats.promedio_resenas > 0 ? stats.promedio_resenas : 'Sin reseñas';
+            } else {
+                console.error('❌ Error en estadísticas:', data.message);
             }
         })
         .catch(error => {
-            console.error('Error:', error);
+            console.error('❌ Error fetch estadísticas:', error);
         });
 }
 
@@ -225,7 +237,6 @@ function marcarEnCamino(pedidoId) {
 }
 
 function ejecutarMarcarEnCamino(pedidoId) {
-    
     fetch('repartidor.php?action=marcar_en_camino', {
         method: 'POST',
         headers: {
@@ -258,7 +269,6 @@ function marcarEntregado(pedidoId) {
 }
 
 function ejecutarMarcarEntregado(pedidoId) {
-    
     fetch('repartidor.php?action=marcar_entregado', {
         method: 'POST',
         headers: {
@@ -271,45 +281,56 @@ function ejecutarMarcarEntregado(pedidoId) {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            showNotification('Pedido entregado correctamente. El cliente debe confirmar la recepción.', 'success');
+            notify.success('Pedido marcado como entregado. Esperando confirmación del cliente...');
             cargarDatos();
         } else {
-            showNotification('Error: ' + data.message, 'error');
+            notify.error('Error: ' + data.message);
         }
     })
     .catch(error => {
         console.error('Error:', error);
-        showNotification('Error de conexión', 'error');
+        notify.error('Error de conexión');
     });
 }
 
 // Función para renderizar historial
 function renderHistorial() {
     const historialContainer = document.getElementById('historialContainer');
-    historialContainer.innerHTML = historial.length > 0 ? historial.map(pedido => `
-        <div class="flex justify-between items-center p-3 bg-green-50 rounded-lg">
-            <div>
+    
+    console.log('📋 Renderizando historial:', historial);
+    
+    if (historial.length === 0) {
+        historialContainer.innerHTML = '<p class="text-gray-500 text-center py-4">No hay entregas completadas hoy</p>';
+        return;
+    }
+    
+    historialContainer.innerHTML = historial.map(pedido => `
+        <div class="flex justify-between items-center p-4 bg-green-50 rounded-lg border-l-4 border-green-500 hover:shadow-md transition-shadow">
+            <div class="flex-1">
                 <p class="font-medium text-gray-800">Pedido #${pedido.numero_pedido} - ${pedido.cliente_nombre} ${pedido.cliente_apellido}</p>
-                <p class="text-sm text-gray-600">${pedido.direccion_entrega}</p>
-                <p class="text-sm text-green-600">Entregado${pedido.horaEntrega ? ' a las ' + pedido.horaEntrega : ''}</p>
+                <p class="text-sm text-gray-600 mt-1">📍 ${pedido.direccion_entrega}</p>
+                <p class="text-sm text-green-600 font-medium mt-1">
+                    ✅ Entregado${pedido.horaEntrega ? ' a las ' + pedido.horaEntrega : ''}
+                </p>
             </div>
-            <div class="text-right">
-                <p class="font-bold text-green-600">$${parseFloat(pedido.total).toLocaleString('es-AR', {minimumFractionDigits: 2})}</p>
-                ${pedido.reseñas ? `
-                <button onclick="verReseñas(${pedido.id})" 
-                        class="text-sm bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-1 rounded-full mt-1">
-                    Ver Reseña
+            <div class="text-right ml-4">
+                <p class="font-bold text-green-600 text-lg">$${parseFloat(pedido.total).toLocaleString('es-AR', {minimumFractionDigits: 2})}</p>
+                <p class="text-xs text-gray-500 mt-1">Ganancia: $${parseFloat(pedido.precio_delivery).toLocaleString('es-AR', {minimumFractionDigits: 2})}</p>
+                ${pedido.tiene_resena ? `
+                <button onclick="verResena(${pedido.id})" 
+                        class="text-sm bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded-full mt-2 transition-colors">
+                    ⭐ Ver Reseña
                 </button>
-                ` : '<p class="text-xs text-gray-500 mt-1">Sin reseña aún</p>'}
+                ` : '<p class="text-xs text-gray-400 mt-2 italic">Sin reseña aún</p>'}
             </div>
         </div>
-    `).join('') : '<p class="text-gray-500 text-center py-4">No hay entregas completadas hoy</p>';
+    `).join('');
 }
 
-// Función para ver reseñas
-function verReseñas(pedidoId) {
+// Función para ver reseña
+function verResena(pedidoId) {
     const pedido = historial.find(p => p.id == pedidoId);
-    if (!pedido || !pedido.reseñas) {
+    if (!pedido || !pedido.tiene_resena) {
         showNotification('No hay reseñas disponibles para este pedido', 'info');
         return;
     }
@@ -319,23 +340,38 @@ function verReseñas(pedidoId) {
     
     content.innerHTML = `
         <div class="space-y-4">
-            <div class="text-center">
+            <div class="text-center border-b pb-4">
                 <h4 class="text-lg font-bold text-primary-brown">Pedido #${pedido.numero_pedido}</h4>
                 <p class="text-gray-600">${pedido.cliente_nombre} ${pedido.cliente_apellido}</p>
+                <p class="text-sm text-gray-500 mt-1">Total: $${parseFloat(pedido.total).toLocaleString('es-AR', {minimumFractionDigits: 2})}</p>
             </div>
             
-            ${pedido.reseñas.entrega ? `
-            <div class="bg-blue-50 p-4 rounded-lg">
-                <h5 class="font-bold text-blue-800 mb-2">Reseña del Servicio de Entrega</h5>
+            ${pedido.resena.delivery.puntuacion > 0 ? `
+            <div class="bg-blue-50 p-4 rounded-lg border-l-4 border-blue-500">
+                <h5 class="font-bold text-blue-800 mb-2">🚚 Reseña del Servicio de Entrega</h5>
                 <div class="flex items-center gap-2 mb-2">
-                    <span class="text-yellow-500">${'⭐'.repeat(pedido.reseñas.entrega.puntuacion)}</span>
-                    <span class="text-gray-600">(${pedido.reseñas.entrega.puntuacion}/5)</span>
+                    <span class="text-yellow-500 text-xl">${'⭐'.repeat(pedido.resena.delivery.puntuacion)}${'☆'.repeat(5 - pedido.resena.delivery.puntuacion)}</span>
+                    <span class="text-gray-600 font-medium">(${pedido.resena.delivery.puntuacion}/5)</span>
                 </div>
-                ${pedido.reseñas.entrega.comentario ? `
-                    <p class="text-gray-700">"${pedido.reseñas.entrega.comentario}"</p>
-                ` : '<p class="text-gray-500 italic">Sin comentarios</p>'}
+                ${pedido.resena.delivery.comentario ? `
+                    <p class="text-gray-700 italic">"${pedido.resena.delivery.comentario}"</p>
+                ` : '<p class="text-gray-500 text-sm italic">Sin comentarios</p>'}
             </div>
-            ` : '<p class="text-gray-500 text-center">Aún no hay reseñas para este pedido</p>'}
+            ` : ''}
+            
+            ${pedido.resena.comida.puntuacion > 0 ? `
+            <div class="bg-orange-50 p-4 rounded-lg border-l-4 border-orange-500">
+                <h5 class="font-bold text-orange-800 mb-2">🍽️ Calificación de la Comida</h5>
+                <div class="flex items-center gap-2">
+                    <span class="text-yellow-500 text-xl">${'⭐'.repeat(pedido.resena.comida.puntuacion)}${'☆'.repeat(5 - pedido.resena.comida.puntuacion)}</span>
+                    <span class="text-gray-600 font-medium">(${pedido.resena.comida.puntuacion}/5)</span>
+                </div>
+            </div>
+            ` : ''}
+            
+            ${!pedido.resena.delivery.puntuacion && !pedido.resena.comida.puntuacion ? `
+                <p class="text-gray-500 text-center py-4">No hay reseñas disponibles</p>
+            ` : ''}
         </div>
     `;
     
@@ -357,20 +393,24 @@ function showNotification(message, type = 'info') {
         notify.info(message);
     }
 }
+
 // Función de logout
 function logout() {
-    if (customConfirm('¿Está seguro que desea cerrar sesión?')) {
+    customConfirm('¿Estás seguro que deseas cerrar sesión?', () => {
+        localStorage.removeItem('cart');
+
         fetch('../php/logout.php', {
             method: 'POST',
             headers: {
                 'X-Requested-With': 'XMLHttpRequest'
             }
         })
-        .then(() => {
+        .then(response => {
             window.location.href = '../index.html';
         })
-        .catch(() => {
+        .catch(error => {
+            console.log('Cerrando sesión...');
             window.location.href = '../index.html';
         });
-    }
+    });
 }
