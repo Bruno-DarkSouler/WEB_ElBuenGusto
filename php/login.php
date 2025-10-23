@@ -80,6 +80,15 @@ $redirect_url = '/html/inicio.php';
 if ($usuario['rol'] === 'administrador' || $usuario['email'] === 'admin@elbuengusto.com') {
 $redirect_url = '/admin/admin.php';
 }
+if ($usuario['rol'] === 'cocinero'){
+    $redirect_url = '/admin/cocinero.php';
+}
+if ($usuario['rol'] === 'repartidor'){
+    $redirect_url = '/admin/repartidor.php';
+}
+if ($usuario['rol'] === 'cajero'){
+    $redirect_url = '/admin/cajero.php';
+}
 
 echo json_encode([
     'success' => true,

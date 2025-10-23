@@ -171,7 +171,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 },
                 body: JSON.stringify(pedidoData)
             })
-            .then(response => response.json())
+            .then(response => {
+                // CORRECCIÓN: Verificar si la respuesta es JSON válida
+                const contentType = response.headers.get('content-type');
+                if (!contentType || !contentType.includes('application/json')) {
+                    throw new Error('La respuesta del servidor no es JSON');
+                }
+                return response.json();
+            })
             .then(data => {
                 if (data.success) {
                     // Crear contenedor de alerta bonita
@@ -252,27 +259,17 @@ document.addEventListener('DOMContentLoaded', function() {
                         setTimeout(() => window.location.reload(), 1500);
                     });
                 } else {
-                    showNotification('Error al procesar el pedido: ' + data.message, 'error');
+                    notify.error('Error al procesar el pedido: ' + data.message);
                     submitBtn.disabled = false;
                     submitBtn.textContent = '✅ Confirmar Pedido';
                 }
             })
             .catch(error => {
-                console.error('Error:', error);
-                showNotification('Error al procesar el pedido. Intente nuevamente.', 'error');
+                console.error('Error completo:', error);
+                notify.error('Error al procesar el pedido. Intente nuevamente.');
                 submitBtn.disabled = false;
                 submitBtn.textContent = '✅ Confirmar Pedido';
-            })
-            .finally(() => {
-                // Rehabilitar el botón en caso de cualquier error no capturado
-                setTimeout(() => {
-                    if (submitBtn.disabled) {
-                        submitBtn.disabled = false;
-                        submitBtn.textContent = '✅ Confirmar Pedido';
-                    }
-                }, 3000);
             });
-            
         });
     }
     

@@ -431,20 +431,22 @@ function actualizarContador() {
 
 
 function logout() {
-    if(customConfirm('¿Está seguro que desea cerrar sesión?',)) () => {
-        clearInterval(intervaloActualizacion);
-        
+    customConfirm('¿Estás seguro que deseas cerrar sesión?', () => {
+        // Si el usuario confirma, se ejecuta esto:
+        localStorage.removeItem('cart');
+
         fetch('../php/logout.php', {
             method: 'POST',
             headers: {
                 'X-Requested-With': 'XMLHttpRequest'
             }
         })
-        .then(() => {
+        .then(response => {
             window.location.href = '../index.html';
         })
-        .catch(() => {
+        .catch(error => {
+            console.log('Cerrando sesión...');
             window.location.href = '../index.html';
         });
-    }    
+    });
 }
