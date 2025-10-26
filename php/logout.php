@@ -30,7 +30,7 @@ try {
         ]);
     } else {
         // Redirección directa para peticiones normales
-        header('Location: ../index.html');
+        header('Location: ../index.php');
         exit();
     }
     
@@ -43,7 +43,7 @@ try {
             'message' => 'Sesión cerrada'
         ]);
     } else {
-        header('Location: ../index.html');
+        header('Location: ../index.php');
         exit();
     }
 }

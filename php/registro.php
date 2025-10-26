@@ -1,4 +1,7 @@
 <?php
+// Limpiar cualquier output previo
+ob_start();
+
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: POST');
@@ -6,18 +9,20 @@ header('Access-Control-Allow-Headers: Content-Type');
 
 require_once 'conexion.php';
 
+// Limpiar buffer
+ob_clean();
+
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     // Obtener datos del formulario
-    $nombre = trim($_POST['nombre']);
-    $apellido = trim($_POST['apellido']);
-    $email = trim($_POST['email']);
-    $telefono = trim($_POST['telefono']);
-    $direccion = trim($_POST['direccion']);
-    $password = $_POST['password'];
-    $confirm_password = $_POST['confirm_password'];
+    $nombre = trim($_POST['nombre'] ?? '');
+    $apellido = trim($_POST['apellido'] ?? '');
+    $email = trim($_POST['email'] ?? '');
+    $telefono = trim($_POST['telefono'] ?? '');
+    $password = $_POST['password'] ?? '';
+    $confirm_password = $_POST['confirm_password'] ?? '';
     
     // Validaciones básicas
-    if (empty($nombre) || empty($apellido) || empty($email) || empty($telefono) || empty($direccion) || empty($password)) {
+    if (empty($nombre) || empty($apellido) || empty($email) || empty($telefono) || empty($password)) {
         echo json_encode(['success' => false, 'message' => 'Todos los campos son obligatorios']);
         exit;
     }
@@ -51,19 +56,22 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     // Encriptar contraseña
     $password_hash = password_hash($password, PASSWORD_DEFAULT);
     
-    // Insertar usuario en la base de datos
-    $stmt = $conexion->prepare("INSERT INTO usuarios (nombre, apellido, email, telefono, direccion, contraseña, rol) VALUES (?, ?, ?, ?, ?, ?, 'cliente')");
-    $stmt->bind_param("ssssss", $nombre, $apellido, $email, $telefono, $direccion, $password_hash);
+    // Insertar usuario en la base de datos (SIN dirección)
+    $stmt = $conexion->prepare("INSERT INTO usuarios (nombre, apellido, email, telefono, contraseña, rol) VALUES (?, ?, ?, ?, ?, 'cliente')");
+    $stmt->bind_param("sssss", $nombre, $apellido, $email, $telefono, $password_hash);
     
     if ($stmt->execute()) {
-        echo json_encode(['success' => true, 'message' => 'Usuario registrado exitosamente']);
+        echo json_encode(['success' => true, 'message' => 'Usuario registrado exitosamente'], JSON_UNESCAPED_UNICODE);
     } else {
-        echo json_encode(['success' => false, 'message' => 'Error al registrar usuario: ' . $conexion->error]);
+        echo json_encode(['success' => false, 'message' => 'Error al registrar usuario: ' . $conexion->error], JSON_UNESCAPED_UNICODE);
     }
     
     $stmt->close();
-    cerrarConexion($conexion);
+    $conexion->close();
 } else {
     echo json_encode(['success' => false, 'message' => 'Método no permitido']);
 }
+
+// Limpiar y enviar
+ob_end_flush();
 ?>

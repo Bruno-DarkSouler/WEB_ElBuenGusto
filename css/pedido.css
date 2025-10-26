@@ -28,6 +28,12 @@
     padding: 20px;
 }
 
+.container2 {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
 .header {
     background: linear-gradient(135deg, #C81E2D, #a01623);
     color: white;

@@ -1,17 +1,13 @@
 <?php
 session_start();
 
-// Verificar si hay sesión activa
-if (!isset($_SESSION['user_id'])) {
-    header('Location: ../index.html');
-    exit;
-}
-
 require_once '../php/conexion.php';
 
 // Obtener información del usuario
 $usuario_nombre = isset($_SESSION['user_name']) ? $_SESSION['user_name'] : 'Usuario';
 $usuario_email = isset($_SESSION['user_email']) ? $_SESSION['user_email'] : '';
+$usuario_telefono = isset($_SESSION['user_telefono']) ? $_SESSION['user_telefono'] : '';
+$telefono = isset($_SESSION['user_telefono']) ? $_SESSION['user_telefono'] : '';
 
 // ========== MANEJO DE PETICIONES AJAX ==========
 if (isset($_GET['action'])) {
@@ -68,99 +64,211 @@ if (isset($_GET['action'])) {
                 echo json_encode(['success' => false, 'message' => 'Error al obtener zonas: ' . $e->getMessage()]);
             }
             exit;
-            
-        case 'procesar_pedido':
-            // Obtener datos del POST
-            $data = json_decode(file_get_contents('php://input'), true);
-            
-            if (!$data) {
-                echo json_encode(['success' => false, 'message' => 'Datos inválidos']);
-                exit;
-            }
-            
+
+        // ====== AQUÍ VAN LOS NUEVOS CASOS ======
+        case 'get_direcciones':
             try {
-                $conexion->begin_transaction();
+                if (!isset($_SESSION['user_id'])) {
+                    echo json_encode(['success' => false, 'message' => 'Usuario no autenticado']);
+                    exit;
+                }
                 
-                // Generar número de pedido único
-                $numero_pedido = 'PED' . str_pad(rand(1, 99999), 5, '0', STR_PAD_LEFT);
+                $query = "SELECT * FROM direcciones_cliente 
+                          WHERE usuario_id = ? 
+                          ORDER BY es_favorita DESC, id DESC";
                 
-                // Determinar estado según tipo de pedido
-                $estado = ($data['tipo_pedido'] === 'programado') ? 'pendiente' : 'en_preparacion';
+                $stmt = $conexion->prepare($query);
+                $stmt->bind_param("i", $_SESSION['user_id']);
+                $stmt->execute();
+                $resultado = $stmt->get_result();
                 
-                // Insertar pedido
-                $stmt = $conexion->prepare("INSERT INTO pedidos 
-                    (numero_pedido, usuario_id, tipo_pedido, fecha_entrega_programada, 
-                     direccion_entrega, telefono_contacto, metodo_pago, estado, 
-                     subtotal, precio_delivery, total, zona_delivery_id, comentarios_cliente) 
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+                $direcciones = [];
+                while ($row = $resultado->fetch_assoc()) {
+                    $direcciones[] = $row;
+                }
                 
-                $fecha_entrega = ($data['tipo_pedido'] === 'programado') 
-                    ? $data['fecha_entrega'] . ' ' . $data['hora_entrega'] 
-                    : null;
+                echo json_encode(['success' => true, 'direcciones' => $direcciones]);
+            } catch (Exception $e) {
+                echo json_encode(['success' => false, 'message' => 'Error al obtener direcciones: ' . $e->getMessage()]);
+            }
+            exit;
+
+        case 'guardar_direccion':
+            try {
+                if (!isset($_SESSION['user_id'])) {
+                    echo json_encode(['success' => false, 'message' => 'Usuario no autenticado']);
+                    exit;
+                }
                 
-                $metodo_pago = 'digital'; // Ambos métodos son digitales
+                $data = json_decode(file_get_contents('php://input'), true);
                 
-                $stmt->bind_param(
-                    "sissssssdddis",
-                    $numero_pedido,
+                // Si se marca como favorita, quitar favorita de las demás
+                if ($data['es_favorita']) {
+                    $stmt = $conexion->prepare("UPDATE direcciones_cliente SET es_favorita = 0 WHERE usuario_id = ?");
+                    $stmt->bind_param("i", $_SESSION['user_id']);
+                    $stmt->execute();
+                }
+                
+                $stmt = $conexion->prepare("INSERT INTO direcciones_cliente 
+                    (usuario_id, alias, direccion, codigo_postal, instrucciones, es_favorita) 
+                    VALUES (?, ?, ?, ?, ?, ?)");
+                
+                $stmt->bind_param("issssi",
                     $_SESSION['user_id'],
-                    $data['tipo_pedido'],
-                    $fecha_entrega,
+                    $data['alias'],
                     $data['direccion'],
-                    $data['telefono'],
-                    $metodo_pago,
-                    $estado,
-                    $data['subtotal'],
-                    $data['precio_delivery'],
-                    $data['total'],
-                    $data['zona_id'],
-                    $data['comentarios']
+                    $data['codigo_postal'],
+                    $data['instrucciones'],
+                    $data['es_favorita']
                 );
                 
                 $stmt->execute();
-                $pedido_id = $conexion->insert_id;
-                
-                // Insertar items del pedido
-                $stmt_items = $conexion->prepare("INSERT INTO pedido_items 
-                    (pedido_id, producto_id, cantidad, precio_unitario, precio_total) 
-                    VALUES (?, ?, ?, ?, ?)");
-                
-                foreach ($data['productos'] as $producto) {
-                    $precio_total = $producto['precio'] * $producto['cantidad'];
-                    $stmt_items->bind_param(
-                        "iiidd",
-                        $pedido_id,
-                        $producto['id'],
-                        $producto['cantidad'],
-                        $producto['precio'],
-                        $precio_total
-                    );
-                    $stmt_items->execute();
-                }
-                
-                // Insertar seguimiento
-                $stmt_seguimiento = $conexion->prepare("INSERT INTO seguimiento_pedidos 
-                    (pedido_id, estado_anterior, estado_nuevo, usuario_cambio_id, comentarios) 
-                    VALUES (?, NULL, ?, ?, ?)");
-                
-                $comentario_seguimiento = 'Pedido creado por el cliente';
-                $stmt_seguimiento->bind_param("isis", $pedido_id, $estado, $_SESSION['user_id'], $comentario_seguimiento);
-                $stmt_seguimiento->execute();
-                
-                $conexion->commit();
+                $id = $conexion->insert_id;
                 
                 echo json_encode([
                     'success' => true, 
-                    'message' => 'Pedido creado exitosamente',
-                    'numero_pedido' => $numero_pedido,
-                    'pedido_id' => $pedido_id
+                    'message' => 'Dirección guardada exitosamente',
+                    'direccion_id' => $id
                 ]);
-                
             } catch (Exception $e) {
-                $conexion->rollback();
-                echo json_encode(['success' => false, 'message' => 'Error al procesar pedido: ' . $e->getMessage()]);
+                echo json_encode(['success' => false, 'message' => 'Error al guardar dirección: ' . $e->getMessage()]);
             }
             exit;
+        // ====== FIN DE LOS NUEVOS CASOS ======
+            
+case 'procesar_pedido':
+    // DEBUG: Log para ver si llega aquí
+    error_log("=== PROCESANDO PEDIDO ===");
+    error_log("Session user_id: " . (isset($_SESSION['user_id']) ? $_SESSION['user_id'] : 'NO EXISTE'));
+    
+    // Log del input recibido
+    $input_raw = file_get_contents('php://input');
+    error_log("Input recibido: " . $input_raw);
+    // VALIDAR QUE EL USUARIO ESTÉ LOGUEADO
+    if (!isset($_SESSION['user_id'])) {
+        echo json_encode([
+            'success' => false, 
+            'message' => 'Debe iniciar sesión para realizar un pedido'
+        ]);
+        exit;
+    }
+    
+    // Obtener datos del POST
+    $data = json_decode(file_get_contents('php://input'), true);
+    
+    if (!$data) {
+        echo json_encode(['success' => false, 'message' => 'Datos inválidos']);
+        exit;
+    }
+    
+    // VALIDAR DATOS REQUERIDOS
+    $camposRequeridos = ['nombre', 'telefono', 'email', 'direccion', 'zona_id', 'tipo_pedido', 'metodo_pago', 'productos'];
+    foreach ($camposRequeridos as $campo) {
+        if (!isset($data[$campo]) || empty($data[$campo])) {
+            echo json_encode([
+                'success' => false, 
+                'message' => "El campo {$campo} es obligatorio"
+            ]);
+            exit;
+        }
+    }
+    
+    try {
+        $conexion->begin_transaction();
+        
+        // Generar número de pedido único
+        $numero_pedido = 'PED' . str_pad(rand(1, 99999), 5, '0', STR_PAD_LEFT);
+        
+        // Determinar estado según tipo de pedido
+        $estado = ($data['tipo_pedido'] === 'programado') ? 'pendiente' : 'en_preparacion';
+        
+        // Insertar pedido
+        $stmt = $conexion->prepare("INSERT INTO pedidos 
+            (numero_pedido, usuario_id, tipo_pedido, fecha_entrega_programada, 
+             direccion_entrega, telefono_contacto, metodo_pago, estado, 
+             subtotal, precio_delivery, total, zona_delivery_id, comentarios_cliente) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+        
+        $fecha_entrega = ($data['tipo_pedido'] === 'programado') 
+            ? $data['fecha_entrega'] . ' ' . $data['hora_entrega'] 
+            : null;
+        
+        $metodo_pago = 'digital'; // Ambos métodos son digitales
+        
+        $stmt->bind_param(
+            "sissssssdddis",
+            $numero_pedido,
+            $_SESSION['user_id'],
+            $data['tipo_pedido'],
+            $fecha_entrega,
+            $data['direccion'],
+            $data['telefono'],
+            $metodo_pago,
+            $estado,
+            $data['subtotal'],
+            $data['precio_delivery'],
+            $data['total'],
+            $data['zona_id'],
+            $data['comentarios']
+        );
+        
+        if (!$stmt->execute()) {
+            throw new Exception("Error al insertar pedido: " . $stmt->error);
+        }
+        
+        $pedido_id = $conexion->insert_id;
+        
+        // Insertar items del pedido
+        $stmt_items = $conexion->prepare("INSERT INTO pedido_items 
+            (pedido_id, producto_id, cantidad, precio_unitario, precio_total) 
+            VALUES (?, ?, ?, ?, ?)");
+        
+        foreach ($data['productos'] as $producto) {
+            $precio_total = $producto['precio'] * $producto['cantidad'];
+            $stmt_items->bind_param(
+                "iiidd",
+                $pedido_id,
+                $producto['id'],
+                $producto['cantidad'],
+                $producto['precio'],
+                $precio_total
+            );
+            
+            if (!$stmt_items->execute()) {
+                throw new Exception("Error al insertar item: " . $stmt_items->error);
+            }
+        }
+        
+        // Insertar seguimiento
+        $stmt_seguimiento = $conexion->prepare("INSERT INTO seguimiento_pedidos 
+            (pedido_id, estado_anterior, estado_nuevo, usuario_cambio_id, comentarios) 
+            VALUES (?, NULL, ?, ?, ?)");
+        
+        $comentario_seguimiento = 'Pedido creado por el cliente';
+        $stmt_seguimiento->bind_param("isis", $pedido_id, $estado, $_SESSION['user_id'], $comentario_seguimiento);
+        
+        if (!$stmt_seguimiento->execute()) {
+            throw new Exception("Error al insertar seguimiento: " . $stmt_seguimiento->error);
+        }
+        
+        $conexion->commit();
+        
+        echo json_encode([
+            'success' => true, 
+            'message' => 'Pedido creado exitosamente',
+            'numero_pedido' => $numero_pedido,
+            'pedido_id' => $pedido_id
+        ]);
+        
+    } catch (Exception $e) {
+        $conexion->rollback();
+        error_log("Error en procesar_pedido: " . $e->getMessage());
+        echo json_encode([
+            'success' => false, 
+            'message' => 'Error al procesar pedido: ' . $e->getMessage()
+        ]);
+    }
+    exit;
     }
 }
 
@@ -172,7 +280,10 @@ $conexion->close();
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>El Buen Gusto - Inicio</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+    <link rel="stylesheet" href="../css/cabecera.css">
     <link rel="stylesheet" href="../css/inicio.css">
+    <link rel="stylesheet" href="../css/direccion.css">
     <link rel="stylesheet" href="../css/style.css">
     <link rel="stylesheet" href="../css/pedido.css">
     <link rel="stylesheet" href="../css/notifications.css">
@@ -205,7 +316,7 @@ $conexion->close();
                     </svg>
                     <span class="cart-count" id="cartCount">0</span>
                 </button>
-                <button class="profile-btn" onclick="window.location.href='perfil.html'" title="Perfil">
+                <button class="profile-btn" onclick="window.location.href='perfil.php'" title="Perfil">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 16 16">
                         <path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/>
                         <path fill-rule="evenodd" d="M14 14s-1-1.5-6-1.5S2 14 2 14s1-4 6-4 6 4 6 4z"/>
@@ -221,6 +332,76 @@ $conexion->close();
             </div>
         </div>
     </header>
+    <!-- Menu inferior para celulares -->
+    <div id="menu_inferior">
+        <a href="../html/inicio.php">
+            <div class="contenedor_seccion">
+                <svg xmlns="http://www.w3.org/2000/svg" width="25" height="25" fill="currentColor" class="bi icono_navegacion bi-house-door" viewBox="0 0 16 16">
+                    <path d="M8.354 1.146a.5.5 0 0 0-.708 0l-6 6A.5.5 0 0 0 1.5 7.5v7a.5.5 0 0 0 .5.5h4.5a.5.5 0 0 0 .5-.5v-4h2v4a.5.5 0 0 0 .5.5H14a.5.5 0 0 0 .5-.5v-7a.5.5 0 0 0-.146-.354L13 5.793V2.5a.5.5 0 0 0-.5-.5h-1a.5.5 0 0 0-.5.5v1.293zM2.5 14V7.707l5.5-5.5 5.5 5.5V14H10v-4a.5.5 0 0 0-.5-.5h-3a.5.5 0 0 0-.5.5v4z"/>
+                </svg>
+                <span>Inicio</span>
+            </div>
+        </a>
+        <a href="./perfil.php">
+            <div class="contenedor_seccion">
+                <svg xmlns="http://www.w3.org/2000/svg" width="25" height="25" fill="currentColor" class="bi icono_navegacion bi-person-fill" viewBox="0 0 16 16">
+                    <path d="M3 14s-1 0-1-1 1-4 6-4 6 3 6 4-1 1-1 1zm5-6a3 3 0 1 0 0-6 3 3 0 0 0 0 6"/>
+                </svg>
+                <span>Perfil</span>
+            </div>
+        </a>
+        
+        <?php
+            if(isset($_SESSION["rol"]) && $_SESSION["rol"] == "repartidor"){
+            echo"
+            <a href=\"../admin/repartidor.php\">
+                <div class=\"contenedor_seccion\">
+                    <svg xmlns=\"http://www.w3.org/2000/svg\" width=\"25\" height=\"25\" fill=\"currentColor\" class=\"bi icono_navegacion bi-bicycle\" viewBox=\"0 0 16 16\">
+                        <path d=\"M4 4.5a.5.5 0 0 1 .5-.5H6a.5.5 0 0 1 0 1v.5h4.14l.386-1.158A.5.5 0 0 1 11 4h1a.5.5 0 0 1 0 1h-.64l-.311.935.807 1.29a3 3 0 1 1-.848.53l-.508-.812-2.076 3.322A.5.5 0 0 1 8 10.5H5.959a3 3 0 1 1-1.815-3.274L5 5.856V5h-.5a.5.5 0 0 1-.5-.5m1.5 2.443-.508.814c.5.444.85 1.054.967 1.743h1.139zM8 9.057 9.598 6.5H6.402zM4.937 9.5a2 2 0 0 0-.487-.877l-.548.877zM3.603 8.092A2 2 0 1 0 4.937 10.5H3a.5.5 0 0 1-.424-.765zm7.947.53a2 2 0 1 0 .848-.53l1.026 1.643a.5.5 0 1 1-.848.53z\"/>
+                    </svg>
+                    <span>Repartos</span>
+                </div>
+            </a>
+            ";
+            }elseif(isset($_SESSION["rol"]) && $_SESSION["rol"] == "cajero"){
+                echo "
+                <a href=\"../admin/cajero.html\">
+                    <div class=\"contenedor_seccion\">
+                        <svg xmlns=\"http://www.w3.org/2000/svg\" width=\"25\" height=\"25\" fill=\"currentColor\" class=\"bi icono_navegacion bi-cash-coin\" viewBox=\"0 0 16 16\">
+                            <path fill-rule=\"evenodd\" d=\"M11 15a4 4 0 1 0 0-8 4 4 0 0 0 0 8m5-4a5 5 0 1 1-10 0 5 5 0 0 1 10 0\"/>
+                            <path d=\"M9.438 11.944c.047.596.518 1.06 1.363 1.116v.44h.375v-.443c.875-.061 1.386-.529 1.386-1.207 0-.618-.39-.936-1.09-1.1l-.296-.07v-1.2c.376.043.614.248.671.532h.658c-.047-.575-.54-1.024-1.329-1.073V8.5h-.375v.45c-.747.073-1.255.522-1.255 1.158 0 .562.378.92 1.007 1.066l.248.061v1.272c-.384-.058-.639-.27-.696-.563h-.668zm1.36-1.354c-.369-.085-.569-.26-.569-.522 0-.294.216-.514.572-.578v1.1zm.432.746c.449.104.655.272.655.569 0 .339-.257.571-.709.614v-1.195z\"/>
+                            <path d=\"M1 0a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h4.083q.088-.517.258-1H3a2 2 0 0 0-2-2V3a2 2 0 0 0 2-2h10a2 2 0 0 0 2 2v3.528c.38.34.717.728 1 1.154V1a1 1 0 0 0-1-1z\"/>
+                            <path d=\"M9.998 5.083 10 5a2 2 0 1 0-3.132 1.65 6 6 0 0 1 3.13-1.567\"/>
+                        </svg>
+                        <span>Cajero</span>
+                    </div>
+                </a>
+                ";
+            }elseif(isset($_SESSION["rol"]) && $_SESSION["rol"] == "cocinero"){
+                echo "
+                <a href=\"../admin/cocinero.php\">
+                    <div class=\"contenedor_seccion\">
+                        <svg xmlns=\"http://www.w3.org/2000/svg\" width=\"25\" height=\"25\" fill=\"currentColor\" class=\"bi icono_navegacion bi-fork-knife\" viewBox=\"0 0 16 16\">
+                            <path d=\"M13 .5c0-.276-.226-.506-.498-.465-1.703.257-2.94 2.012-3 8.462a.5.5 0 0 0 .498.5c.56.01 1 .13 1 1.003v5.5a.5.5 0 0 0 .5.5h1a.5.5 0 0 0 .5-.5zM4.25 0a.25.25 0 0 1 .25.25v5.122a.128.128 0 0 0 .256.006l.233-5.14A.25.25 0 0 1 5.24 0h.522a.25.25 0 0 1 .25.238l.233 5.14a.128.128 0 0 0 .256-.006V.25A.25.25 0 0 1 6.75 0h.29a.5.5 0 0 1 .498.458l.423 5.07a1.69 1.69 0 0 1-1.059 1.711l-.053.022a.92.92 0 0 0-.58.884L6.47 15a.971.971 0 1 1-1.942 0l.202-6.855a.92.92 0 0 0-.58-.884l-.053-.022a1.69 1.69 0 0 1-1.059-1.712L3.462.458A.5.5 0 0 1 3.96 0z\"/>
+                        </svg>
+                        <span>Cocina</span>
+                    </div>
+                </a>
+                ";
+            }elseif(isset($_SESSION["rol"]) && $_SESSION["rol"] == "administrador"){
+                echo "
+                <a href=\"../admin/admin.php\">
+                    <div class=\"contenedor_seccion\">
+                        <svg xmlns=\"http://www.w3.org/2000/svg\" width=\"25\" height=\"25\" fill=\"currentColor\" class=\"bi icono_navegacion bi-file-earmark-spreadsheet\" viewBox=\"0 0 16 16\">
+                            <path d=\"M14 14V4.5L9.5 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2M9.5 3A1.5 1.5 0 0 0 11 4.5h2V9H3V2a1 1 0 0 1 1-1h5.5zM3 12v-2h2v2zm0 1h2v2H4a1 1 0 0 1-1-1zm3 2v-2h3v2zm4 0v-2h3v1a1 1 0 0 1-1 1zm3-3h-3v-2h3zm-7 0v-2h3v2z\"/>
+                        </svg>
+                        <span>Admin</span>
+                    </div>
+                </a>
+                ";
+            }
+        ?>
+    </div>
 
     <!-- Carrito desplegable -->
     <div class="cart-sidebar" id="cartSidebar">
@@ -301,7 +482,7 @@ $conexion->close();
                             </div>
                             <div class="form-group">
                                 <label for="phone">Teléfono <span class="required">*</span></label>
-                                <input type="tel" id="phone" name="phone" required placeholder="+54 11 1234-5678">
+                                <input type="tel" id="phone" name="phone" required placeholder="+54 11 1234-5678" value="<?php echo htmlspecialchars($telefono); ?>">
                             </div>
                         </div>
 
@@ -312,38 +493,75 @@ $conexion->close();
                         </div>
                     </div>
 
-                    <!-- Dirección de Entrega -->
-                    <div class="section">
-                        <h2 class="section-title">
-                            <span class="icon">📍</span>
-                            Dirección de Entrega
-                        </h2>
-                        
-                        <div class="form-group">
-                            <label for="address">Dirección Completa <span class="required">*</span></label>
-                            <input type="text" id="address" name="address" required placeholder="Calle, número, barrio">
-                        </div>
+<!-- Dirección de Entrega -->
+<div class="section">
+    <h2 class="section-title">
+        <span class="icon">📍</span>
+        Dirección de Entrega
+    </h2>
+    
+    <!-- Opciones de dirección -->
+    <div class="address-options" style="margin-bottom: 20px;">
+        <button type="button" class="address-option-btn active" onclick="mostrarDireccionesGuardadas()">
+            📋 Mis Direcciones
+        </button>
+        <button type="button" class="address-option-btn" onclick="mostrarNuevaDireccion()">
+            ➕ Nueva Dirección
+        </button>
+    </div>
 
-                        <div class="form-group">
-                            <label for="zona">Zona de Entrega <span class="required">*</span></label>
-                            <select id="zona" name="zona" required onchange="actualizarPrecioDelivery()">
-                                <option value="">Seleccione una zona</option>
-                                <!-- Las zonas se cargarán dinámicamente -->
-                            </select>
-                            <div class="info-text">Costo de envío: $<span id="costoEnvio">0</span></div>
-                        </div>
+    <!-- Lista de direcciones guardadas -->
+    <div id="direccionesGuardadas" class="direcciones-container">
+        <p class="loading-text">Cargando direcciones...</p>
+    </div>
 
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="floor">Piso/Departamento</label>
-                                <input type="text" id="floor" name="floor" placeholder="Ej: 2°B">
-                            </div>
-                            <div class="form-group">
-                                <label for="references">Referencias</label>
-                                <input type="text" id="references" name="references" placeholder="Portero, timbre, etc.">
-                            </div>
-                        </div>
-                    </div>
+    <!-- Formulario nueva dirección (oculto por defecto) -->
+    <div id="nuevaDireccionForm" style="display: none;">
+        <div class="form-group">
+            <label for="alias">Alias <span class="required">*</span></label>
+            <select id="alias" name="alias">
+                <option value="Casa">🏠 Casa</option>
+                <option value="Trabajo">💼 Trabajo</option>
+                <option value="Otro">📍 Otro</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="address">Dirección Completa <span class="required">*</span></label>
+            <input type="text" id="address" name="address" required placeholder="Calle, número, barrio">
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label for="codigo_postal">Código Postal</label>
+                <input type="text" id="codigo_postal" name="codigo_postal" placeholder="Ej: 1520">
+            </div>
+            <div class="form-group">
+                <label for="references">Referencias</label>
+                <input type="text" id="references" name="references" placeholder="Portero, timbre, etc.">
+            </div>
+        </div>
+
+        <div class="form-group" style="display: flex; align-items: center; gap: 10px;">
+            <input type="checkbox" id="guardar_direccion" name="guardar_direccion" style="width: auto;">
+            <label for="guardar_direccion" style="margin: 0;">Guardar esta dirección para futuros pedidos</label>
+        </div>
+
+        <div class="form-group" id="favorita_group" style="display: none; margin-left: 30px;">
+            <input type="checkbox" id="es_favorita" name="es_favorita" style="width: auto;">
+            <label for="es_favorita" style="margin: 0;">⭐ Marcar como dirección favorita</label>
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label for="zona">Zona de Entrega <span class="required">*</span></label>
+        <select id="zona" name="zona" required onchange="actualizarPrecioDelivery()">
+            <option value="">Seleccione una zona</option>
+            <!-- Las zonas se cargarán dinámicamente -->
+        </select>
+        <div class="info-text">Costo de envío: $<span id="costoEnvio">0</span></div>
+    </div>
+</div>
 
                     <!-- Tipo de Entrega -->
                     <div class="section">
@@ -470,8 +688,12 @@ $conexion->close();
     </div>
     <?php include '../php/footer.php'; ?>
 
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
+    <script src="../js/cabecera_header.js"></script>
     <script src="../js/pedido.js"></script>
     <script src="../js/inicio.js"></script>
+    <script src="../js/direccion.js"></script>
     <script src="../js/notifications.js"></script>
 </body>
 </html>

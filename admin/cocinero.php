@@ -3,7 +3,7 @@ session_start();
 
 // Verificar si hay sesión activa y es cocinero
 if (!isset($_SESSION['user_id']) || $_SESSION['user_rol'] !== 'cocinero') {
-    header('Location: ../index.html');
+    header('Location: ../html/inicio.php');
     exit;
 }
 
@@ -373,7 +373,7 @@ $conexion->close();
     <script>
         // Ejecutar cron cada minuto mientras el panel esté abierto
         setInterval(function() {
-            fetch('cron_pedidos.php', {
+            fetch('../php/cron_pedidos.php', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded',
@@ -394,7 +394,7 @@ $conexion->close();
         }, 60000); // 60000 ms = 1 minuto
 
         // Ejecutar una vez al cargar la página
-        fetch('cron_pedidos.php', {
+        fetch('../php/cron_pedidos.php', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded',

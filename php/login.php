@@ -40,8 +40,8 @@ require_once 'conexion.php';
 $email = trim($_POST['email']);
 $password = $_POST['password'];
 
-// Buscar usuario
-$stmt = $conexion->prepare("SELECT id, nombre, apellido, email, contraseña, rol, activo FROM usuarios WHERE email = ?");
+// Buscar usuario - AGREGADO: telefono en la consulta
+$stmt = $conexion->prepare("SELECT id, nombre, apellido, email, telefono, contraseña, rol, activo FROM usuarios WHERE email = ?");
 
 if (!$stmt) {
     echo json_encode(['success' => false, 'message' => 'Error en consulta: ' . $conexion->error]);
@@ -69,16 +69,17 @@ if (!password_verify($password, $usuario['contraseña'])) {
     exit;
 }
 
-// Login exitoso
+// Login exitoso - AGREGADO: telefono en la sesión
 $_SESSION['user_id'] = $usuario['id'];
 $_SESSION['user_name'] = $usuario['nombre'] . ' ' . $usuario['apellido'];
 $_SESSION['user_email'] = $usuario['email'];
+$_SESSION['user_telefono'] = $usuario['telefono']; // ← LÍNEA AGREGADA
 $_SESSION['user_rol'] = $usuario['rol'];
 
 // Usar rutas absolutas desde la raíz del servidor
 $redirect_url = '/html/inicio.php';
 if ($usuario['rol'] === 'administrador' || $usuario['email'] === 'admin@elbuengusto.com') {
-$redirect_url = '/admin/admin.php';
+    $redirect_url = '/admin/admin.php';
 }
 if ($usuario['rol'] === 'cocinero'){
     $redirect_url = '/admin/cocinero.php';

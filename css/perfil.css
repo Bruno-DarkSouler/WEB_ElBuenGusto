@@ -42,11 +42,6 @@
     background: linear-gradient(90deg, #10b981 0%, #10b981 var(--progress, 0%), #e5e7eb var(--progress, 0%), #e5e7eb 100%);
 }
 
-/* perfil.css */
-.bg-primary-cream {
-    background-color: #f5f5f5;
-}
-
 .bg-primary-red {
     background-color: #e53e3e;
 }

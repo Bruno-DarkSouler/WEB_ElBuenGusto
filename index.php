@@ -1,0 +1,243 @@
+<?php
+session_start();
+?>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="./css/style.css">
+    <link rel="stylesheet" href="./css/login.css">
+    <link rel="stylesheet" href="./css/regsitro.css">
+    <link rel="stylesheet" href="./css/tailwind_inicio.css">
+    <link rel="stylesheet" href="./css/fondo.css"> <title>El Buen Gusto</title>
+    
+    <style>
+        .alert-success {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background-color: #4CAF50; 
+            color: white;
+            padding: 15px;
+            border-radius: 5px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+            display: none; 
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+    </style>
+</head>
+<body>
+    <?php if (isset($_SESSION['login_success'])): ?>
+        <div class="alert-success" id="login-alert">
+            ¡Has iniciado sesión con éxito! Bienvenido, <?php echo htmlspecialchars($_SESSION['user_name']); ?>.
+        </div>
+        <?php unset($_SESSION['login_success']); ?>
+    <?php endif; ?>
+
+    <header>
+        <div class="div_navbar">
+            <nav class="navbar">
+                <div class="nombre_sitio">
+                    <img src="./img/logo 2.png" alt="Logo">
+                    <p>Rotiseria</p>
+                </div>
+                <div class="opciones flex justify-center align-middle gap-7">
+                    <a href=""><p>Inicio</p></a>
+                    <a href="html/perfil.php"><p>Perfil</p></a>
+                    <a href=""><p>Opiniones</p></a>
+                    <a href=""><p>Contacto</p></a> </div>
+                <div class="preguntas"><p>Preguntas frecuentes</p></div>
+            </nav>
+        </div>
+        <div class="bienvenida">
+            <h1 class="titulo text-center">Sabores únicos</h1>
+            <h2 class="subtitulo text-center">Auténtica rotisería con recetas de familia y un toque moderno.</h2>
+            <a href="html/inicio.php" class="btn-ver-mas">Explorar Productos</a>
+        </div>
+        <div class="sesion" id="redireccionamiento_sesion">
+            <?php if (isset($_SESSION['user_id'])): ?>
+                <p class="bienvenido">¡Hola, <?php echo htmlspecialchars($_SESSION['user_name']); ?>!</p>
+                <a href="php/logout.php" class="btn-cerrar-sesion">Cerrar Sesión</a>
+            <?php else: ?>
+                <button class="inicio" onclick="abrir_login()">Iniciar sesión</button>
+                <button class="registro" onclick="abrir_registro()">Registrarse</button>
+            <?php endif; ?>
+        </div>
+    </header>
+
+    <main>
+        <div class="div_opiniones"><p class="opiniones">Opiniones</p></div>
+        <div class="opinion grid gap-10 md:mx-10 lg:grid-cols-3 md:grid-cols-1 sm:grid-cols-1">
+            <div class="ejemplo py-5">
+                <div class="foto_usuario"><img src="./img/alex-suprun-bYODySpLIhE-unsplash.jpg" alt="Usuario 1"></div>
+                <div class="text_opinion"><p>¡La mejor rotisería de la ciudad! Comida deliciosa y atención de primera.</p></div>
+                <div class="nombre_usuario"><p>Carlos Gómez</p></div>
+            </div>
+            <div class="ejemplo py-5">
+                <div class="foto_usuario"><img src="./img/alex-suprun-ZHvM3XIOHoE-unsplash.jpg" alt="Usuario 2"></div>
+                <div class="text_opinion"><p>Me encanta la variedad y la calidad. ¡Siempre vuelvo por más!</p></div>
+                <div class="nombre_usuario"><p>Mateo Silvero</p></div>
+            </div>
+            <div class="ejemplo py-5">
+                <div class="foto_usuario"><img src="./img/alexander-hipp-iEEBWgY_6lA-unsplash.jpg" alt="Usuario 3"></div>
+                <div class="text_opinion"><p>Una experiencia culinaria increíble. ¡Totalmente recomendado!</p></div>
+                <div class="nombre_usuario"><p>Juan Pérez</p></div>
+            </div>
+        </div>
+        <hr>
+        <div class="preguntas_frecuentes">
+            <p class="texto_principal">Preguntas Frecuentes</p>
+            <div class="pregunta sm:w-full lg:w-[80%]">
+                <p class="text_pregunta text-center">¿Tienen opciones vegetarianas?</p>
+                <div class="respuesta_pregunta">Sí, contamos con opciones vegetarianas y veganas deliciosas. Por favor, consulta nuestro menú o pregunta a nuestro personal para más detalles.</div>
+            </div>
+            <div class="pregunta sm:w-full lg:w-[80%]">
+                <p class="text_pregunta text-center">¿Ofrecen servicio a domicilio?</p>
+                <div class="respuesta_pregunta">Realizamos entregas a domicilio en toda la ciudad. Puedes hacer tu pedido a través de nuestro sitio web o llamando directamente a la rotisería.</div>
+            </div>
+            <div class="pregunta sm:w-full lg:w-[80%]">
+                <p class="text_pregunta text-center">¿Cuáles son sus promociones?</p>
+                <div class="respuesta_pregunta">Nuestras promociones cambian semanalmente. Te recomendamos seguirnos en redes sociales para estar al tanto de las últimas ofertas.</div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <div class="redes_sociales">
+            <h1 class="text_redes">Síguenos</h1>
+            <div class="redes">
+                <svg class="red_social" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M16 8.049c0-4.446-3.582-8.05-8-8.05C3.58 0-.002 3.603-.002 8.05c0 4.017 2.926 7.347 6.75 7.951v-5.625h-2.03V8.05H6.75V6.275c0-2.017 1.195-3.131 3.022-3.131.876 0 1.791.157 1.791.157v1.98h-1.009c-.993 0-1.303.621-1.303 1.258v1.51h2.218l-.354 2.326H9.25V16c3.824-.604 6.75-3.934 6.75-7.951"/></svg>
+                <svg class="red_social" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M12.6.75h2.454l-5.36 6.142L16 15.25h-4.937l-3.867-5.07-4.425 5.07H.316l5.733-6.57L0 .75h5.063l3.495 4.633L12.601.75Zm-.86 13.028h1.36L4.323 2.145H2.865z"/></svg>
+                <svg class="red_social" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M8 0C5.829 0 5.556.01 4.703.048 3.85.088 3.269.222 2.76.42a3.9 3.9 0 0 0-1.417.923A3.9 3.9 0 0 0 .42 2.76C.222 3.268.087 3.85.048 4.7.01 5.555 0 5.827 0 8.001c0 2.172.01 2.444.048 3.297.04.852.174 1.433.372 1.942.205.526.478.972.923 1.417.444.445.89.719 1.416.923.51.198 1.09.333 1.942.372C5.555 15.99 5.827 16 8 16s2.444-.01 3.298-.048c.851-.04 1.434-.174 1.943-.372a3.9 3.9 0 0 0 1.416-.923c.445-.445.718-.891.923-1.417.197-.509.332-1.09.372-1.942C15.99 10.445 16 10.173 16 8s-.01-2.445-.048-3.299c-.04-.851-.175-1.433-.372-1.941a3.9 3.9 0 0 0-.923-1.417A3.9 3.9 0 0 0 13.24.42c-.51-.198-1.092-.333-1.943-.372C10.443.01 10.172 0 7.998 0zm-.717 1.442h.718c2.136 0 2.389.007 3.232.046.78.035 1.204.166 1.486.275.373.145.64.319.92.599s.453.546.598.92c.11.281.24.705.275 1.485.039.843.047 1.096.047 3.231s-.008 2.389-.047 3.232c-.035.78-.166 1.203-.275 1.485a2.5 2.5 0 0 1-.599.919c-.28.28-.546.453-.92.598-.28.11-.704.24-1.485.276-.843.038-1.096.047-3.232.047s-2.39-.009-3.233-.047c-.78-.036-1.203-.166-1.485-.276a2.5 2.5 0 0 1-.92-.598 2.5 2.5 0 0 1-.6-.92c-.109-.281-.24-.705-.275-1.485-.038-.843-.046-1.096-.046-3.233s.008-2.388.046-3.231c.036-.78.166-1.204.276-1.486.145-.373.319-.64.599-.92s.546-.453.92-.598c.282-.11.705-.24 1.485-.276.738-.034 1.024-.044 2.515-.045zm4.988 1.328a.96.96 0 1 0 0 1.92.96.96 0 0 0 0-1.92m-4.27 1.122a4.109 4.109 0 1 0 0 8.217 4.109 4.109 0 0 0 0-8.217m0 1.441a2.667 2.667 0 1 1 0 5.334 2.667 2.667 0 0 1 0-5.334"/></svg>
+                <svg class="red_social" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M0 1.146C0 .513.526 0 1.175 0h13.65C15.474 0 16 .513 16 1.146v13.708c0 .633-.526 1.146-1.175 1.146H1.175C.526 16 0 15.487 0 14.854zm4.943 12.248V6.169H2.542v7.225zm-1.2-8.212c.837 0 1.358-.554 1.358-1.248-.015-.709-.52-1.248-1.342-1.248S2.4 3.226 2.4 3.934c0 .694.521 1.248 1.327 1.248zm4.908 8.212V9.359c0-.216.016-.432.08-.586.173-.431.568-.878 1.232-.878.869 0 1.216.662 1.216 1.634v3.865h2.401V9.25c0-2.22-1.184-3.252-2.764-3.252-1.274 0-1.845.7-2.165 1.193v.025h-.016l.016-.025V6.169h-2.4c.03.678 0 7.225 0 7.225z"/></svg>
+                <svg class="red_social" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M3.857 0 1 2.857v10.286h3.429V16l2.857-2.857H9.57L14.714 8V0zm9.714 7.429-2.285 2.285H9l-2 2v-2H4.429V1.143h9.142z"/><path d="M11.857 3.143h-1.143V6.57h1.143zm-3.143 0H7.571V6.57h1.143z"/></svg>
+            </div>
+        </div>
+    </footer>
+
+    <div class="body_login" id="login">
+        <div class="container">
+            <div class="form-container">
+                <svg class="cancel" onclick="cerrar_modal()" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-x" viewBox="0 0 16 16">
+                    <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708"/>
+                  </svg>
+                <div class="logo">
+                    <img src="./img/isotipo_sm.png" alt="Logo">
+                </div>
+                <h1 class="title">El Buen Gusto</h1>
+                <p class="subtitle">Sabores que enamoran</p>
+
+                <form id="loginForm">
+                    <div class="form-group">
+                        <label for="login-email">Correo electrónico</label>
+                        <input type="email" id="login-email" name="email" placeholder="ejemplo@email.com" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="login-password">Contraseña</label>
+                        <input type="password" id="login-password" name="password" placeholder="Ingresa tu contraseña" required>
+                    </div>
+
+                    <button type="submit" class="btn-primary">Acceder</button>
+                </form>
+
+                <a href="#" class="forgot-password">¿Olvidaste tu contraseña?</a>
+
+                <div class="divider" onclick="abrir_registro()">¿No tienes cuenta?</div>
+            </div>
+        </div>
+    </div>
+    <div class="body_registro" id="registro">
+        <div class="container">
+            <div class="form-container">
+                <svg class="cancel" onclick="cerrar_modal()" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-x" viewBox="0 0 16 16">
+                    <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708"/>
+                  </svg>
+                <div class="logo">
+                    <img src="./img/isotipo_sm.png" alt="Logo">
+                </div>
+                <h1 class="title">El Buen Gusto</h1>
+                <p class="subtitle">Sabores que enamoran</p>
+                
+                <div style="margin: 15px 0; color: #5D4037; font-weight: 500;">Crear nueva cuenta</div>
+
+                <form id="registroForm">
+                    <div class="form-group">
+                        <label for="registro-nombre">Nombre *</label>
+                        <input type="text" id="registro-nombre" name="nombre" placeholder="Tu nombre" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="registro-apellido">Apellido *</label>
+                        <input type="text" id="registro-apellido" name="apellido" placeholder="Tu apellido" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="registro-email">Correo electrónico *</label>
+                        <input type="email" id="registro-email" name="email" placeholder="correo@ejemplo.com" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="registro-telefono">Teléfono *</label>
+                        <input type="tel" id="registro-telefono" name="telefono" placeholder="11-1234-5678" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="registro-direccion">Dirección *</label>
+                        <input type="text" id="registro-direccion" name="direccion" placeholder="Calle y número, ciudad" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="registro-password">Contraseña *</label>
+                        <div class="password-group">
+                            <input type="password" id="registro-password" name="password" placeholder="Mínimo 6 caracteres" required>
+                            <button type="button" class="password-toggle" onclick="togglePassword('registro-password')">👁</button>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="registro-confirm-password">Confirmar *</label>
+                        <div class="password-group">
+                            <input type="password" id="registro-confirm-password" name="confirm_password" placeholder="Repetir contraseña" required>
+                            <button type="button" class="password-toggle" onclick="togglePassword('registro-confirm-password')">👁</button>
+                        </div>
+                    </div>
+
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="terms" required>
+                        <label for="terms">Al registrarme acepto los términos de uso y política de privacidad</label>
+                    </div>
+
+                    <button type="submit" class="btn-primary">Crear Cuenta</button>
+                </form>
+                <div class="divider" onclick="abrir_login()">¿Ya tienes cuenta?</div>
+            </div>
+        </div>
+    </div>
+
+    <script src="./js/script.js"></script>
+    <script src="./js/login.js"></script>
+    <script src="./js/registro.js"></script>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const loginAlert = document.getElementById('login-alert');
+            
+            if (loginAlert) {
+                loginAlert.style.display = 'block';
+                loginAlert.style.opacity = '1';
+
+                setTimeout(() => {
+                    loginAlert.style.opacity = '0';
+                    setTimeout(() => {
+                        loginAlert.style.display = 'none';
+                    }, 500);
+                }, 4500); // Muestra por 4.5 segundos antes de empezar a desvanecerse
+            }
+        });
+    </script>
+</body>
+</html>

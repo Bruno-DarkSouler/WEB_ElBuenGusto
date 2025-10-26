@@ -5,6 +5,8 @@ let productos = [];
 let zonas = [];
 let zonaSeleccionada = null;
 
+let sesion_iniciada = false;
+
 // Inicialización cuando se carga la página
 document.addEventListener('DOMContentLoaded', function() {
     initializeApp();
@@ -26,18 +28,22 @@ function initializeApp() {
     // Cargar zonas de delivery
     cargarZonas();
 }
+
+
 // Verificar si hay pedidos pendientes de confirmar
 function verificarPedidosPendientes() {
-    if (!window.location.pathname.includes('confirmar_pedido.php')) {
-        fetch('confirmar_pedido.php?action=verificar_pedidos_pendientes')
-            .then(response => response.json())
-            .then(data => {
-                if (data.success && data.pedidos.length > 0) {
-                    // Redirigir a confirmación
-                    window.location.href = 'confirmar_pedido.php';
-                }
-            })
-            .catch(error => console.error('Error:', error));
+    if(sesion_iniciada == true){
+        if (!window.location.pathname.includes('confirmar_pedido.php')) {
+            fetch('../html/confirmar_pedido.php?action=verificar_pedidos_pendientes')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success && data.pedidos.length > 0) {
+                        // Redirigir a confirmación
+                        window.location.href = 'confirmar_pedido.php';
+                    }
+                })
+                .catch(error => console.error('Error:', error));
+        }
     }
 }
 
@@ -46,23 +52,27 @@ setInterval(verificarPedidosPendientes, 15000);
 // Verificar al cargar
 verificarPedidosPendientes();
 
+
 function checkUserSession() {
     fetch('../php/check_session.php')
         .then(response => response.json())
         .then(data => {
             if (data.success) {
                 document.getElementById('userName').textContent = data.user.nombre;
+                sesion_iniciada = true;
             } else {
-                window.location.href = '../index.html';
+                // window.location.href = '../index.php';
+                sesion_iniciada = false;
             }
         })
         .catch(error => {
             console.error('Error verificando sesión:', error);
-            window.location.href = '../index.html';
+            window.location.href = '../index.php';
         });
 }
 
 function cargarProductos() {
+    
     fetch('inicio.php?action=get_productos')
         .then(response => response.json())
         .then(data => {
@@ -266,22 +276,26 @@ function loadCartFromStorage() {
 
 function abrirModalPedido() {
     // Verificar que hay productos en el carrito
-    if (cart.length === 0) {
-        showNotification('Tu carrito está vacío. Agrega productos antes de finalizar el pedido.', 'error');
-        return;
+    if(sesion_iniciada == true){
+        if (cart.length === 0) {
+            showNotification('Tu carrito está vacío. Agrega productos antes de finalizar el pedido.', 'error');
+            return;
+        }
+        
+        const modal = document.getElementById("modal-compra");
+        modal.style.display = "flex";
+        
+        // Actualizar resumen del pedido
+        actualizarResumenPedido();
+        
+        // Cerrar carrito
+        const cartSidebar = document.getElementById('cartSidebar');
+        const cartOverlay = document.getElementById('cartOverlay');
+        cartSidebar.classList.remove('open');
+        cartOverlay.classList.remove('active');
+    }else{
+        window.location.href = "../index.php";
     }
-    
-    const modal = document.getElementById("modal-compra");
-    modal.style.display = "flex";
-    
-    // Actualizar resumen del pedido
-    actualizarResumenPedido();
-    
-    // Cerrar carrito
-    const cartSidebar = document.getElementById('cartSidebar');
-    const cartOverlay = document.getElementById('cartOverlay');
-    cartSidebar.classList.remove('open');
-    cartOverlay.classList.remove('active');
 }
 
 function cerrar_modal() {
@@ -330,11 +344,11 @@ function logout() {
             }
         })
         .then(response => {
-            window.location.href = '../index.html';
+            window.location.href = '../index.php';
         })
         .catch(error => {
             console.log('Cerrando sesión...');
-            window.location.href = '../index.html';
+            window.location.href = '../index.php';
         });
     });
 }
@@ -350,6 +364,12 @@ function showNotification(message, type = 'success') {
     }
 }
 
+function atajoCarrito(e){
+    if((e.code === "KeyC" || e.code === "KeyV" || e.code === "KeyX" || e.code === "KeyF" || e.code === "KeyD") && e.ctrlKey){
+        toggleCart();
+    }
+}
+
 document.addEventListener('click', function(event) {
     const cartSidebar = document.getElementById('cartSidebar');
     const cartBtn = document.querySelector('.cart-btn');
@@ -360,6 +380,8 @@ document.addEventListener('click', function(event) {
         }
     }
 });
+
+document.addEventListener('keyup', atajoCarrito,false);
 
 document.getElementById('cartSidebar').addEventListener('click', function(event) {
     event.stopPropagation();

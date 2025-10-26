@@ -1,0 +1,123 @@
+html{
+    height: 100%
+}
+
+body{
+    min-height: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+a{
+    text-decoration: none;
+}
+
+.cabecera{
+    background-color: #C81E2D;
+    height: 10vh;
+}
+
+.barra_navegacion{
+    height: 100%;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+}
+
+#menu_inferior{
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    z-index: 2;
+
+    width: 100%;
+    height: 7vh;
+
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+
+    background-color: #C81E2D;
+}
+
+.contenedor_seccion{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    padding: 5px 10px;
+
+    height: 70%;
+}
+
+.contenedor_seccion_actual{
+    background-color: rgba(245, 235, 210, 0.3);
+}
+
+.contenedor_seccion span{
+    color: rgb(245, 235, 210);
+}
+
+.icono_navegacion{
+    color: rgb(245, 235, 210);
+}
+
+.boton_perfil{
+    background-color: rgb(80, 50, 20);
+    color: rgb(245, 235, 210);
+    border-radius: 10px;
+    border: none;
+    padding: 0.7rem;
+}
+
+.boton_cerrar_sesion{
+    background-color: rgb(80, 50, 20);
+    border-radius: 10px;
+    border: none;
+    padding: 0.7rem;
+    color: rgb(245, 235, 210);
+}
+
+.contenedor_enlaces{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.contenedor_enlaces a{
+    color: rgb(245, 235, 210);
+    text-decoration: none;
+    padding: 1rem;
+    margin: 0 1rem;
+    border-radius: 10px;
+    transition: background-color ease 250ms;
+}
+
+.contenedor_enlaces a:hover{
+    background-color: rgba(245, 235, 210, 0.3);
+}
+
+.imagen_isotipo{
+    height: 5rem;
+    width: 5rem;
+    object-fit: cover;
+    object-position: 50% 50%;
+}
+
+@media (width >= 780px){
+    #menu_inferior{
+        display: none;
+    }
+}
+
+@media (width < 780px){
+    .contenedor_enlaces{
+        display: none;
+    }
+    
+    /* ✅ AGREGÁ ESTO - Espacio para el menú inferior */
+    body {
+        padding-bottom: calc(8vh + 80px); /* 7vh del menú + 20px extra */
+    }
+}

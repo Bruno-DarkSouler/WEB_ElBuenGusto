@@ -1,0 +1,132 @@
+.address-options {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.address-option-btn {
+    flex: 1;
+    padding: 12px 20px;
+    border: 2px solid #ddd;
+    background: white;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.address-option-btn:hover {
+    border-color: #C81E2D;
+    color: #C81E2D;
+    transform: translateY(-2px);
+}
+
+.address-option-btn.active {
+    background: #C81E2D;
+    color: white;
+    border-color: #C81E2D;
+}
+
+/* Contenedor de direcciones */
+.direcciones-container {
+    display: grid;
+    gap: 15px;
+    max-height: 400px;
+    overflow-y: auto;
+    padding: 10px;
+}
+
+/* Tarjeta de dirección */
+.direccion-card {
+    border: 2px solid #e0e0e0;
+    border-radius: 12px;
+    padding: 15px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    background: white;
+}
+
+.direccion-card:hover {
+    border-color: #C81E2D;
+    box-shadow: 0 4px 12px rgba(200, 30, 45, 0.1);
+    transform: translateY(-2px);
+}
+
+.direccion-card.selected {
+    border-color: #C81E2D;
+    background: #fff5f5;
+    box-shadow: 0 4px 12px rgba(200, 30, 45, 0.2);
+}
+
+.direccion-card .alias-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    background: #C81E2D;
+    color: white;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+.direccion-card.selected .alias-badge {
+    background: #a01826;
+}
+
+.direccion-card .direccion-text {
+    font-size: 14px;
+    color: #333;
+    margin: 8px 0;
+    line-height: 1.5;
+}
+
+.direccion-card .direccion-detalles {
+    font-size: 12px;
+    color: #666;
+    margin-top: 8px;
+}
+
+.direccion-card .favorita-icon {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    font-size: 20px;
+}
+
+.direccion-card .check-icon {
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
+    background: #C81E2D;
+    color: white;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+}
+
+.direccion-card.selected .check-icon {
+    display: flex;
+}
+
+.loading-text {
+    text-align: center;
+    color: #666;
+    padding: 20px;
+}
+
+.no-direcciones {
+    text-align: center;
+    padding: 30px;
+    color: #666;
+}
+
+.no-direcciones-icon {
+    font-size: 48px;
+    margin-bottom: 10px;
+}

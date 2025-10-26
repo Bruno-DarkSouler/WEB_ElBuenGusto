@@ -76,7 +76,7 @@ document.addEventListener('DOMContentLoaded', function() {
             
             const formData = new FormData(loginForm);
             
-            fetch('./php/login.php', {
+            fetch('../php/login.php', {
                 method: 'POST',
                 body: formData
             })
@@ -107,7 +107,7 @@ document.addEventListener('DOMContentLoaded', function() {
             
             const formData = new FormData(registroForm);
             
-            fetch('./php/registro.php', {
+            fetch('../php/registro.php', {
                 method: 'POST',
                 body: formData
             })

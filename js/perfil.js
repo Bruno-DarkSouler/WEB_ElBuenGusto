@@ -1,20 +1,6 @@
-tailwind.config = {
-    theme: {
-        extend: {
-            colors: {
-                'primary-brown': 'rgb(80, 50, 20)',
-                'primary-cream': 'rgb(245, 235, 210)',
-                'primary-red': 'rgb(200, 30, 45)'
-            },
-            fontFamily: {
-                'averia': ['"Averia Serif Libre"', 'serif']
-            }
-        }
-    }
-}
-
 // Variables globales
 let datosOriginales = {};
+
 // Función para mostrar notificaciones
 function showNotification(message, type = 'info') {
     const notification = document.createElement('div');
@@ -36,7 +22,10 @@ function showNotification(message, type = 'info') {
         </div>
     `;
     
-    document.getElementById('notifications').appendChild(notification);
+    const container = document.getElementById('notifications');
+    if (container) {
+        container.appendChild(notification);
+    }
     
     setTimeout(() => {
         if (notification.parentElement) {
@@ -45,38 +34,25 @@ function showNotification(message, type = 'info') {
     }, 5000);
 }
 
-// Función para cambiar foto de perfil
-function cambiarFoto(input) {
-    const file = input.files[0];
-    if (file) {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            document.getElementById('fotoPerfilGrande').src = e.target.result;
-            document.getElementById('avatarUsuario').src = e.target.result;
-            showNotification('Foto de perfil actualizada', 'success');
-        };
-        reader.readAsDataURL(file);
-    }
-}
-
-// Función para guardar datos originales
+// Guardar los valores originales del perfil
 function guardarDatosOriginales() {
     datosOriginales = {
-        nombreCompleto: document.getElementById('nombreCompleto').value,
-        email: document.getElementById('email').value,
-        telefono: document.getElementById('telefono').value,
-        fechaNacimiento: document.getElementById('fechaNacimiento').value,
-        direccion: document.getElementById('direccion').value,
-        comidaFavorita: document.getElementById('comidaFavorita').value,
-        horarioPreferido: document.getElementById('horarioPreferido').value,
-        notificaciones: document.getElementById('notificaciones').checked,
-        recordatorios: document.getElementById('recordatorios').checked,
-        newsletter: document.getElementById('newsletter').checked
+        nombreCompleto: document.getElementById('nombreCompleto')?.value || '',
+        email: document.getElementById('email')?.value || '',
+        telefono: document.getElementById('telefono')?.value || '',
+        fechaNacimiento: document.getElementById('fechaNacimiento')?.value || '',
+        direccion: document.getElementById('direccion')?.value || '',
+        comidaFavorita: document.getElementById('comidaFavorita')?.value || '',
+        horarioPreferido: document.getElementById('horarioPreferido')?.value || '',
+        notificaciones: document.getElementById('notificaciones')?.checked || false,
+        recordatorios: document.getElementById('recordatorios')?.checked || false,
+        newsletter: document.getElementById('newsletter')?.checked || false
     };
 }
 
-// Función para cancelar cambios
+// Cancelar cambios
 function cancelarCambios() {
+    if (!datosOriginales) return;
     document.getElementById('nombreCompleto').value = datosOriginales.nombreCompleto;
     document.getElementById('email').value = datosOriginales.email;
     document.getElementById('telefono').value = datosOriginales.telefono;
@@ -89,167 +65,371 @@ function cancelarCambios() {
     document.getElementById('newsletter').checked = datosOriginales.newsletter;
     document.getElementById('nuevaPassword').value = '';
     document.getElementById('confirmarPassword').value = '';
-    
     showNotification('Cambios cancelados', 'info');
 }
 
-
-
-
-
-
-//funcion Direccion ALL
-
-// Función para eliminar dirección
+// Funciones para direcciones
 function eliminarDireccion(id) {
     if (confirm('¿Estás seguro de que quieres eliminar esta dirección?')) {
         showNotification('Dirección eliminada correctamente', 'success');
-        // Aquí iría la lógica para eliminar la dirección
     }
 }
-// Función para editar dirección
+
 function editarDireccion(id) {
-    document.getElementById('modalDireccion').classList.remove('hidden');
-    // Aquí se cargarían los datos de la dirección para editar
+    const modal = document.getElementById('modalDireccion');
+    if (modal) modal.classList.remove('hidden');
 }
-// Función para agregar dirección
+
 function agregarDireccion() {
-    document.getElementById('modalDireccion').classList.remove('hidden');
+    const modal = document.getElementById('modalDireccion');
+    if (modal) modal.classList.remove('hidden');
 }
+
 function cerrarModalDireccion() {
-    document.getElementById('modalDireccion').classList.add('hidden');
-    document.getElementById('formDireccion').reset();
+    const modal = document.getElementById('modalDireccion');
+    if (modal) modal.classList.add('hidden');
+    const form = document.getElementById('formDireccion');
+    if (form) form.reset();
 }
 
 
-
-
-// Función para repetir pedido
-function repetirPedido(id) {
-    showNotification(`Pedido #${id} agregado al carrito`, 'success');
-}
-// Función para ver todos los pedidos
 function verTodosLosPedidos() {
-    document.getElementById('verTodosLosPedidos').classList.remove('hidden');
+    const modal = document.getElementById('verTodosLosPedidos');
+    if (modal) modal.classList.remove('hidden');
 }
+
 function cerrarModalPedidos() {
-    document.getElementById('verTodosLosPedidos').classList.add('hidden');
-    document.getElementById('formDireccion').reset();
+    const modal = document.getElementById('verTodosLosPedidos');
+    if (modal) modal.classList.add('hidden');
 }
-
-
-// Formatear número de tarjeta
-document.getElementById('numeroTarjeta').addEventListener('input', function(e) {
-    let value = e.target.value.replace(/\D/g, '');
-    let formattedValue = value.replace(/(\d{4})(?=\d)/g, '$1 ');
-    e.target.value = formattedValue;
-});
-
-// Formatear fecha de vencimiento
-document.getElementById('vencimiento').addEventListener('input', function(e) {
-    let value = e.target.value.replace(/\D/g, '');
-    if (value.length >= 2) {
-        value = value.substring(0,2) + '/' + value.substring(2,4);
-    }
-    e.target.value = value;
-});
-
-// Formatear CVV
-document.getElementById('cvv').addEventListener('input', function(e) {
-    e.target.value = e.target.value.replace(/\D/g, '');
-});
-
-// Event listeners para formularios
-document.getElementById('perfilForm').addEventListener('submit', function(e) {
-    e.preventDefault();
-    
-    // Validar contraseñas si se ingresaron
-    const nuevaPassword = document.getElementById('nuevaPassword').value;
-    const confirmarPassword = document.getElementById('confirmarPassword').value;
-    
-    if (nuevaPassword && nuevaPassword !== confirmarPassword) {
-        showNotification('Las contraseñas no coinciden', 'error');
-        return;
-    }
-
-    // Validar email
-    const email = document.getElementById('email').value;
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-        showNotification('Ingrese un email válido', 'error');
-        return;
-    }
-
-    // Guardar cambios
-    guardarDatosOriginales();
-    showNotification('Perfil actualizado correctamente', 'success');
-    
-    // Actualizar nombre en header
-    document.getElementById('nombreUsuario').textContent = document.getElementById('nombreCompleto').value;
-});
-
-document.getElementById('formTarjeta').addEventListener('submit', function(e) {
-    e.preventDefault();
-    
-    const numeroTarjeta = document.getElementById('numeroTarjeta').value.replace(/\s/g, '');
-    const vencimiento = document.getElementById('vencimiento').value;
-    const cvv = document.getElementById('cvv').value;
-    const nombreTitular = document.getElementById('nombreTitular').value;
-
-    if (numeroTarjeta.length !== 16) {
-        showNotification('Número de tarjeta inválido', 'error');
-        return;
-    }
-
-    if (!/^\d{2}\/\d{2}$/.test(vencimiento)) {
-        showNotification('Fecha de vencimiento inválida', 'error');
-        return;
-    }
-
-    if (cvv.length !== 3) {
-        showNotification('CVV inválido', 'error');
-        return;
-    }
-
-    if (!nombreTitular.trim()) {
-        showNotification('Ingrese el nombre del titular', 'error');
-        return;
-    }
-
-    cerrarModalTarjeta();
-    showNotification('Tarjeta agregada correctamente', 'success');
-});
-
-document.getElementById('formDireccion').addEventListener('submit', function(e) {
-    e.preventDefault();
-    
-    const direccionCompleta = document.getElementById('direccionCompleta').value;
-    const ciudad = document.getElementById('ciudad').value;
-    const codigoPostal = document.getElementById('codigoPostal').value;
-
-    if (!direccionCompleta.trim() || !ciudad.trim() || !codigoPostal.trim()) {
-        showNotification('Complete todos los campos obligatorios', 'error');
-        return;
-    }
-
-    cerrarModalDireccion();
-    showNotification('Dirección agregada correctamente', 'success');
-});
-
-// Inicialización
+// Event listeners seguros
 document.addEventListener('DOMContentLoaded', function() {
     guardarDatosOriginales();
+
+    const perfilForm = document.getElementById('perfilForm');
+    if (perfilForm) {
+        perfilForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const nuevaPassword = document.getElementById('nuevaPassword').value;
+            const confirmarPassword = document.getElementById('confirmarPassword').value;
+            
+            if (nuevaPassword && nuevaPassword !== confirmarPassword) {
+                showNotification('Las contraseñas no coinciden', 'error');
+                return;
+            }
+
+            const email = document.getElementById('email').value;
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email)) {
+                showNotification('Ingrese un email válido', 'error');
+                return;
+            }
+
+            guardarDatosOriginales();
+            showNotification('Perfil actualizado correctamente', 'success');
+
+            const nombreUsuario = document.getElementById('nombreUsuario');
+            const nombreCompleto = document.getElementById('nombreCompleto');
+            if (nombreUsuario && nombreCompleto) {
+                nombreUsuario.textContent = nombreCompleto.value;
+            }
+        });
+    }
+
+    const formDireccion = document.getElementById('formDireccion');
+    if (formDireccion) {
+        formDireccion.addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const direccionCompleta = document.getElementById('direccionCompleta').value;
+            const ciudad = document.getElementById('ciudad').value;
+            const codigoPostal = document.getElementById('codigoPostal').value;
+
+            if (!direccionCompleta.trim() || !ciudad.trim() || !codigoPostal.trim()) {
+                showNotification('Complete todos los campos obligatorios', 'error');
+                return;
+            }
+
+            cerrarModalDireccion();
+            showNotification('Dirección agregada correctamente', 'success');
+        });
+    }
 });
 
-// perfil.js
-function cambiarFoto(input) {
-    if (input.files && input.files[0]) {
-        var reader = new FileReader();
 
-        reader.onload = function(e) {
-            document.getElementById('fotoPerfilGrande').src = e.target.result;
-        }
+// ========== FUNCIONES PARA CARGAR PRODUCTOS Y ZONAS EN PERFIL.PHP ==========
 
-        reader.readAsDataURL(input.files[0]);
+// Cargar productos
+function cargarProductos() {
+    fetch('?action=get_productos')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                console.log('✅ Productos cargados:', data.productos.length);
+            } else {
+                console.error('❌ Error al cargar productos:', data.message);
+                showNotification('Error al cargar productos', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('❌ Error:', error);
+            showNotification('Error al cargar productos', 'error');
+        });
+}
+
+// Cargar zonas de delivery
+function cargarZonasDelivery() {
+    fetch('?action=get_zonas')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const selectZona = document.getElementById('zona');
+                if (selectZona) {
+                    selectZona.innerHTML = '<option value="">Seleccione una zona</option>';
+                    
+                    data.zonas.forEach(zona => {
+                        const option = document.createElement('option');
+                        option.value = zona.id;
+                        option.textContent = `${zona.nombre} - $${parseFloat(zona.precio_delivery).toLocaleString()}`;
+                        option.setAttribute('data-precio', zona.precio_delivery);
+                        selectZona.appendChild(option);
+                    });
+                    
+                    console.log('✅ Zonas cargadas:', data.zonas.length);
+                }
+            } else {
+                console.error('❌ Error al cargar zonas:', data.message);
+            }
+        })
+        .catch(error => {
+            console.error('❌ Error:', error);
+        });
+}
+
+// Actualizar precio de delivery
+function actualizarPrecioDelivery() {
+    const selectZona = document.getElementById('zona');
+    const selectedOption = selectZona.options[selectZona.selectedIndex];
+    
+    if (selectedOption.value) {
+        const precioDelivery = parseFloat(selectedOption.getAttribute('data-precio'));
+        document.getElementById('costoEnvio').textContent = precioDelivery.toLocaleString();
+        document.getElementById('resumenDelivery').textContent = precioDelivery.toLocaleString();
+        
+        window.zonaSeleccionada = {
+            id: selectedOption.value,
+            precio: precioDelivery
+        };
+        
+        actualizarResumenPedido();
+    } else {
+        document.getElementById('costoEnvio').textContent = '0';
+        document.getElementById('resumenDelivery').textContent = '0';
+        window.zonaSeleccionada = null;
+        actualizarResumenPedido();
     }
 }
+
+// Actualizar resumen del pedido
+function actualizarResumenPedido() {
+    const cart = JSON.parse(localStorage.getItem('cart')) || [];
+    const subtotal = cart.reduce((sum, item) => sum + (item.precio * item.cantidad), 0);
+    const delivery = window.zonaSeleccionada ? window.zonaSeleccionada.precio : 0;
+    const total = subtotal + delivery;
+    
+    document.getElementById('resumenSubtotal').textContent = subtotal.toLocaleString();
+    document.getElementById('resumenDelivery').textContent = delivery.toLocaleString();
+    document.getElementById('resumenTotal').textContent = total.toLocaleString();
+}
+
+console.log('✅ perfil.js cargado con funciones de productos y zonas');
+
+// ========== FUNCIONES DEL CARRITO ==========
+
+let cart = [];
+let zonaSeleccionada = null;
+
+// Cargar carrito desde localStorage
+function loadCartFromStorage() {
+    const savedCart = localStorage.getItem('cart');
+    if (savedCart) {
+        cart = JSON.parse(savedCart);
+        updateCartDisplay();
+    }
+}
+
+// Guardar carrito en localStorage
+function saveCartToStorage() {
+    localStorage.setItem('cart', JSON.stringify(cart));
+}
+
+// Toggle del carrito
+function toggleCart() {
+    const cartSidebar = document.getElementById('cartSidebar');
+    const cartOverlay = document.getElementById('cartOverlay');
+    
+    if (cartSidebar && cartOverlay) {
+        cartSidebar.classList.toggle('open');
+        cartOverlay.classList.toggle('active');
+    }
+}
+
+// Agregar al carrito
+function addToCart(id, name, price, image) {
+    const existingItem = cart.find(item => item.id === id);
+    
+    if (existingItem) {
+        existingItem.quantity += 1;
+    } else {
+        cart.push({
+            id: id,
+            name: name,
+            price: parseFloat(price),
+            image: image,
+            quantity: 1
+        });
+    }
+    
+    updateCartDisplay();
+    saveCartToStorage();
+    showNotification(`${name} agregado al carrito`, 'success');
+}
+
+// Eliminar del carrito
+function removeFromCart(id) {
+    cart = cart.filter(item => item.id !== id);
+    updateCartDisplay();
+    saveCartToStorage();
+}
+
+// Actualizar cantidad
+function updateQuantity(id, change) {
+    const item = cart.find(item => item.id === id);
+    if (item) {
+        item.quantity += change;
+        if (item.quantity <= 0) {
+            removeFromCart(id);
+        } else {
+            updateCartDisplay();
+            saveCartToStorage();
+        }
+    }
+}
+
+// Actualizar visualización del carrito
+function updateCartDisplay() {
+    const cartItems = document.getElementById('cartItems');
+    const cartCount = document.getElementById('cartCount');
+    const cartTotal = document.getElementById('cartTotal');
+    
+    if (!cartItems || !cartCount || !cartTotal) return;
+    
+    const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
+    cartCount.textContent = totalItems;
+    
+    const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    cartTotal.textContent = total.toLocaleString();
+    
+    if (cart.length === 0) {
+        cartItems.innerHTML = '<p class="empty-cart">Tu carrito está vacío</p>';
+    } else {
+        cartItems.innerHTML = cart.map(item => `
+            <div class="cart-item">
+                <img src="${item.image}" alt="${item.name}">
+                <div class="cart-item-info">
+                    <div class="cart-item-name">${item.name}</div>
+                    <div class="cart-item-price">$${item.price.toLocaleString()}</div>
+                    <div class="cart-item-quantity">
+                        <button class="quantity-btn" onclick="updateQuantity(${item.id}, -1)">-</button>
+                        <span>${item.quantity}</span>
+                        <button class="quantity-btn" onclick="updateQuantity(${item.id}, 1)">+</button>
+                        <button class="quantity-btn" onclick="removeFromCart(${item.id})" style="margin-left: 10px; background-color: #C81E2D; color: white;">🗑</button>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+    }
+}
+
+// Abrir modal de pedido
+function abrirModalPedido() {
+    if (cart.length === 0) {
+        showNotification('Tu carrito está vacío. Agrega productos antes de finalizar el pedido.', 'error');
+        return;
+    }
+    
+    const modal = document.getElementById("modal-compra");
+    if (modal) {
+        modal.style.display = "flex";
+    }
+    
+    // Cargar zonas de delivery
+    cargarZonasDelivery();
+    
+    // Cargar direcciones guardadas
+    setTimeout(() => {
+        if (typeof cargarDireccionesGuardadas === 'function') {
+            cargarDireccionesGuardadas();
+        }
+    }, 300);
+    
+    // Actualizar resumen del pedido
+    actualizarResumenPedido();
+    
+    // Cerrar carrito
+    const cartSidebar = document.getElementById('cartSidebar');
+    const cartOverlay = document.getElementById('cartOverlay');
+    if (cartSidebar) cartSidebar.classList.remove('open');
+    if (cartOverlay) cartOverlay.classList.remove('active');
+}
+
+// Cerrar modal
+function cerrar_modal() {
+    const modal = document.getElementById("modal-compra");
+    if (modal) {
+        modal.style.display = "none";
+    }
+}
+
+// Logout
+function logout() {
+    if (confirm('¿Estás seguro que deseas cerrar sesión?')) {
+        localStorage.removeItem('cart');
+        
+        fetch('../php/logout.php', {
+            method: 'POST',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(() => {
+            window.location.href = '../index.php';
+        })
+        .catch(() => {
+            window.location.href = '../index.php';
+        });
+    }
+}
+
+// Cerrar carrito al hacer clic fuera
+document.addEventListener('click', function(event) {
+    const cartSidebar = document.getElementById('cartSidebar');
+    const cartBtn = document.querySelector('.cart-btn');
+    
+    if (cartSidebar && cartBtn) {
+        if (!cartSidebar.contains(event.target) && !cartBtn.contains(event.target)) {
+            if (cartSidebar.classList.contains('open')) {
+                toggleCart();
+            }
+        }
+    }
+});
+
+// Inicializar carrito cuando carga la página
+document.addEventListener('DOMContentLoaded', function() {
+    loadCartFromStorage();
+    console.log('✅ Carrito inicializado con', cart.length, 'productos');
+});
+
+console.log('✅ Funciones del carrito cargadas');

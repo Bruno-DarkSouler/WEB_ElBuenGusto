@@ -3,7 +3,7 @@ session_start();
 
 // Verificar si hay sesión activa y es repartidor
 if (!isset($_SESSION['user_id']) || $_SESSION['user_rol'] !== 'repartidor') {
-    header('Location: ../index.html');
+    header('Location: ../html/inicio.php');
     exit;
 }
 

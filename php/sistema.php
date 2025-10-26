@@ -10,7 +10,10 @@
 
     function consultaSelect(&$conexion, $consulta, $tipo_d, $parametros){
         $cursor = $conexion->prepare($consulta);
-        $cursor->bind_param($tipo_d, ...$parametros);
+
+        if($tipo_d != ""){
+            $cursor->bind_param($tipo_d, ...$parametros);
+        }
 
         $cursor->execute();
         $resultado = $cursor->get_result();

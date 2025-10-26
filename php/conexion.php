@@ -1,9 +1,9 @@
 <?php
 // Configuración de la base de datos
 $servidor = "localhost";
-$usuario = "root";
-$password = "";
-$base_datos = "buengusto";
+$usuario = "elbuengusto";
+$password = "Rotiseria2025";
+$base_datos = "elbuengusto_elbuengusto";
 
 // Crear conexión
 $conexion = new mysqli($servidor, $usuario, $password, $base_datos);
