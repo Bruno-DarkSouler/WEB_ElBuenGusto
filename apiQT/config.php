@@ -1,11 +1,9 @@
 <?php
-// Configuración de la aplicación
-
-// Base de datos (para cuando se implemente)
+// Configuración de la base de datos
 define('DB_HOST', 'localhost');
-define('DB_NAME', 'buengusto');
-define('DB_USER', 'root');
-define('DB_PASS', '');
+define('DB_USER', 'elbuengusto');
+define('DB_PASS', 'Rotiseria2025');
+define('DB_NAME', 'elbuengusto_elbuengusto');
 
 // Horarios de atención
 define('HORA_APERTURA_1', '11:00');
