@@ -149,7 +149,108 @@ if (isset($_GET['action'])) {
                 echo json_encode(['success' => false, 'message' => 'Error: ' . $e->getMessage()]);
             }
             exit;
-
+        case 'cancelar_pedido':
+            try {
+                if (!isset($_SESSION['user_id'])) {
+                    echo json_encode(['success' => false, 'message' => 'Usuario no autenticado']);
+                    exit;
+                }
+                
+                $data = json_decode(file_get_contents('php://input'), true);
+                $pedido_id = $data['pedido_id'];
+                $user_id = $_SESSION['user_id'];
+                
+                $conexion->begin_transaction();
+                
+                // Obtener datos del pedido incluyendo cuándo entró en preparación
+                $query = "SELECT p.*, p.fecha_pedido, p.metodo_pago, p.total, p.estado,
+                        (SELECT fecha_cambio FROM seguimiento_pedidos 
+                        WHERE pedido_id = p.id AND estado_nuevo = 'en_preparacion' 
+                        ORDER BY fecha_cambio DESC LIMIT 1) as fecha_en_preparacion,
+                        TIMESTAMPDIFF(MINUTE, 
+                            COALESCE(
+                                (SELECT fecha_cambio FROM seguimiento_pedidos 
+                                WHERE pedido_id = p.id AND estado_nuevo = 'en_preparacion' 
+                                ORDER BY fecha_cambio DESC LIMIT 1),
+                                p.fecha_pedido
+                            ), 
+                            NOW()
+                        ) as minutos_desde_preparacion
+                        FROM pedidos p
+                        WHERE p.id = ? AND p.usuario_id = ?";
+                
+                $stmt = $conexion->prepare($query);
+                $stmt->bind_param("ii", $pedido_id, $user_id);
+                $stmt->execute();
+                $pedido = $stmt->get_result()->fetch_assoc();
+                
+                if (!$pedido) {
+                    throw new Exception('Pedido no encontrado');
+                }
+                
+                // Validar según el estado
+                $puede_cancelar = false;
+                $motivo_rechazo = '';
+                
+                if ($pedido['estado'] == 'pendiente') {
+                    // SIEMPRE puede cancelar si está pendiente
+                    $puede_cancelar = true;
+                } 
+                elseif ($pedido['estado'] == 'en_preparacion') {
+                    // Solo puede cancelar si pasaron menos de 7 minutos desde que entró en preparación
+                    $minutos = (int)$pedido['minutos_desde_preparacion'];
+                    
+                    if ($minutos <= 7) {
+                        $puede_cancelar = true;
+                    } else {
+                        $motivo_rechazo = "Han pasado {$minutos} minutos desde que entró en preparación (máximo 7 minutos)";
+                    }
+                } 
+                else {
+                    // Estados no cancelables: confirmado, listo, en_camino, entregado, cancelado
+                    $motivo_rechazo = "El pedido está en estado '{$pedido['estado']}' y no se puede cancelar";
+                }
+                
+                if (!$puede_cancelar) {
+                    throw new Exception($motivo_rechazo ?: 'No se puede cancelar este pedido');
+                }
+                // Actualizar estado a cancelado
+                $stmt = $conexion->prepare("UPDATE pedidos SET estado = 'cancelado', updated_at = NOW() WHERE id = ?");
+                $stmt->bind_param("i", $pedido_id);
+                $stmt->execute();
+                
+                // Registrar en seguimiento
+                $stmt = $conexion->prepare(
+                    "INSERT INTO seguimiento_pedidos (pedido_id, estado_anterior, estado_nuevo, usuario_cambio_id, comentarios)
+                    VALUES (?, ?, 'cancelado', ?, 'Pedido cancelado por el cliente dentro del tiempo permitido')"
+                );
+                $stmt->bind_param("isi", $pedido_id, $pedido['estado'], $user_id);
+                $stmt->execute();
+                
+                $conexion->commit();
+                
+                // Mensaje según método de pago
+                $mensaje_reembolso = '';
+                if ($pedido['metodo_pago'] === 'digital') {
+                    $mensaje_reembolso = ' El reembolso de $' . number_format($pedido['total'], 0, ',', '.') . ' será procesado en 24-48 horas hábiles.';
+                } elseif ($pedido['metodo_pago'] === 'efectivo') {
+                    $mensaje_reembolso = ' No se realizó ningún cargo ya que el pago era en efectivo.';
+                }
+                
+                echo json_encode([
+                    'success' => true,
+                    'message' => 'Pedido cancelado exitosamente.' . $mensaje_reembolso,
+                    'monto_reembolso' => ($pedido['metodo_pago'] === 'digital') ? $pedido['total'] : 0,
+                    'metodo_pago' => $pedido['metodo_pago']
+                ]);
+                
+            } catch (Exception $e) {
+                if (isset($conexion)) {
+                    $conexion->rollback();
+                }
+                echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+            }
+            exit;
 case 'procesar_pedido':
     // VALIDAR QUE EL USUARIO ESTÉ LOGUEADO
     if (!isset($_SESSION['user_id'])) {
@@ -184,7 +285,20 @@ case 'procesar_pedido':
         $numero_pedido = 'PED' . str_pad(rand(1, 99999), 5, '0', STR_PAD_LEFT);
         $estado = ($data['tipo_pedido'] === 'programado') ? 'pendiente' : 'en_preparacion';
         $fecha_entrega = ($data['tipo_pedido'] === 'programado') ? $data['fecha_entrega'] . ' ' . $data['hora_entrega'] : null;
-        $metodo_pago = 'digital';
+        // Validar método de pago
+        $metodo_pago = $data['metodo_pago'];
+
+        // Si es efectivo, verificar que el usuario sea VIP
+        if ($metodo_pago === 'efectivo') {
+            $stmt_vip = $conexion->prepare("SELECT vip FROM usuarios WHERE id = ?");
+            $stmt_vip->bind_param("i", $_SESSION['user_id']);
+            $stmt_vip->execute();
+            $es_vip = $stmt_vip->get_result()->fetch_assoc()['vip'];
+            
+            if (!$es_vip) {
+                throw new Exception('El pago en efectivo solo está disponible para clientes VIP');
+            }
+        }
 
         $stmt = $conexion->prepare("INSERT INTO pedidos 
             (numero_pedido, usuario_id, tipo_pedido, fecha_entrega_programada, 
@@ -279,8 +393,8 @@ $result_pedidos = $stmt_pedidos->get_result();
 $total_pedidos = $result_pedidos->fetch_assoc()['total_pedidos'];
 
 // Total gastado
-$stmt_gastado = $conexion->prepare("SELECT SUM(total) as total_gastado FROM pedidos WHERE usuario_id = ? AND estado = 'entregado'");
-$stmt_gastado->bind_param("i", $user_id);
+// Total gastado (solo pedidos entregados, excluyendo cancelados)
+$stmt_gastado = $conexion->prepare("SELECT SUM(total) as total_gastado FROM pedidos WHERE usuario_id = ? AND estado = 'entregado'");$stmt_gastado->bind_param("i", $user_id);
 $stmt_gastado->execute();
 $result_gastado = $stmt_gastado->get_result();
 $total_gastado = $result_gastado->fetch_assoc()['total_gastado'] ?? 0;
@@ -317,9 +431,22 @@ $pedidos_recientes = $result_pedidos_recientes->fetch_all(MYSQLI_ASSOC);
 
 
 // ================== SEGUIMIENTO DE PEDIDOS==================
+// ================== SEGUIMIENTO DE PEDIDOS==================
 $stmt_activos = $conexion->prepare("
-    SELECT p.id, p.numero_pedido, p.fecha_pedido, p.total, p.estado,
-           GROUP_CONCAT(CONCAT(pi.cantidad, 'x ', pr.nombre) SEPARATOR ', ') as productos
+    SELECT p.id, p.numero_pedido, p.fecha_pedido, p.total, p.estado, p.metodo_pago,
+           GROUP_CONCAT(CONCAT(pi.cantidad, 'x ', pr.nombre) SEPARATOR ', ') as productos,
+           (SELECT fecha_cambio FROM seguimiento_pedidos 
+            WHERE pedido_id = p.id AND estado_nuevo = 'en_preparacion' 
+            ORDER BY fecha_cambio DESC LIMIT 1) as fecha_en_preparacion,
+           TIMESTAMPDIFF(MINUTE, 
+               COALESCE(
+                   (SELECT fecha_cambio FROM seguimiento_pedidos 
+                    WHERE pedido_id = p.id AND estado_nuevo = 'en_preparacion' 
+                    ORDER BY fecha_cambio DESC LIMIT 1),
+                   p.fecha_pedido
+               ), 
+               NOW()
+           ) as minutos_desde_preparacion
     FROM pedidos p
     LEFT JOIN pedido_items pi ON p.id = pi.pedido_id
     LEFT JOIN productos pr ON pi.producto_id = pr.id
@@ -634,21 +761,21 @@ if ($ultimo_pedido) {
                     </div>
 
                     <!-- Reseñas del cliente -->
-<div class="bg-purple-50 p-3 rounded-lg cursor-pointer hover:bg-purple-100 transition-colors" onclick="verMisResenas()">
-    <p class="text-sm text-gray-600 mb-1">⭐ Mis Reseñas:</p>
-    <p class="font-bold text-gray-800">
-        <?php echo $total_resenas; ?> reseña<?php echo $total_resenas != 1 ? 's' : ''; ?> realizadas
-    </p>
-    <?php if ($total_resenas == 0): ?>
-        <p class="text-xs text-orange-600 mt-1">Aún no has dejado reseñas 📝</p>
-    <?php elseif ($total_resenas >= 10): ?>
-        <p class="text-xs text-green-600 mt-1">¡Eres un reviewer top! 🌟</p>
-    <?php elseif ($total_resenas >= 5): ?>
-        <p class="text-xs text-blue-600 mt-1">¡Gracias por tu feedback! 💬</p>
-    <?php else: ?>
-        <p class="text-xs text-purple-600 mt-1">Clic para ver tus reseñas 👆</p>
-    <?php endif; ?>
-</div>
+                    <div class="bg-purple-50 p-3 rounded-lg cursor-pointer hover:bg-purple-100 transition-colors" onclick="verMisResenas()">
+                        <p class="text-sm text-gray-600 mb-1">⭐ Mis Reseñas:</p>
+                        <p class="font-bold text-gray-800">
+                            <?php echo $total_resenas; ?> reseña<?php echo $total_resenas != 1 ? 's' : ''; ?> realizadas
+                        </p>
+                        <?php if ($total_resenas == 0): ?>
+                            <p class="text-xs text-orange-600 mt-1">Aún no has dejado reseñas 📝</p>
+                        <?php elseif ($total_resenas >= 10): ?>
+                            <p class="text-xs text-green-600 mt-1">¡Eres un reviewer top! 🌟</p>
+                        <?php elseif ($total_resenas >= 5): ?>
+                            <p class="text-xs text-blue-600 mt-1">¡Gracias por tu feedback! 💬</p>
+                        <?php else: ?>
+                            <p class="text-xs text-purple-600 mt-1">Clic para ver tus reseñas 👆</p>
+                        <?php endif; ?>
+                    </div>
                 </form>
             </div>
         </div>
@@ -781,7 +908,7 @@ if ($ultimo_pedido) {
                 </div>
                 <?php endif; ?>
             </div>
-
+            <!-- seccion pedidos activos -->
             <div class="bg-white rounded-xl shadow-lg">
                 <div class="bg-blue-600 text-white p-4 rounded-t-xl flex justify-between items-center">
                     <h3 class="text-lg font-bold">🚚 Mis Pedidos Activos</h3>
@@ -792,6 +919,25 @@ if ($ultimo_pedido) {
                     <?php if (!empty($pedidos_activos)): ?>
                         <?php foreach ($pedidos_activos as $pedido): ?>
                             <?php
+                            // Calcular si puede cancelar
+                            $puede_cancelar = false;
+                            $minutos_restantes = 0;
+                            
+                            // Si está pendiente, siempre puede cancelar
+                            if ($pedido['estado'] == 'pendiente') {
+                                $puede_cancelar = true;
+                                $minutos_restantes = 7; // Mostrar 7 minutos disponibles
+                            } 
+                            // Si está en_preparacion, verificar los 7 minutos
+                            elseif ($pedido['estado'] == 'en_preparacion') {
+                                $minutos_desde_prep = (int)$pedido['minutos_desde_preparacion'];
+                                
+                                if ($minutos_desde_prep <= 7) {
+                                    $puede_cancelar = true;
+                                    $minutos_restantes = 7 - $minutos_desde_prep;
+                                }
+                            }
+                                
                                 // Determinar color y emoji según estado
                                 $estados = [
                                     'pendiente' => ['color' => 'orange', 'emoji' => '⏳', 'texto' => 'Pendiente'],
@@ -834,6 +980,28 @@ if ($ultimo_pedido) {
                                         </span>
                                     <?php endif; ?>
                                 </div>
+                                
+                                <!-- Botón de cancelar -->
+                                <?php if ($puede_cancelar): ?>
+                                    <div class="mt-3 pt-2 border-t border-gray-200">
+                                        <button 
+                                            onclick="cancelarPedido(<?= $pedido['id'] ?>, '<?= htmlspecialchars($pedido['numero_pedido']) ?>', <?= $pedido['total'] ?>)"
+                                            class="w-full bg-red-500 hover:bg-red-600 text-white py-2 px-4 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                            </svg>
+                                            <?php if ($pedido['estado'] == 'pendiente'): ?>
+                                                Cancelar Pedido (disponible)
+                                            <?php else: ?>
+                                                Cancelar Pedido (<?= $minutos_restantes ?> min restantes)
+                                            <?php endif; ?>
+                                        </button>
+                                    </div>
+                                <?php elseif ($pedido['estado'] == 'en_preparacion' && $minutos_desde_prep > 7): ?>
+                                    <div class="mt-3 pt-2 border-t border-gray-200">
+                                        <p class="text-xs text-gray-500 text-center">⏱️ Tiempo de cancelación agotado (más de 7 min en preparación)</p>
+                                    </div>
+                                <?php endif; ?>
                             </div>
                         <?php endforeach; ?>
                     <?php else: ?>
@@ -847,7 +1015,7 @@ if ($ultimo_pedido) {
                             <p class="text-sm text-gray-400 mt-1">¡Hacé tu pedido ahora!</p>
                         </div>
                     <?php endif; ?>
-                </div>
+                </div>  
             </div>
         </div>
 
@@ -1331,18 +1499,33 @@ if ($ultimo_pedido) {
                         </h2>
                         
                         <div class="payment-methods">
-                            <div class="payment-method" onclick="selectPaymentMethod('mercadopago')">
-                                <input type="radio" name="payment_method" value="mercadopago" id="mercadopago" required>
-                                <div class="payment-icon"><img class="metodo-pago" src="../img/mp-logo.png" alt="MP"></div>
-                                <div>Mercado Pago</div>
-                            </div>
+                        <div class="payment-method" onclick="selectPaymentMethod('mercadopago')">
+                            <input type="radio" name="payment_method" value="mercadopago" id="mercadopago" required>
+                            <div class="payment-icon"><img class="metodo-pago" src="../img/mp-logo.png" alt="MP"></div>
+                            <div>Mercado Pago</div>
+                        </div>
 
-                            <div class="payment-method" onclick="selectPaymentMethod('cuenta_dni')">
-                                <input type="radio" name="payment_method" value="cuenta_dni" id="cuenta_dni">
-                                <div class="payment-icon"><img class="metodo-pago" src="../img/cuenta-dni-logo.png" alt="DNI"></div>
-                                <div>Cuenta DNI</div>
+                        <div class="payment-method" onclick="selectPaymentMethod('cuenta_dni')">
+                            <input type="radio" name="payment_method" value="cuenta_dni" id="cuenta_dni">
+                            <div class="payment-icon"><img class="metodo-pago" src="../img/cuenta-dni-logo.png" alt="DNI"></div>
+                            <div>Cuenta DNI</div>
+                        </div>
+
+                        <?php if ($user['es_vip']): ?>
+                        <div class="payment-method" onclick="selectPaymentMethod('efectivo')">
+                            <input type="radio" name="payment_method" value="efectivo" id="efectivo">
+                            <div class="payment-icon">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" fill="#4CAF50" viewBox="0 0 16 16">
+                                    <path d="M4 10.781c.148 1.667 1.513 2.85 3.591 3.003V15h1.043v-1.216c2.27-.179 3.678-1.438 3.678-3.3 0-1.59-.947-2.51-2.956-3.028l-.722-.187V3.467c1.122.11 1.879.714 2.07 1.616h1.47c-.166-1.6-1.54-2.748-3.54-2.875V1H7.591v1.233c-1.939.23-3.27 1.472-3.27 3.156 0 1.454.966 2.483 2.661 2.917l.61.162v4.031c-1.149-.17-1.94-.8-2.131-1.718H4zm3.391-3.836c-1.043-.263-1.6-.825-1.6-1.616 0-.944.704-1.641 1.8-1.828v3.495l-.2-.05zm1.591 1.872c1.287.323 1.852.859 1.852 1.769 0 1.097-.826 1.828-2.2 1.939V8.73l.348.086z"/>
+                                </svg>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span>Efectivo</span>
+                                <span class="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full">⭐ VIP</span>
                             </div>
                         </div>
+                        <?php endif; ?>
+                    </div>
                     </div>
 
                     <!-- Comentarios -->
@@ -1704,7 +1887,7 @@ function formatearFecha(fecha) {
     return `${dia}/${mes}/${año} ${horas}:${minutos}`;
 }
 
-// Función para actualizar pedidos activos
+// Función para actualizar pedidos activos (VERSIÓN CORREGIDA)
 function actualizarPedidosActivos() {
     const statusIndicator = document.getElementById('statusIndicator');
     
@@ -1716,12 +1899,28 @@ function actualizarPedidosActivos() {
     fetch('../php/obtener_pedidos_activos.php')
         .then(response => response.json())
         .then(data => {
+            // 🔍 DEBUG: Ver qué datos llegan
+            console.log('📦 Datos recibidos:', data);
+            if (data.pedidos && data.pedidos.length > 0) {
+                console.table(data.pedidos.map(p => ({
+                    id: p.id,
+                    numero: p.numero_pedido,
+                    estado: p.estado,
+                    minutos: p.minutos_desde_preparacion,
+                    fecha_prep: p.fecha_en_preparacion
+                })));
+            }
+            
             if (data.success) {
                 const container = document.getElementById('pedidosActivosContainer');
                 
                 if (data.pedidos && data.pedidos.length > 0) {
                     // Verificar si hubo cambios de estado
-                    const estadoActual = JSON.stringify(data.pedidos.map(p => ({ id: p.id, estado: p.estado })));
+                    const estadoActual = JSON.stringify(data.pedidos.map(p => ({ 
+                        id: p.id, 
+                        estado: p.estado,
+                        minutos: p.minutos_desde_preparacion || 0
+                    })));
                     
                     if (ultimoEstado !== estadoActual) {
                         // Hubo cambio de estado
@@ -1744,6 +1943,32 @@ function actualizarPedidosActivos() {
                         let html = '';
                         data.pedidos.forEach(pedido => {
                             const info = obtenerInfoEstado(pedido.estado);
+                            
+                            // ⚡ CALCULAR SI PUEDE CANCELAR (LÓGICA COMPLETA)
+                            let puede_cancelar = false;
+                            let minutos_restantes = 0;
+                            let mensaje_tiempo = '';
+                            
+                            // CRÍTICO: Obtener minutos desde preparación
+                            const minutos_desde_prep = parseInt(pedido.minutos_desde_preparacion || 0);
+                            
+                            // Si está pendiente, siempre puede cancelar
+                            if (pedido.estado === 'pendiente') {
+                                puede_cancelar = true;
+                                minutos_restantes = 7;
+                                mensaje_tiempo = 'Cancelar Pedido (disponible)';
+                            } 
+                            // Si está en_preparacion, verificar los 7 minutos
+                            else if (pedido.estado === 'en_preparacion') {
+                                if (minutos_desde_prep <= 7) {
+                                    puede_cancelar = true;
+                                    minutos_restantes = 7 - minutos_desde_prep;
+                                    mensaje_tiempo = `Cancelar Pedido (${minutos_restantes} min restantes)`;
+                                } else {
+                                    mensaje_tiempo = `⏱️ Tiempo de cancelación agotado (más de 7 min en preparación)`;
+                                }
+                            }
+                            
                             html += `
                                 <div class="p-4 border-2 border-${info.color}-200 rounded-lg hover:shadow-md transition-shadow bg-${info.color}-50">
                                     <div class="flex justify-between items-start mb-2">
@@ -1766,6 +1991,23 @@ function actualizarPedidosActivos() {
                                         </span>
                                         ${pedido.estado === 'en_camino' ? '<span class="text-xs text-orange-600 font-medium animate-pulse">🔥 ¡Llega pronto!</span>' : ''}
                                     </div>
+                                    
+                                    ${puede_cancelar ? `
+                                        <div class="mt-3 pt-2 border-t border-gray-200">
+                                            <button 
+                                                onclick="cancelarPedido(${pedido.id}, '${pedido.numero_pedido}', ${pedido.total})"
+                                                class="w-full bg-red-500 hover:bg-red-600 text-white py-2 px-4 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                                </svg>
+                                                ${mensaje_tiempo}
+                                            </button>
+                                        </div>
+                                    ` : (pedido.estado === 'en_preparacion' ? `
+                                        <div class="mt-3 pt-2 border-t border-gray-200">
+                                            <p class="text-xs text-gray-500 text-center">${mensaje_tiempo}</p>
+                                        </div>
+                                    ` : '')}
                                 </div>
                             `;
                         });
@@ -1804,10 +2046,10 @@ function actualizarPedidosActivos() {
 // Iniciar actualización automática
 document.addEventListener('DOMContentLoaded', function() {
     // Primera actualización inmediata
-    setTimeout(actualizarPedidosActivos, 2000);
+    setTimeout(actualizarPedidosActivos, 500);
     
-    // Actualizar cada 10 segundos
-    actualizacionInterval = setInterval(actualizarPedidosActivos, 1000);
+    // 🔧 CORREGIDO: Actualizar cada 5 segundos (no cada 1 segundo)
+    actualizacionInterval = setInterval(actualizarPedidosActivos, 5000);
 });
 
 // Limpiar interval al salir de la página

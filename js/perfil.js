@@ -411,6 +411,54 @@ function logout() {
         });
     }
 }
+// ========== FUNCIÓN PARA CANCELAR PEDIDO ==========
+function cancelarPedido(pedidoId, numeroPedido, total) {
+    const mensajeConfirm = `¿Estás seguro que deseas cancelar el Pedido #${numeroPedido}?\n\nMonto: $${total.toLocaleString('es-AR')}\n\nSi pagaste con método digital, el reembolso se procesará en 24-48 horas.`;
+    
+    customConfirm(mensajeConfirm, () => {
+        // Usuario confirmó, proceder con cancelación
+        fetch('?action=cancelar_pedido', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                pedido_id: pedidoId
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+            // Mostrar notificación de éxito con info de reembolso
+            if (data.monto_reembolso > 0) {
+                showNotification(
+                    `✅ ${data.message}\n\n💰 Reembolso: $${data.monto_reembolso.toLocaleString('es-AR')}`,
+                    'success'
+                );
+            } else {
+                // Si es efectivo o sin reembolso
+                const mensaje = data.metodo_pago === 'efectivo' 
+                    ? `✅ ${data.message}\n\n💵 Pago en efectivo - No hubo cargos`
+                    : data.message;
+                showNotification(mensaje, 'success');
+            }
+                
+                // Recargar página después de 2 segundos
+                setTimeout(() => {
+                    location.reload();
+                }, 2000);
+            } else {
+                showNotification('❌ ' + data.message, 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showNotification('❌ Error al cancelar el pedido. Intenta nuevamente.', 'error');
+        });
+    });
+}
+
+console.log('✅ Función cancelarPedido cargada');
 
 // Cerrar carrito al hacer clic fuera
 document.addEventListener('click', function(event) {

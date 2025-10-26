@@ -54,6 +54,16 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 // Validar método de pago
                 const paymentMethod = document.querySelector('input[name="payment_method"]:checked');
+                // Si es efectivo, validar que esté disponible
+                if (paymentMethod.value === 'efectivo') {
+                    const efectivoOption = document.getElementById('efectivo');
+                    if (!efectivoOption) {
+                        notify.warning('El pago en efectivo solo está disponible para clientes VIP');
+                        submitBtn.disabled = false;
+                        submitBtn.textContent = '✅ Confirmar Pedido';
+                        return;
+                    }
+                }
                 if (!paymentMethod) {
                     notify.warning('Por favor seleccione un método de pago');
                     submitBtn.disabled = false;

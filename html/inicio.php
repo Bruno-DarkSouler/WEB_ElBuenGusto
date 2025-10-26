@@ -9,6 +9,24 @@ $usuario_email = isset($_SESSION['user_email']) ? $_SESSION['user_email'] : '';
 $usuario_telefono = isset($_SESSION['user_telefono']) ? $_SESSION['user_telefono'] : '';
 $telefono = isset($_SESSION['user_telefono']) ? $_SESSION['user_telefono'] : '';
 
+// ============ AGREGAR ESTA SECCIÓN ============
+// Obtener datos completos del usuario (incluyendo estado VIP)
+$user = ['vip' => 0]; // Valor por defecto
+
+if (isset($_SESSION['user_id'])) {
+    $user_id = $_SESSION['user_id'];
+    $stmt_user = $conexion->prepare("SELECT * FROM usuarios WHERE id = ?");
+    $stmt_user->bind_param("i", $user_id);
+    $stmt_user->execute();
+    $result_user = $stmt_user->get_result();
+    
+    if ($result_user->num_rows > 0) {
+        $user = $result_user->fetch_assoc();
+    }
+    $stmt_user->close();
+}
+// ============ FIN DE LA SECCIÓN A AGREGAR ============
+
 // ========== MANEJO DE PETICIONES AJAX ==========
 if (isset($_GET['action'])) {
     header('Content-Type: application/json');
@@ -253,6 +271,42 @@ case 'procesar_pedido':
         
         $conexion->commit();
         
+        // ===== ENVIAR FACTURA POR EMAIL =====
+        require_once '../php/enviar_factura.php';
+
+        $factura_data = [
+            'numero_pedido' => $numero_pedido,
+            'nombre' => $data['nombre'],
+            'email' => $data['email'],
+            'telefono' => $data['telefono'],
+            'direccion' => $data['direccion'],
+            'tipo_pedido' => $data['tipo_pedido'],
+            'metodo_pago' => $data['metodo_pago'],
+            'productos' => [],
+            'subtotal' => $data['subtotal'],
+            'precio_delivery' => $data['precio_delivery'],
+            'total' => $data['total'],
+            'comentarios' => $data['comentarios']
+        ];
+
+        // Obtener nombres de productos
+        foreach ($data['productos'] as $prod) {
+            $stmt_prod = $conexion->prepare("SELECT nombre FROM productos WHERE id = ?");
+            $stmt_prod->bind_param("i", $prod['id']);
+            $stmt_prod->execute();
+            $nombre_prod = $stmt_prod->get_result()->fetch_assoc()['nombre'];
+            
+            $factura_data['productos'][] = [
+                'nombre' => $nombre_prod,
+                'cantidad' => $prod['cantidad'],
+                'precio' => $prod['precio']
+            ];
+        }
+
+        $resultado_email = enviarFactura($factura_data);
+        error_log("Resultado envío email: " . json_encode($resultado_email));
+        // ===== FIN ENVÍO FACTURA =====
+
         echo json_encode([
             'success' => true, 
             'message' => 'Pedido creado exitosamente',
@@ -628,18 +682,33 @@ $conexion->close();
                         </h2>
                         
                         <div class="payment-methods">
-                            <div class="payment-method" onclick="selectPaymentMethod('mercadopago')">
-                                <input type="radio" name="payment_method" value="mercadopago" id="mercadopago" required>
-                                <div class="payment-icon"><img class="metodo-pago" src="../img/mp-logo.png" alt="MP"></div>
-                                <div>Mercado Pago</div>
-                            </div>
+                        <div class="payment-method" onclick="selectPaymentMethod('mercadopago')">
+                            <input type="radio" name="payment_method" value="mercadopago" id="mercadopago" required>
+                            <div class="payment-icon"><img class="metodo-pago" src="../img/mp-logo.png" alt="MP"></div>
+                            <div>Mercado Pago</div>
+                        </div>
 
-                            <div class="payment-method" onclick="selectPaymentMethod('cuenta_dni')">
-                                <input type="radio" name="payment_method" value="cuenta_dni" id="cuenta_dni">
-                                <div class="payment-icon"><img class="metodo-pago" src="../img/cuenta-dni-logo.png" alt="DNI"></div>
-                                <div>Cuenta DNI</div>
+                        <div class="payment-method" onclick="selectPaymentMethod('cuenta_dni')">
+                            <input type="radio" name="payment_method" value="cuenta_dni" id="cuenta_dni">
+                            <div class="payment-icon"><img class="metodo-pago" src="../img/cuenta-dni-logo.png" alt="DNI"></div>
+                            <div>Cuenta DNI</div>
+                        </div>
+
+                        <?php if ($user['vip']): ?>
+                        <div class="payment-method" onclick="selectPaymentMethod('efectivo')">
+                            <input type="radio" name="payment_method" value="efectivo" id="efectivo">
+                            <div class="payment-icon">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" fill="#4CAF50" viewBox="0 0 16 16">
+                                    <path d="M4 10.781c.148 1.667 1.513 2.85 3.591 3.003V15h1.043v-1.216c2.27-.179 3.678-1.438 3.678-3.3 0-1.59-.947-2.51-2.956-3.028l-.722-.187V3.467c1.122.11 1.879.714 2.07 1.616h1.47c-.166-1.6-1.54-2.748-3.54-2.875V1H7.591v1.233c-1.939.23-3.27 1.472-3.27 3.156 0 1.454.966 2.483 2.661 2.917l.61.162v4.031c-1.149-.17-1.94-.8-2.131-1.718H4zm3.391-3.836c-1.043-.263-1.6-.825-1.6-1.616 0-.944.704-1.641 1.8-1.828v3.495l-.2-.05zm1.591 1.872c1.287.323 1.852.859 1.852 1.769 0 1.097-.826 1.828-2.2 1.939V8.73l.348.086z"/>
+                                </svg>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span>Efectivo</span>
+                                <span class="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full">⭐ VIP</span>
                             </div>
                         </div>
+                        <?php endif; ?>
+                    </div>
                     </div>
 
                     <!-- Comentarios -->

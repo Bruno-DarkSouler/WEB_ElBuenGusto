@@ -15,12 +15,12 @@ function enviarFactura($pedido_data) {
         $mail->Host = 'smtp.gmail.com';
         $mail->SMTPAuth = true;
         $mail->Username = 'rotiseriaelbuengusto3966@gmail.com'; // TU EMAIL DE GMAIL
-        $mail->Password = 'olxuogbrwtngzwed'; // CONTRASEÑA DE APLICACIÓN
+        $mail->Password = 'sexuethkqeubwvtb'; // CONTRASEÑA DE APLICACIÓN
         $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
         $mail->Port = 465;
         
         // Configuración del email
-        $mail->setFrom('tuempresa@gmail.com', 'El Buen Gusto');
+        $mail->setFrom('rotiseriaelbuengusto3966@gmail.com', 'elbuengusto');
         $mail->addAddress($pedido_data['email'], $pedido_data['nombre']);
         
         // Contenido
@@ -119,7 +119,7 @@ function generarHTMLFactura($data) {
             <div class='footer'>
                 <p><strong>¡Gracias por tu compra!</strong></p>
                 <p>El Buen Gusto - Cerrito 3966, Buenos Aires</p>
-                <p>📞 +54 11 6216-5019 | ✉️ contacto@elbuengusto.com</p>
+                <p>📞 +54 11 6216-5019 | ✉️ rotiseriaelbuengusto3966@gmail.com</p>
             </div>
         </div>
     </body>
