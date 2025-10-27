@@ -113,7 +113,7 @@ function crearPedido($data) {
         'direccion_entrega' => $data['direccion'],
         'telefono_contacto' => $data['telefono'],
         'metodo_pago' => $data['metodo_pago'],
-        'estado' => 'confirmado',
+        'estado' => 'en_preparacion',
         'subtotal' => $data['subtotal'],
         'precio_delivery' => $data['costo_delivery'],
         'total' => $data['total'],

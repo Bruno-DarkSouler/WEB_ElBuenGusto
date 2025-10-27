@@ -74,7 +74,7 @@ try {
                     subtotal, precio_delivery, total, cajero_id, comentarios_cliente, activo) 
                    VALUES 
                    ('$numeroPedido', $usuarioId, '$tipoPedido', " . ($fechaEntrega ? "'$fechaEntrega'" : "NULL") . ", 
-                    '$direccionEntrega', '$telefono', '$metodoPago', 'confirmado', 
+                    '$direccionEntrega', '$telefono', '$metodoPago', 'en_preparacion', 
                     $subtotal, $precioDelivery, $total, $cajerpoId, '$comentarios', 1)";
     
     if (!$conexion->query($queryPedido)) {
