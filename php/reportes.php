@@ -59,7 +59,7 @@ function obtenerResumen() {
     $delivery = $resultado->fetch_assoc();
     $stmt->close();
     
-    // Costos estimados (60% del subtotal como ejemplo)
+    // Costos estimados (40% del subtotal)
     $costos_estimados = ($ingresos['ingresos_brutos'] - $delivery['total_delivery']) * 0.4;
     $ganancia_neta = $ingresos['ingresos_brutos'] - $costos_estimados;
     
@@ -122,13 +122,13 @@ function obtenerReporteDetallado() {
 function obtenerMetricas() {
     global $conexion;
     
-    // Métricas de hoy
     $fecha_hoy = date('Y-m-d');
     
+    // Métricas de hoy (todos los pedidos procesados)
     $stmt = $conexion->prepare("SELECT 
                                 COUNT(*) as pedidos_hoy,
-                                SUM(total) as ventas_hoy,
-                                AVG(total) as ticket_promedio
+                                COALESCE(SUM(total), 0) as ventas_hoy,
+                                COALESCE(AVG(total), 0) as gasto_promedio
                                 FROM pedidos 
                                 WHERE DATE(fecha_pedido) = ? 
                                 AND estado IN ('confirmado', 'en_preparacion', 'listo', 'en_camino', 'entregado') 
@@ -149,35 +149,13 @@ function obtenerMetricas() {
     $empleados = $resultado->fetch_assoc();
     $stmt->close();
     
-    // Productos más vendidos (última semana)
-    $fecha_semana = date('Y-m-d', strtotime('-7 days'));
-    $stmt = $conexion->prepare("SELECT p.nombre, SUM(pi.cantidad) as total_vendido
-                                FROM pedido_items pi
-                                INNER JOIN productos p ON pi.producto_id = p.id
-                                INNER JOIN pedidos ped ON pi.pedido_id = ped.id
-                                WHERE DATE(ped.fecha_pedido) >= ?
-                                AND ped.estado = 'entregado'
-                                GROUP BY p.id
-                                ORDER BY total_vendido DESC
-                                LIMIT 5");
-    $stmt->bind_param("s", $fecha_semana);
-    $stmt->execute();
-    $resultado = $stmt->get_result();
-    
-    $productos_top = [];
-    while($fila = $resultado->fetch_assoc()) {
-        $productos_top[] = $fila;
-    }
-    $stmt->close();
-    
     echo json_encode([
         'success' => true,
         'metricas' => [
             'pedidos_hoy' => intval($metricas_hoy['pedidos_hoy']),
             'ventas_hoy' => floatval($metricas_hoy['ventas_hoy']),
-            'ticket_promedio' => floatval($metricas_hoy['ticket_promedio']),
-            'empleados_activos' => intval($empleados['empleados_activos']),
-            'productos_top' => $productos_top
+            'gasto_promedio' => floatval($metricas_hoy['gasto_promedio']),
+            'empleados_activos' => intval($empleados['empleados_activos'])
         ]
     ]);
 }

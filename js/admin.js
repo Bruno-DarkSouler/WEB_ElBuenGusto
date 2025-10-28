@@ -24,7 +24,6 @@ let zonas = [];
 document.addEventListener('DOMContentLoaded', function() {
     verificarSesion();
     cargarCategorias();
-    cargarMetricas();
     actualizarReloj();
     setInterval(actualizarReloj, 60000);
     
@@ -90,7 +89,6 @@ function showSection(sectionId, event) {
         'reportes': 'Reportes Financieros',
         'configuracion': 'Configuración del Local',
         'pagos': 'Métodos de Pago',
-        'promociones': 'Promociones'
     };
     
     document.getElementById('pageTitle').textContent = titulos[sectionId];
@@ -106,9 +104,6 @@ function showSection(sectionId, event) {
             break;
         case 'reportes':
             cargarReportes();
-            break;
-        case 'promociones':
-            cargarPromociones();
             break;
         case 'configuracion':
             cargarConfiguracion();
@@ -452,75 +447,6 @@ function applyBulkPriceUpdate() {
     }
 }
 
-// ============ PROMOCIONES ============
-async function cargarPromociones() {
-    try {
-        const response = await fetch(API_BASE + 'promociones.php');
-        const data = await response.json();
-        
-        if (data.success) {
-            promociones = data.promociones;
-            renderizarPromociones();
-        }
-    } catch (error) {
-        console.error('Error al cargar promociones:', error);
-        showToast('Error al cargar promociones', 'error');
-    }
-}
-
-function renderizarPromociones() {
-    const tbody = document.querySelector('#promociones table tbody');
-    if (!tbody) return;
-    
-    tbody.innerHTML = '';
-    
-    promociones.forEach(promo => {
-        const tr = document.createElement('tr');
-        tr.classList.add('hover:bg-gray-50');
-        tr.innerHTML = `
-            <td class="px-6 py-4 whitespace-nowrap">
-                <div class="text-sm font-medium text-gray-900">${promo.nombre}</div>
-                <div class="text-sm text-gray-500">${promo.descripcion}</div>
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${promo.tipo === 'descuento_porcentaje' ? 'Porcentual' : 'Fijo'}</td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${promo.fecha_inicio} - ${promo.fecha_fin}</td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">-</td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-red-600">${promo.tipo === 'descuento_porcentaje' ? promo.valor + '%' : '$' + promo.valor}</td>
-            <td class="px-6 py-4 whitespace-nowrap">
-                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${promo.activa == 1 ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}">
-                    ${promo.activa == 1 ? 'Activa' : 'Finalizada'}
-                </span>
-            </td>
-             <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-        
-                <button onclick="editPromotion(${promo.id})" class="p-2 text-indigo-600 hover:text-indigo-900 transition duration-150 ease-in-out" title="Editar">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                    </svg>
-                </button>
-                
-                <button onclick="deletePromotion(${promo.id})" class="p-2 text-red-600 hover:text-red-800 transition duration-150 ease-in-out ml-2" title="Eliminar">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                    </svg>
-                </button>
-            </td>
-        `;
-        tbody.appendChild(tr);
-    });
-}
-
-function pausePromotion(id) {
-    showToast('Función de pausa de promoción en desarrollo');
-}
-
-function duplicatePromotion(id) {
-    showToast('Función de duplicación de promoción en desarrollo');
-}
-
-function viewPromotionStats(id) {
-    showToast('Función de estadísticas de promoción en desarrollo');
-}
 
 // ============ REPORTES ============
 async function cargarReportes() {
@@ -545,10 +471,10 @@ async function cargarReportes() {
 function actualizarResumenFinanciero(resumen) {
     const cards = document.querySelectorAll('#reportes .grid .bg-white');
     if (cards.length >= 4) {
-        cards[0].querySelector('dd').textContent = `$${resumen.ingresos_brutos.toFixed(2)}`;
-        cards[1].querySelector('dd').textContent = `$${resumen.total_delivery.toFixed(2)}`;
-        cards[2].querySelector('dd').textContent = `$${resumen.costos_estimados.toFixed(2)}`;
-        cards[3].querySelector('dd').textContent = `$${resumen.ganancia_neta.toFixed(2)}`;
+        cards[0].querySelector('dd').textContent = `$${Number(resumen.ingresos_brutos || 0).toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+        cards[1].querySelector('dd').textContent = `$${Number(resumen.total_delivery || 0).toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+        cards[2].querySelector('dd').textContent = `$${Number(resumen.costos_estimados || 0).toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+        cards[3].querySelector('dd').textContent = `$${Number(resumen.ganancia_neta || 0).toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
     }
 }
 
@@ -577,13 +503,21 @@ function renderizarReporteDetallado(detalle) {
     detalle.forEach(dia => {
         const tr = document.createElement('tr');
         tr.classList.add('hover:bg-gray-50');
+
+        // Formatear fecha
+        const fechaFormateada = new Date(dia.fecha + 'T00:00:00').toLocaleDateString('es-AR', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric'
+        });
+
         tr.innerHTML = `
-            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${dia.fecha}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${fechaFormateada}</td>
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${dia.pedidos}</td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">$${dia.ingresos.toFixed(2)}</td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">$${dia.delivery.toFixed(2)}</td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-red-600">$${dia.costos.toFixed(2)}</td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-green-600">$${dia.ganancia.toFixed(2)}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">$${Number(dia.ingresos).toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">$${Number(dia.delivery).toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-red-600">$${Number(dia.costos).toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-green-600">$${Number(dia.ganancia).toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${dia.margen}%</td>
         `;
         tbody.appendChild(tr);
@@ -672,6 +606,7 @@ function togglePayment(metodo) {
     showToast(`Cambiando estado del método de pago: ${metodo}`);
 }
 
+
 // ============ MÉTRICAS ============
 async function cargarMetricas() {
     try {
@@ -683,14 +618,26 @@ async function cargarMetricas() {
             
             const cards = document.querySelectorAll('#metricas .grid .bg-white');
             if (cards.length >= 4) {
-                cards[0].querySelector('.text-2xl').textContent = `$${metricas.ventas_hoy.toFixed(2)}`;
-                cards[1].querySelector('.text-2xl').textContent = metricas.pedidos_hoy;
-                cards[2].querySelector('.text-2xl').textContent = metricas.empleados_activos;
-                cards[3].querySelector('.text-2xl').textContent = `$${metricas.ticket_promedio.toFixed(0)}`;
+                // Ventas Hoy
+                const ventasElement = cards[0].querySelector('.text-2xl');
+                ventasElement.textContent = `$${Number(metricas.ventas_hoy || 0).toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+                
+                // Pedidos Procesados
+                const pedidosElement = cards[1].querySelector('.text-2xl');
+                pedidosElement.textContent = metricas.pedidos_hoy || 0;
+                
+                // Empleados Activos
+                const empleadosElement = cards[2].querySelector('.text-2xl');
+                empleadosElement.textContent = metricas.empleados_activos || 0;
+                
+                // Gasto Promedio
+                const gastoPromedioElement = cards[3].querySelector('.text-2xl');
+                gastoPromedioElement.textContent = `$${Number(metricas.gasto_promedio || 0).toLocaleString('es-AR', {minimumFractionDigits: 0, maximumFractionDigits: 0})}`;
             }
         }
     } catch (error) {
         console.error('Error al cargar métricas:', error);
+        showToast('Error al cargar métricas', 'error');
     }
 }
 
@@ -814,7 +761,6 @@ function showUserModal(id = null) {
             document.getElementById('usuario_apellido').value = usuario.apellido;
             document.getElementById('usuario_email').value = usuario.email;
             document.getElementById('usuario_telefono').value = usuario.telefono;
-            document.getElementById('usuario_direccion').value = usuario.direccion || '';
             document.getElementById('usuario_rol').value = usuario.rol;
             document.getElementById('usuario_password').required = false;
         }
@@ -826,7 +772,6 @@ function showUserModal(id = null) {
     
     modal.classList.remove('hidden');
 }
-
 function cerrarModalUsuario() {
     const modal = document.getElementById('modalUsuario');
     if (modal) {
@@ -838,20 +783,34 @@ async function guardarUsuario(event) {
     event.preventDefault();
     
     const form = document.getElementById('formUsuario');
-    const formData = new FormData(form);
     const id = document.getElementById('usuario_id').value;
     
     try {
         let response;
         
         if (id) {
-            const params = new URLSearchParams(formData);
+            // Para edición
+            const data = new URLSearchParams();
+            data.append('id', id);
+            data.append('nombre', form.nombre.value);
+            data.append('apellido', form.apellido.value);
+            data.append('email', form.email.value);
+            data.append('telefono', form.telefono.value);
+            data.append('rol', form.rol.value);
+            
+            // Solo agregar password si tiene valor
+            if (form.password.value.trim() !== '') {
+                data.append('password', form.password.value);
+            }
+            
             response = await fetch(API_BASE + 'usuarios.php', {
                 method: 'PUT',
                 headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-                body: params.toString()
+                body: data.toString()
             });
         } else {
+            // Para creación
+            const formData = new FormData(form);
             response = await fetch(API_BASE + 'usuarios.php', {
                 method: 'POST',
                 body: formData
@@ -993,86 +952,6 @@ async function deletePromotion(id) {
         showToast('Error de conexión al eliminar promoción', 'error');
     }
 }
-// Modal Promoción
-function showPromotionModal(id = null) {
-    const modal = document.getElementById('modalPromocion');
-    const titulo = document.getElementById('tituloModalPromocion');
-    const form = document.getElementById('formPromocion');
-    
-    if (!modal || !titulo || !form) {
-        showToast('Error: Modal no encontrado', 'error');
-        return;
-    }
-    
-    form.reset();
-    
-    if (id) {
-        titulo.textContent = 'Editar Promoción';
-        const promocion = promociones.find(p => p.id === id);
-        if (promocion) {
-            document.getElementById('promocion_id').value = promocion.id;
-            document.getElementById('promocion_nombre').value = promocion.nombre;
-            document.getElementById('promocion_descripcion').value = promocion.descripcion || '';
-            document.getElementById('promocion_tipo').value = promocion.tipo;
-            document.getElementById('promocion_valor').value = promocion.valor;
-            document.getElementById('promocion_monto_minimo').value = promocion.monto_minimo || 0;
-            document.getElementById('promocion_fecha_inicio').value = promocion.fecha_inicio;
-            document.getElementById('promocion_fecha_fin').value = promocion.fecha_fin;
-        }
-    } else {
-        titulo.textContent = 'Nueva Promoción';
-        document.getElementById('promocion_id').value = '';
-        document.getElementById('promocion_fecha_inicio').value = new Date().toISOString().split('T')[0];
-    }
-    
-    modal.classList.remove('hidden');
-}
-
-function cerrarModalPromocion() {
-    const modal = document.getElementById('modalPromocion');
-    if (modal) {
-        modal.classList.add('hidden');
-    }
-}
-
-async function guardarPromocion(event) {
-    event.preventDefault();
-    
-    const form = document.getElementById('formPromocion');
-    const formData = new FormData(form);
-    const id = document.getElementById('promocion_id').value;
-    
-    try {
-        let response;
-        
-        if (id) {
-            const params = new URLSearchParams(formData);
-            response = await fetch(API_BASE + 'promociones.php', {
-                method: 'PUT',
-                headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-                body: params.toString()
-            });
-        } else {
-            response = await fetch(API_BASE + 'promociones.php', {
-                method: 'POST',
-                body: formData
-            });
-        }
-        
-        const data = await response.json();
-        
-        if (data.success) {
-            showToast(data.message);
-            cerrarModalPromocion();
-            cargarPromociones();
-        } else {
-            showToast(data.message, 'error');
-        }
-    } catch (error) {
-        console.error('Error al guardar promoción:', error);
-        showToast('Error al guardar promoción', 'error');
-    }
-}
 
 // Actualizar funciones existentes para usar modales
 function editUser(id) {
@@ -1083,9 +962,6 @@ function editProduct(id) {
     showProductModal(id);
 }
 
-function editPromotion(id) {
-    showPromotionModal(id);
-}
 // Función para cerrar la sesión (utilizando fetch/AJAX)
 function cerrarSesion() {
     // Llama al script PHP que destruye la sesión

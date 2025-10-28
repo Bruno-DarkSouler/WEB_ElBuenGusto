@@ -1,7 +1,5 @@
 <?php
 session_start();
-
-// Incluir conexión
 require_once '../php/conexion.php';
 
 // Verificar sesión
@@ -10,9 +8,59 @@ if (!isset($_SESSION['user_id']) || ($_SESSION['user_rol'] !== 'administrador' &
     exit;
 }
 
-// Obtener nombre del usuario
 $nombre_usuario = $_SESSION['user_name'];
 $rol_usuario = $_SESSION['user_rol'];
+
+// MÉTRICAS DEL DASHBOARD
+$fecha_hoy = date('Y-m-d');
+
+// Ventas de hoy
+$stmt = $conexion->prepare("SELECT COALESCE(SUM(total), 0) as ventas_hoy FROM pedidos WHERE DATE(fecha_pedido) = ? AND estado IN ('confirmado', 'en_preparacion', 'listo', 'en_camino', 'entregado') AND activo = 1");
+$stmt->bind_param("s", $fecha_hoy);
+$stmt->execute();
+$ventas_hoy = $stmt->get_result()->fetch_assoc()['ventas_hoy'];
+$stmt->close();
+
+// Pedidos procesados hoy
+$stmt = $conexion->prepare("SELECT COUNT(*) as pedidos_hoy FROM pedidos WHERE DATE(fecha_pedido) = ? AND estado IN ('confirmado', 'en_preparacion', 'listo', 'en_camino', 'entregado') AND activo = 1");
+$stmt->bind_param("s", $fecha_hoy);
+$stmt->execute();
+$pedidos_hoy = $stmt->get_result()->fetch_assoc()['pedidos_hoy'];
+$stmt->close();
+
+// Empleados activos
+$stmt = $conexion->prepare("SELECT COUNT(*) as empleados_activos FROM usuarios WHERE rol IN ('cajero', 'cocinero', 'repartidor', 'administrador') AND activo = 1");
+$stmt->execute();
+$empleados_activos = $stmt->get_result()->fetch_assoc()['empleados_activos'];
+$stmt->close();
+
+// Gasto promedio hoy
+$stmt = $conexion->prepare("SELECT COALESCE(AVG(total), 0) as gasto_promedio FROM pedidos WHERE DATE(fecha_pedido) = ? AND estado IN ('confirmado', 'en_preparacion', 'listo', 'en_camino', 'entregado') AND activo = 1");
+$stmt->bind_param("s", $fecha_hoy);
+$stmt->execute();
+$gasto_promedio = $stmt->get_result()->fetch_assoc()['gasto_promedio'];
+$stmt->close();
+
+// REPORTES FINANCIEROS
+$fecha_mes_inicio = date('Y-m-01');
+$fecha_mes_fin = date('Y-m-d');
+
+// Ingresos brutos del mes
+$stmt = $conexion->prepare("SELECT COALESCE(SUM(total), 0) as ingresos_brutos FROM pedidos WHERE DATE(fecha_pedido) BETWEEN ? AND ? AND estado = 'entregado' AND activo = 1");
+$stmt->bind_param("ss", $fecha_mes_inicio, $fecha_mes_fin);
+$stmt->execute();
+$ingresos_brutos = $stmt->get_result()->fetch_assoc()['ingresos_brutos'];
+$stmt->close();
+
+// Total delivery del mes
+$stmt = $conexion->prepare("SELECT COALESCE(SUM(precio_delivery), 0) as total_delivery FROM pedidos WHERE DATE(fecha_pedido) BETWEEN ? AND ? AND estado = 'entregado' AND activo = 1");
+$stmt->bind_param("ss", $fecha_mes_inicio, $fecha_mes_fin);
+$stmt->execute();
+$total_delivery = $stmt->get_result()->fetch_assoc()['total_delivery'];
+$stmt->close();
+
+$costos_estimados = ($ingresos_brutos - $total_delivery) * 0.4;
+$ganancia_neta = $ingresos_brutos - $costos_estimados;
 ?>
 <!DOCTYPE html>
 <html lang="es" class="h-full bg-gray-50">
@@ -24,16 +72,14 @@ $rol_usuario = $_SESSION['user_rol'];
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
 </head>
 <body class="h-full overflow-hidden">
-
     <div class="h-24 bg-[#C81E2D] flex justify-between items-center md:hidden">
         <div class="flex justify-between items-center ml-3">
             <img src="../img/Logotipo_sin_fondo.png" alt="" class="h-12 w-12">
             <span class="text-white">El Buen Gusto - administración</span>
         </div>
-        
-        <svg onclick="abrir_opciones()" class="text-white h-12 w-12 mr-3" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-list" viewBox="0 0 16 16">
+        <svg onclick="abrir_opciones()" class="text-white h-12 w-12 mr-3" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
             <path fill-rule="evenodd" d="M2.5 12a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5m0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5m0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5"/>
-          </svg>
+        </svg>
     </div>
 
     <!-- Toast Notification -->
@@ -68,33 +114,29 @@ $rol_usuario = $_SESSION['user_rol'];
                 </div>
                 <div class="mt-8 flex-grow flex flex-col">
                     <nav class="flex-1 px-2 pb-4 space-y-1">
-                        <a href="#" onclick="showSection('metricas')" class="nav-link active bg-[#AD1926] text-white group flex items-center px-2 py-2 text-sm font-medium rounded-md">
+                        <a href="#" onclick="showSection('metricas', event)" class="nav-link active bg-[#AD1926] text-white group flex items-center px-2 py-2 text-sm font-medium rounded-md">
                             <span class="mr-3">📊</span>
                             Métricas & Dashboard
                         </a>
-                        <a href="#" onclick="showSection('usuarios')" class="nav-link text-indigo-100 hover:bg-[#AD1926] group flex items-center px-2 py-2 text-sm font-medium rounded-md">
+                        <a href="#" onclick="showSection('usuarios', event)" class="nav-link text-indigo-100 hover:bg-[#AD1926] group flex items-center px-2 py-2 text-sm font-medium rounded-md">
                             <span class="mr-3">👥</span>
                             Gestión Usuarios
                         </a>
-                        <a href="#" onclick="showSection('productos')" class="nav-link text-indigo-100 hover:bg-[#AD1926] group flex items-center px-2 py-2 text-sm font-medium rounded-md">
+                        <a href="#" onclick="showSection('productos', event)" class="nav-link text-indigo-100 hover:bg-[#AD1926] group flex items-center px-2 py-2 text-sm font-medium rounded-md">
                             <span class="mr-3">⚙️</span>
                             Productos & Precios
                         </a>
-                        <a href="#" onclick="showSection('reportes')" class="nav-link text-indigo-100 hover:bg-[#AD1926] group flex items-center px-2 py-2 text-sm font-medium rounded-md">
+                        <a href="#" onclick="showSection('reportes', event)" class="nav-link text-indigo-100 hover:bg-[#AD1926] group flex items-center px-2 py-2 text-sm font-medium rounded-md">
                             <span class="mr-3">📈</span>
                             Reportes Financieros
                         </a>
-                        <a href="#" onclick="showSection('configuracion')" class="nav-link text-indigo-100 hover:bg-[#AD1926] group flex items-center px-2 py-2 text-sm font-medium rounded-md">
+                        <a href="#" onclick="showSection('configuracion', event)" class="nav-link text-indigo-100 hover:bg-[#AD1926] group flex items-center px-2 py-2 text-sm font-medium rounded-md">
                             <span class="mr-3">🏪</span>
                             Configuración Local
                         </a>
-                        <a href="#" onclick="showSection('pagos')" class="nav-link text-indigo-100 hover:bg-[#AD1926] group flex items-center px-2 py-2 text-sm font-medium rounded-md">
+                        <a href="#" onclick="showSection('pagos', event)" class="nav-link text-indigo-100 hover:bg-[#AD1926] group flex items-center px-2 py-2 text-sm font-medium rounded-md">
                             <span class="mr-3">💰</span>
                             Métodos de Pago
-                        </a>
-                        <a href="#" onclick="showSection('promociones')" class="nav-link text-indigo-100 hover:bg-[#AD1926] group flex items-center px-2 py-2 text-sm font-medium rounded-md">
-                            <span class="mr-3">🗓️</span>
-                            Promociones
                         </a>
                     </nav>
                 </div>
@@ -150,13 +192,7 @@ $rol_usuario = $_SESSION['user_rol'];
                                                 <dl>
                                                     <dt class="text-sm font-medium text-gray-500 truncate">Ventas Hoy</dt>
                                                     <dd class="flex items-baseline">
-                                                        <div class="text-2xl font-semibold text-gray-900">$14,550</div>
-                                                        <div class="ml-2 flex items-baseline text-sm font-semibold text-green-600">
-                                                            <svg class="self-center flex-shrink-0 h-5 w-5 text-green-500" viewBox="0 0 20 20" fill="currentColor">
-                                                                <path fill-rule="evenodd" d="M5.293 9.707a1 1 0 010-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 01-1.414 1.414L11 7.414V15a1 1 0 11-2 0V7.414L6.707 9.707a1 1 0 01-1.414 0z" clip-rule="evenodd" />
-                                                            </svg>
-                                                            8%
-                                                        </div>
+                                                        <div class="text-2xl font-semibold text-gray-900">$<?php echo number_format($ventas_hoy, 2, ',', '.'); ?></div>
                                                     </dd>
                                                 </dl>
                                             </div>
@@ -176,7 +212,7 @@ $rol_usuario = $_SESSION['user_rol'];
                                                 <dl>
                                                     <dt class="text-sm font-medium text-gray-500 truncate">Pedidos Procesados</dt>
                                                     <dd class="flex items-baseline">
-                                                        <div class="text-2xl font-semibold text-gray-900">24</div>
+                                                        <div class="text-2xl font-semibold text-gray-900"><?php echo $pedidos_hoy; ?></div>
                                                         <div class="ml-2 flex items-baseline text-sm font-semibold text-green-600">
                                                             <svg class="self-center flex-shrink-0 h-5 w-5 text-green-500" viewBox="0 0 20 20" fill="currentColor">
                                                                 <path fill-rule="evenodd" d="M5.293 9.707a1 1 0 010-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 01-1.414 1.414L11 7.414V15a1 1 0 11-2 0V7.414L6.707 9.707a1 1 0 01-1.414 0z" clip-rule="evenodd" />
@@ -201,7 +237,7 @@ $rol_usuario = $_SESSION['user_rol'];
                                             <div class="ml-5 w-0 flex-1">
                                                 <dl>
                                                     <dt class="text-sm font-medium text-gray-500 truncate">Empleados Activos</dt>
-                                                    <dd class="text-2xl font-semibold text-gray-900">5</dd>
+                                                    <dd class="text-2xl font-semibold text-gray-900"><?php echo $empleados_activos; ?></dd>
                                                 </dl>
                                             </div>
                                         </div>
@@ -213,13 +249,13 @@ $rol_usuario = $_SESSION['user_rol'];
                                         <div class="flex items-center">
                                             <div class="flex-shrink-0">
                                                 <div class="w-8 h-8 bg-yellow-500 rounded-md flex items-center justify-center">
-                                                    <span class="text-white text-sm">⭐</span>
+                                                    <span class="text-white text-sm">💵</span>
                                                 </div>
                                             </div>
                                             <div class="ml-5 w-0 flex-1">
                                                 <dl>
-                                                    <dt class="text-sm font-medium text-gray-500 truncate">Ticket Promedio</dt>
-                                                    <dd class="text-2xl font-semibold text-gray-900">$606</dd>
+                                                    <dt class="text-sm font-medium text-gray-500 truncate">Gasto Promedio</dt>
+                                                    <dd class="text-2xl font-semibold text-gray-900">$<?php echo number_format($gasto_promedio, 0, ',', '.'); ?></dd>
                                                 </dl>
                                             </div>
                                         </div>
@@ -229,14 +265,14 @@ $rol_usuario = $_SESSION['user_rol'];
 
                             <!-- Charts Row -->
                             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-                                <div class="bg-white p-6 rounded-lg shadow-lg"style="min-height: 300px;">
+                                <div class="bg-white p-6 rounded-lg shadow-lg" style="min-height: 300px;">
                                     <div class="flex justify-between items-center mb-4">
                                         <h3 class="text-lg font-medium text-gray-900">Ventas de la Semana</h3>
                                         <button class="text-sm text-indigo-600 hover:text-indigo-800">Ver detalles</button>
                                     </div>
-                                    <canvas id="salesChart" width="400" height="200" ></canvas>
+                                    <canvas id="salesChart" width="400" height="200"></canvas>
                                 </div>
-                                <div class="bg-white p-6 rounded-lg shadow-lg"style="min-height: 300px;">
+                                <div class="bg-white p-6 rounded-lg shadow-lg" style="min-height: 300px;">
                                     <div class="flex justify-between items-center mb-4">
                                         <h3 class="text-lg font-medium text-gray-900">Performance por Empleado</h3>
                                         <button class="text-sm text-indigo-600 hover:text-indigo-800">Gestionar</button>
@@ -273,14 +309,14 @@ $rol_usuario = $_SESSION['user_rol'];
                             </div>
                         </div>
 
-                        <!-- Gestión Usuarios Section -->
+                        <!-- Usuarios Section -->
                         <div id="usuarios" class="section hidden">
                             <div class="mb-6">
                                 <div class="flex justify-between items-center">
                                     <h2 class="text-xl font-semibold text-gray-900">Gestión de Usuarios y Empleados</h2>
-                                    <button onclick="showUserModal()" class="bg-primary hover:bg-yellow-600 text-white px-4 py-2 rounded-lg...">
+                                    <button onclick="showUserModal()" class="bg-primary hover:bg-yellow-600 text-white px-4 py-2 rounded-lg flex items-center">
                                         <span>➕</span>
-                                        <span>Nuevo Usuario</span>
+                                        <span class="ml-2">Nuevo Usuario</span>
                                     </button>
                                 </div>
                             </div>
@@ -299,99 +335,19 @@ $rol_usuario = $_SESSION['user_rol'];
                                             </tr>
                                         </thead>
                                         <tbody class="bg-white divide-y divide-gray-200">
-                                            <tr class="hover:bg-gray-50">
-                                                <td class="px-6 py-4 whitespace-nowrap">
-                                                    <div class="flex items-center">
-                                                        <div class="h-10 w-10 flex-shrink-0">
-                                                            <div class="h-10 w-10 rounded-full bg-primary flex items-center justify-center">
-                                                                <span class="text-white font-medium text-sm">JP</span>
-                                                            </div>
-                                                        </div>
-                                                        <div class="ml-4">
-                                                            <div class="text-sm font-medium text-gray-900">Juan Pérez</div>
-                                                            <div class="text-sm text-gray-500">juan@rotiseria.com</div>
-                                                        </div>
-                                                    </div>
-                                                </td>
-                                                <td class="px-6 py-4 whitespace-nowrap">
-                                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-purple-100 text-purple-800">Administrador</span>
-                                                </td>
-                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Total</td>
-                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Hoy 14:30</td>
-                                                <td class="px-6 py-4 whitespace-nowrap">
-                                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Activo</span>
-                                                </td>
-                                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
-                                                    <button onclick="editUser(1)" class="text-indigo-600 hover:text-indigo-900">Editar</button>
-                                                    <button onclick="toggleUser(1)" class="text-yellow-600 hover:text-yellow-900">Suspender</button>
-                                                </td>
-                                            </tr>
-                                            <tr class="hover:bg-gray-50">
-                                                <td class="px-6 py-4 whitespace-nowrap">
-                                                    <div class="flex items-center">
-                                                        <div class="h-10 w-10 flex-shrink-0">
-                                                            <div class="h-10 w-10 rounded-full bg-green-500 flex items-center justify-center">
-                                                                <span class="text-white font-medium text-sm">MG</span>
-                                                            </div>
-                                                        </div>
-                                                        <div class="ml-4">
-                                                            <div class="text-sm font-medium text-gray-900">María García</div>
-                                                            <div class="text-sm text-gray-500">maria@rotiseria.com</div>
-                                                        </div>
-                                                    </div>
-                                                </td>
-                                                <td class="px-6 py-4 whitespace-nowrap">
-                                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">Empleado</span>
-                                                </td>
-                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Pedidos + Cocina</td>
-                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Hoy 12:45</td>
-                                                <td class="px-6 py-4 whitespace-nowrap">
-                                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Activo</span>
-                                                </td>
-                                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
-                                                    <button onclick="editUser(2)" class="text-indigo-600 hover:text-indigo-900">Editar</button>
-                                                    <button onclick="toggleUser(2)" class="text-yellow-600 hover:text-yellow-900">Suspender</button>
-                                                </td>
-                                            </tr>
-                                            <tr class="hover:bg-gray-50">
-                                                <td class="px-6 py-4 whitespace-nowrap">
-                                                    <div class="flex items-center">
-                                                        <div class="h-10 w-10 flex-shrink-0">
-                                                            <div class="h-10 w-10 rounded-full bg-blue-500 flex items-center justify-center">
-                                                                <span class="text-white font-medium text-sm">CL</span>
-                                                            </div>
-                                                        </div>
-                                                        <div class="ml-4">
-                                                            <div class="text-sm font-medium text-gray-900">Carlos López</div>
-                                                            <div class="text-sm text-gray-500">carlos@rotiseria.com</div>
-                                                        </div>
-                                                    </div>
-                                                </td>
-                                                <td class="px-6 py-4 whitespace-nowrap">
-                                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-orange-100 text-orange-800">Delivery</span>
-                                                </td>
-                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Solo Entregas</td>
-                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Ayer 20:15</td>
-                                                <td class="px-6 py-4 whitespace-nowrap">
-                                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">Suspendido</span>
-                                                </td>
-                                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
-                                                    <button onclick="editUser(3)" class="text-indigo-600 hover:text-indigo-900">Editar</button>
-                                                    <button onclick="toggleUser(3)" class="text-green-600 hover:text-green-900">Activar</button>
-                                                </td>
-                                            </tr>
+                                            <!-- Los usuarios se cargarán dinámicamente -->
                                         </tbody>
                                     </table>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Productos & Precios Section -->
+                        <!-- Productos Section -->
                         <div id="productos" class="section hidden">
                             <div class="mb-6">
                                 <div class="flex justify-between items-center">
                                     <h2 class="text-xl font-semibold text-gray-900">Gestión de Productos y Precios</h2>
-                                    <button onclick="showProductModal()" class="bg-primary hover:bg-yellow-600 text-white px-4 py-2 rounded-lg...">
+                                    <button onclick="showProductModal()" class="bg-primary hover:bg-yellow-600 text-white px-4 py-2 rounded-lg">
                                         <span>Nuevo Producto</span>
                                     </button>
                                 </div>
@@ -439,95 +395,7 @@ $rol_usuario = $_SESSION['user_rol'];
                                             </tr>
                                         </thead>
                                         <tbody class="bg-white divide-y divide-gray-200">
-                                            <!--
-                                            <tr class="hover:bg-gray-50">
-                                                <td class="px-6 py-4 whitespace-nowrap">
-                                                    <div class="flex items-center">
-                                                        <div class="h-10 w-10 flex-shrink-0">
-                                                            <div class="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center">🍗</div>
-                                                        </div>
-                                                        <div class="ml-4">
-                                                            <div class="text-sm font-medium text-gray-900">Milanesa con Papas</div>
-                                                            <div class="text-sm text-gray-500">Porción individual</div>
-                                                        </div>
-                                                    </div>
-                                                </td>
-                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Minutas</td>
-                                                <td class="px-6 py-4 whitespace-nowrap">
-                                                    <div class="flex items-center space-x-2">
-                                                        <span class="text-sm font-medium text-gray-900">$850</span>
-                                                        <button onclick="editPrice('milanesa', 850)" class="text-xs text-indigo-600 hover:text-indigo-800">✏️</button>
-                                                    </div>
-                                                </td>
-                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">$320</td>
-                                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-green-600">165%</td>
-                                                <td class="px-6 py-4 whitespace-nowrap">
-                                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Activo</span>
-                                                </td>
-                                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
-                                                    <button onclick="editProduct(1)" class="text-indigo-600 hover:text-indigo-900">Editar</button>
-                                                    <button onclick="toggleProduct(1)" class="text-red-600 hover:text-red-900">Desactivar</button>
-                                                </td>
-                                            </tr>
-                                            <tr class="hover:bg-gray-50">
-                                                <td class="px-6 py-4 whitespace-nowrap">
-                                                    <div class="flex items-center">
-                                                        <div class="h-10 w-10 flex-shrink-0">
-                                                            <div class="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center">🥟</div>
-                                                        </div>
-                                                        <div class="ml-4">
-                                                            <div class="text-sm font-medium text-gray-900">Empanadas de Carne (x6)</div>
-                                                            <div class="text-sm text-gray-500">Media docena</div>
-                                                        </div>
-                                                    </div>
-                                                </td>
-                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Empanadas</td>
-                                                <td class="px-6 py-4 whitespace-nowrap">
-                                                    <div class="flex items-center space-x-2">
-                                                        <span class="text-sm font-medium text-gray-900">$480</span>
-                                                        <button onclick="editPrice('empanadas', 480)" class="text-xs text-indigo-600 hover:text-indigo-800">✏️</button>
-                                                    </div>
-                                                </td>
-                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">$180</td>
-                                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-green-600">167%</td>
-                                                <td class="px-6 py-4 whitespace-nowrap">
-                                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Activo</span>
-                                                </td>
-                                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
-                                                    <button onclick="editProduct(2)" class="text-indigo-600 hover:text-indigo-900">Editar</button>
-                                                    <button onclick="toggleProduct(2)" class="text-red-600 hover:text-red-900">Desactivar</button>
-                                                </td>
-                                            </tr>
-                                            <tr class="hover:bg-gray-50">
-                                                <td class="px-6 py-4 whitespace-nowrap">
-                                                    <div class="flex items-center">
-                                                        <div class="h-10 w-10 flex-shrink-0">
-                                                            <div class="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center">🥤</div>
-                                                        </div>
-                                                        <div class="ml-4">
-                                                            <div class="text-sm font-medium text-gray-900">Coca Cola 1.5L</div>
-                                                            <div class="text-sm text-gray-500">Botella grande</div>
-                                                        </div>
-                                                    </div>
-                                                </td>
-                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Bebidas</td>
-                                                <td class="px-6 py-4 whitespace-nowrap">
-                                                    <div class="flex items-center space-x-2">
-                                                        <span class="text-sm font-medium text-gray-900">$320</span>
-                                                        <button onclick="editPrice('coca', 320)" class="text-xs text-indigo-600 hover:text-indigo-800">✏️</button>
-                                                    </div>
-                                                </td>
-                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">$180</td>
-                                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-yellow-600">78%</td>
-                                                <td class="px-6 py-4 whitespace-nowrap">
-                                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">Sin Stock</span>
-                                                </td>
-                                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
-                                                    <button onclick="editProduct(3)" class="text-indigo-600 hover:text-indigo-900">Editar</button>
-                                                    <button onclick="toggleProduct(3)" class="text-green-600 hover:text-green-900">Activar</button>
-                                                </td>
-                                            </tr>
--->
+                                            <!-- Los productos se cargarán dinámicamente -->
                                         </tbody>
                                     </table>
                                 </div>
@@ -555,11 +423,11 @@ $rol_usuario = $_SESSION['user_rol'];
                                 <div class="flex flex-wrap gap-4 items-center">
                                     <div>
                                         <label class="text-sm font-medium text-gray-700">Desde:</label>
-                                        <input type="date" id="dateFrom" class="ml-2 border-gray-300 rounded-md text-sm" value="2025-09-01">
+                                        <input type="date" id="dateFrom" class="ml-2 border-gray-300 rounded-md text-sm" value="<?php echo $fecha_mes_inicio; ?>">
                                     </div>
                                     <div>
                                         <label class="text-sm font-medium text-gray-700">Hasta:</label>
-                                        <input type="date" id="dateTo" class="ml-2 border-gray-300 rounded-md text-sm" value="2025-09-10">
+                                        <input type="date" id="dateTo" class="ml-2 border-gray-300 rounded-md text-sm" value="<?php echo $fecha_mes_fin; ?>">
                                     </div>
                                     <button onclick="updateFinancialReport()" class="bg-tertiary hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm transition-colors duration-200">
                                         Actualizar Reporte
@@ -580,766 +448,331 @@ $rol_usuario = $_SESSION['user_rol'];
                                             <div class="ml-5 w-0 flex-1">
                                                 <dl>
                                                     <dt class="text-sm font-medium text-gray-500 truncate">Ingresos Brutos</dt>
-                                                    <dd class="text-2xl font-semibold text-gray-900">$145,600</dd>
+                                                    <dd class="text-2xl font-semibold text-gray-900">$<?php echo number_format($ingresos_brutos, 2, ',', '.'); ?></dd>
                                                 </dl>
                                             </div>
                                         </div>
                                     </div>
-                                </div>
-
-                                <div class="bg-white overflow-hidden shadow-lg rounded-lg">
-                                    <div class="p-5">
-                                        <div class="flex items-center">
-                                            <div class="flex-shrink-0">
-                                                <div class="w-8 h-8 bg-blue-500 rounded-md flex items-center justify-center">
-                                                    <span class="text-white text-sm">🚗</span>
-                                                </div>
-                                            </div>
-                                            <div class="ml-5 w-0 flex-1">
-                                                <dl>
-                                                    <dt class="text-sm font-medium text-gray-500 truncate">Delivery</dt>
-                                                    <dd class="text-2xl font-semibold text-gray-900">$18,500</dd>
-                                                </dl>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div class="bg-white overflow-hidden shadow-lg rounded-lg">
-                                    <div class="p-5">
-                                        <div class="flex items-center">
-                                            <div class="flex-shrink-0">
-                                                <div class="w-8 h-8 bg-red-500 rounded-md flex items-center justify-center">
-                                                    <span class="text-white text-sm">📉</span>
-                                                </div>
-                                            </div>
-                                            <div class="ml-5 w-0 flex-1">
-                                                <dl>
-                                                    <dt class="text-sm font-medium text-gray-500 truncate">Costos</dt>
-                                                    <dd class="text-2xl font-semibold text-gray-900">$58,400</dd>
-                                                </dl>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div class="bg-white overflow-hidden shadow-lg rounded-lg">
-                                    <div class="p-5">
-                                        <div class="flex items-center">
-                                            <div class="flex-shrink-0">
-                                                <div class="w-8 h-8 bg-purple-500 rounded-md flex items-center justify-center">
-                                                    <span class="text-white text-sm">📈</span>
-                                                </div>
-                                            </div>
-                                            <div class="ml-5 w-0 flex-1">
-                                                <dl>
-                                                    <dt class="text-sm font-medium text-gray-500 truncate">Ganancia Neta</dt>
-                                                    <dd class="text-2xl font-semibold text-green-600">$87,200</dd>
-                                                </dl>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Financial Charts -->
-                            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-                                <div class="bg-white p-6 rounded-lg shadow-lg"style="min-height: 300px;">
-                                    <h3 class="text-lg font-medium text-gray-900 mb-4">Evolución Mensual</h3>
-                                    <canvas id="monthlyRevenueChart" width="400" height="200"></canvas>
-                                </div>
-                                <div class="bg-white p-6 rounded-lg shadow-lg"style="min-height: 300px;">
-                                    <h3 class="text-lg font-medium text-gray-900 mb-4">Distribución de Ingresos</h3>
-                                    <canvas id="revenueBreakdownChart" width="400" height="200"></canvas>
-                                </div>
-                            </div>
-
-                            <!-- Detailed Financial Table -->
-                            <div class="bg-white shadow-lg rounded-lg overflow-hidden">
-                                <div class="px-6 py-4 border-b border-gray-200">
-                                    <h3 class="text-lg font-medium text-gray-900">Detalle Diario</h3>
-                                </div>
-                                <div class="overflow-x-auto">
-                                    <table class="min-w-full divide-y divide-gray-200">
-                                        <thead class="bg-gray-50">
-                                            <tr>
-                                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fecha</th>
-                                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Pedidos</th>
-                                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ingresos</th>
-                                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Delivery</th>
-                                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Costos</th>
-                                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ganancia</th>
-                                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Margen %</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody class="bg-white divide-y divide-gray-200">
-                                            <tr class="hover:bg-gray-50">
-                                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Hoy - 10/09</td>
-                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">24</td>
-                                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">$14,550</td>
-                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">$2,100</td>
-                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-red-600">$5,820</td>
-                                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-green-600">$8,730</td>
-                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">60%</td>
-                                            </tr>
-                                            <tr class="hover:bg-gray-50">
-                                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Ayer - 09/09</td>
-                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">21</td>
-                                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">$13,050</td>
-                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">$1,850</td>
-                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-red-600">$5,220</td>
-                                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-green-600">$7,830</td>
-                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">60%</td>
-                                            </tr>
-                                            <tr class="hover:bg-gray-50">
-                                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">08/09</td>
-                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">18</td>
-                                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">$11,400</td>
-                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">$1,600</td>
-                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-red-600">$4,560</td>
-                                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-green-600">$6,840</td>
-                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">60%</td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Configuración Local Section -->
-                        <div id="configuracion" class="section hidden">
-                            <div class="mb-6">
-                                <h2 class="text-xl font-semibold text-gray-900">Configuración del Local</h2>
-                            </div>
-
-                            <div class="space-y-6">
-                                <!-- General Settings -->
-                                <div class="bg-white shadow-lg rounded-lg p-6">
-                                    <h3 class="text-lg font-medium text-gray-900 mb-4">Información General</h3>
-                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                        <div>
-                                            <label class="block text-sm font-medium text-gray-700">Nombre del Local</label>
-                                            <input type="text" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary" value="Rotisería Del Barrio">
-                                        </div>
-                                        <div>
-                                            <label class="block text-sm font-medium text-gray-700">Teléfono Principal</label>
-                                            <input type="tel" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary" value="+54 11 1234-5678">
-                                        </div>
-                                        <div>
-                                            <label class="block text-sm font-medium text-gray-700">Email Contacto</label>
-                                            <input type="email" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary" value="info@rotiseria.com">
-                                        </div>
-                                        <div>
-                                            <label class="block text-sm font-medium text-gray-700">Dirección</label>
-                                            <input type="text" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary" value="Av. Corrientes 1234, CABA">
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- Operating Hours -->
-                                <div class="bg-white shadow-lg rounded-lg p-6">
-                                    <h3 class="text-lg font-medium text-gray-900 mb-4">Horarios de Atención</h3>
-                                    <div class="space-y-4">
-                                        <div class="flex items-center justify-between">
-                                            <div class="flex items-center space-x-3">
-                                                <input type="checkbox" id="lunes" class="rounded border-gray-300" checked>
-                                                <label for="lunes" class="text-sm font-medium text-gray-700">Lunes</label>
-                                            </div>
-                                            <div class="flex space-x-2">
-                                                <input type="time" class="border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary text-sm" value="11:00">
-                                                <span class="text-gray-500 self-center">-</span>
-                                                <input type="time" class="border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary text-sm" value="23:00">
-                                            </div>
-                                        </div>
-                                        <div class="flex items-center justify-between">
-                                            <div class="flex items-center space-x-3">
-                                                <input type="checkbox" id="martes" class="rounded border-gray-300" checked>
-                                                <label for="martes" class="text-sm font-medium text-gray-700">Martes</label>
-                                            </div>
-                                            <div class="flex space-x-2">
-                                                <input type="time" class="border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary text-sm" value="11:00">
-                                                <span class="text-gray-500 self-center">-</span>
-                                                <input type="time" class="border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary text-sm" value="23:00">
-                                            </div>
-                                        </div>
-                                        <div class="flex items-center justify-between">
-                                            <div class="flex items-center space-x-3">
-                                                <input type="checkbox" id="sabado" class="rounded border-gray-300" checked>
-                                                <label for="sabado" class="text-sm font-medium text-gray-700">Sábado</label>
-                                            </div>
-                                            <div class="flex space-x-2">
-                                                <input type="time" class="border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary text-sm" value="12:00">
-                                                <span class="text-gray-500 self-center">-</span>
-                                                <input type="time" class="border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary text-sm" value="24:00">
-                                            </div>
-                                        </div>
-                                        <div class="flex items-center justify-between">
-                                            <div class="flex items-center space-x-3">
-                                                <input type="checkbox" id="domingo" class="rounded border-gray-300">
-                                                <label for="domingo" class="text-sm font-medium text-gray-700">Domingo</label>
-                                            </div>
-                                            <div class="flex space-x-2">
-                                                <input type="time" class="border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary text-sm" value="18:00" disabled>
-                                                <span class="text-gray-500 self-center">-</span>
-                                                <input type="time" class="border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary text-sm" value="23:00" disabled>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- Delivery Zones -->
-                                <div class="bg-white shadow-lg rounded-lg p-6">
-                                    <h3 class="text-lg font-medium text-gray-900 mb-4">Zonas de Delivery</h3>
-                                    <div class="space-y-4">
-                                        <div class="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
-                                            <div>
-                                                <h4 class="font-medium text-gray-900">Zona Centro (0-2km)</h4>
-                                                <p class="text-sm text-gray-500">Barrios: Centro, Microcentro, San Telmo</p>
-                                            </div>
-                                            <div class="flex items-center space-x-3">
-                                                <input type="number" class="w-20 border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary text-sm" value="200">
-                                                <span class="text-sm text-gray-500">$</span>
-                                                <div class="flex items-center">
-                                                    <input type="checkbox" class="rounded border-gray-300" checked>
-                                                    <label class="ml-2 text-sm text-gray-700">Activa</label>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
-                                            <div>
-                                                <h4 class="font-medium text-gray-900">Zona Norte (2-4km)</h4>
-                                                <p class="text-sm text-gray-500">Barrios: Palermo, Recoleta, Belgrano</p>
-                                            </div>
-                                            <div class="flex items-center space-x-3">
-                                                <input type="number" class="w-20 border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary text-sm" value="300">
-                                                <span class="text-sm text-gray-500">$</span>
-                                                <div class="flex items-center">
-                                                    <input type="checkbox" class="rounded border-gray-300" checked>
-                                                    <label class="ml-2 text-sm text-gray-700">Activa</label>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
-                                            <div>
-                                                <h4 class="font-medium text-gray-900">Zona Sur (4-6km)</h4>
-                                                <p class="text-sm text-gray-500">Barrios: La Boca, Barracas, San Cristóbal</p>
-                                            </div>
-                                            <div class="flex items-center space-x-3">
-                                                <input type="number" class="w-20 border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary text-sm" value="400">
-                                                <span class="text-sm text-gray-500">$</span>
-                                                <div class="flex items-center">
-                                                    <input type="checkbox" class="rounded border-gray-300">
-                                                    <label class="ml-2 text-sm text-gray-700">Activa</label>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div class="flex justify-end">
-                                    <button onclick="saveConfiguration()" class="bg-primary hover:bg-yellow-600 text-white px-6 py-2 rounded-lg transition-colors duration-200">
-                                        💾 Guardar Configuración
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Métodos de Pago Section -->
-                        <div id="pagos" class="section hidden">
-                            <div class="mb-6">
-                                <div class="flex justify-between items-center">
-                                    <h2 class="text-xl font-semibold text-gray-900">Gestión de Métodos de Pago</h2>
-                                    <button onclick="showPaymentModal()" class="bg-primary hover:bg-yellow-600 text-white px-4 py-2 rounded-lg transition-colors duration-200 flex items-center space-x-2">
-                                        <span>➕</span>
-                                        <span>Nuevo Método</span>
-                                    </button>
-                                </div>
-                            </div>
-
-                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-                                <!-- Payment Method Cards -->
-                                <div class="bg-white rounded-lg shadow-lg p-6 border-l-4 border-green-500">
-                                    <div class="flex items-center justify-between mb-4">
-                                        <div class="flex items-center space-x-3">
-                                            <div class="h-12 w-12 bg-green-100 rounded-lg flex items-center justify-center">
-                                                <span class="text-2xl">💵</span>
-                                            </div>
-                                            <div>
-                                                <h3 class="font-semibold text-gray-900">Efectivo</h3>
-                                                <p class="text-sm text-gray-500">Pago tradicional</p>
-                                            </div>
-                                        </div>
-                                        <span class="px-3 py-1 bg-green-100 text-green-800 text-xs font-semibold rounded-full">ACTIVO</span>
-                                    </div>
-                                    <div class="space-y-2 text-sm">
-                                        <div class="flex justify-between">
-                                            <span class="text-gray-600">Comisión:</span>
-                                            <span class="font-medium">0%</span>
-                                        </div>
-                                        <div class="flex justify-between">
-                                            <span class="text-gray-600">Uso esta semana:</span>
-                                            <span class="font-medium">68%</span>
-                                        </div>
-                                    </div>
-                                    <div class="mt-4 flex space-x-2">
-                                        <button onclick="configurePayment('efectivo')" class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-800 px-3 py-2 rounded-md text-sm transition-colors">
-                                            Configurar
-                                        </button>
-                                        <button onclick="togglePayment('efectivo')" class="px-3 py-2 bg-red-100 hover:bg-red-200 text-red-800 rounded-md text-sm transition-colors">
-                                            Desactivar
-                                        </button>
-                                    </div>
-                                </div>
-
-                                <div class="bg-white rounded-lg shadow-lg p-6 border-l-4 border-blue-500">
-                                    <div class="flex items-center justify-between mb-4">
-                                        <div class="flex items-center space-x-3">
-                                            <div class="h-12 w-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                                                <span class="text-2xl">💳</span>
-                                            </div>
-                                            <div>
-                                                <h3 class="font-semibold text-gray-900">Tarjetas</h3>
-                                                <p class="text-sm text-gray-500">Débito y Crédito</p>
-                                            </div>
-                                        </div>
-                                        <span class="px-3 py-1 bg-green-100 text-green-800 text-xs font-semibold rounded-full">ACTIVO</span>
-                                    </div>
-                                    <div class="space-y-2 text-sm">
-                                        <div class="flex justify-between">
-                                            <span class="text-gray-600">Comisión:</span>
-                                            <span class="font-medium">2.8%</span>
-                                        </div>
-                                        <div class="flex justify-between">
-                                            <span class="text-gray-600">Uso esta semana:</span>
-                                            <span class="font-medium">25%</span>
-                                        </div>
-                                    </div>
-                                    <div class="mt-4 flex space-x-2">
-                                        <button onclick="configurePayment('tarjetas')" class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-800 px-3 py-2 rounded-md text-sm transition-colors">
-                                            Configurar
-                                        </button>
-                                        <button onclick="togglePayment('tarjetas')" class="px-3 py-2 bg-red-100 hover:bg-red-200 text-red-800 rounded-md text-sm transition-colors">
-                                            Desactivar
-                                        </button>
-                                    </div>
-                                </div>
-
-                                <div class="bg-white rounded-lg shadow-lg p-6 border-l-4 border-purple-500">
-                                    <div class="flex items-center justify-between mb-4">
-                                        <div class="flex items-center space-x-3">
-                                            <div class="h-12 w-12 bg-purple-100 rounded-lg flex items-center justify-center">
-                                                <span class="text-2xl">📱</span>
-                                            </div>
-                                            <div>
-                                                <h3 class="font-semibold text-gray-900">Digital</h3>
-                                                <p class="text-sm text-gray-500">MercadoPago, Modo</p>
-                                            </div>
-                                        </div>
-                                        <span class="px-3 py-1 bg-green-100 text-green-800 text-xs font-semibold rounded-full">ACTIVO</span>
-                                    </div>
-                                    <div class="space-y-2 text-sm">
-                                        <div class="flex justify-between">
-                                            <span class="text-gray-600">Comisión:</span>
-                                            <span class="font-medium">3.2%</span>
-                                        </div>
-                                        <div class="flex justify-between">
-                                            <span class="text-gray-600">Uso esta semana:</span>
-                                            <span class="font-medium">7%</span>
-                                        </div>
-                                    </div>
-                                    <div class="mt-4 flex space-x-2">
-                                        <button onclick="configurePayment('digital')" class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-800 px-3 py-2 rounded-md text-sm transition-colors">
-                                            Configurar
-                                        </button>
-                                        <button onclick="togglePayment('digital')" class="px-3 py-2 bg-red-100 hover:bg-red-200 text-red-800 rounded-md text-sm transition-colors">
-                                            Desactivar
-                                        </button>
-                                    </div>
-                                </div>
-
-                                <div class="bg-white rounded-lg shadow-lg p-6 border-l-4 border-gray-300 opacity-60">
-                                    <div class="flex items-center justify-between mb-4">
-                                        <div class="flex items-center space-x-3">
-                                            <div class="h-12 w-12 bg-gray-100 rounded-lg flex items-center justify-center">
-                                                <span class="text-2xl">🏦</span>
-                                            </div>
-                                            <div>
-                                                <h3 class="font-semibold text-gray-900">Transferencia</h3>
-                                                <p class="text-sm text-gray-500">Bancaria</p>
-                                            </div>
-                                        </div>
-                                        <span class="px-3 py-1 bg-gray-100 text-gray-600 text-xs font-semibold rounded-full">INACTIVO</span>
-                                    </div>
-                                    <div class="space-y-2 text-sm">
-                                        <div class="flex justify-between">
-                                            <span class="text-gray-600">Comisión:</span>
-                                            <span class="font-medium">0%</span>
-                                        </div>
-                                        <div class="flex justify-between">
-                                            <span class="text-gray-600">Uso esta semana:</span>
-                                            <span class="font-medium">0%</span>
-                                        </div>
-                                    </div>
-                                    <div class="mt-4 flex space-x-2">
-                                        <button onclick="configurePayment('transferencia')" class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-800 px-3 py-2 rounded-md text-sm transition-colors">
-                                            Configurar
-                                        </button>
-                                        <button onclick="togglePayment('transferencia')" class="px-3 py-2 bg-green-100 hover:bg-green-200 text-green-800 rounded-md text-sm transition-colors">
-                                            Activar
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Payment Statistics -->
-                            <div class="bg-white rounded-lg shadow-lg p-6 mb-8">
-                                <h3 class="text-lg font-medium text-gray-900 mb-4">Estadísticas de Pagos</h3>
-                                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                    <div class="text-center">
-                                        <div class="text-3xl font-bold text-gray-900">$14,550</div>
-                                        <div class="text-sm text-gray-500">Total procesado hoy</div>
-                                    </div>
-                                    <div class="text-center">
-                                        <div class="text-3xl font-bold text-gray-900">2.1%</div>
-                                        <div class="text-sm text-gray-500">Comisión promedio</div>
-                                    </div>
-                                    <div class="text-center">
-                                        <div class="text-3xl font-bold text-gray-900">24</div>
-                                        <div class="text-sm text-gray-500">Transacciones hoy</div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Promociones Section -->
-                        <div id="promociones" class="section hidden">
-                            <div class="mb-6">
-                                <div class="flex justify-between items-center">
-                                    <h2 class="text-xl font-semibold text-gray-900">Gestión de Promociones</h2>
-                                    <button onclick="showPromotionModal()" class="bg-primary hover:bg-yellow-600 text-white px-4 py-2 rounded-lg...">
-                                        <span>Nueva Promoción</span>
-                                    </button>
-                                </div>
-                            </div>
-
-                            <!-- Active Promotions -->
-                            <div class="bg-white rounded-lg shadow-lg p-6 mb-8">
-                                <h3 class="text-lg font-medium text-gray-900 mb-4">Promociones Activas</h3>
-                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <div class="border border-green-200 rounded-lg p-4 bg-green-50">
-                                        <div class="flex items-center justify-between mb-3">
-                                            <h4 class="font-semibold text-gray-900">2x1 Empanadas Viernes</h4>
-                                            <span class="px-2 py-1 bg-green-100 text-green-800 text-xs font-semibold rounded-full">ACTIVA</span>
-                                        </div>
-                                        <p class="text-sm text-gray-600 mb-3">Por cada docena de empanadas, llevá otra gratis los viernes</p>
-                                        <div class="space-y-1 text-xs text-gray-500">
-                                            <div>Válida: Viernes 13/09</div>
-                                            <div>Usos esta semana: 12</div>
-                                            <div>Descuento aplicado: $2,880</div>
-                                        </div>
-                                        <div class="mt-3 flex space-x-2">
-                                            <button onclick="editPromotion(1)" class="text-xs bg-white border border-gray-300 text-gray-700 px-2 py-1 rounded hover:bg-gray-50">
-                                                Editar
-                                            </button>
-                                            <button onclick="pausePromotion(1)" class="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded hover:bg-yellow-200">
-                                                Pausar
-                                            </button>
-                                        </div>
                                     </div>
 
-                                    <div class="border border-blue-200 rounded-lg p-4 bg-blue-50">
-                                        <div class="flex items-center justify-between mb-3">
-                                            <h4 class="font-semibold text-gray-900">15% Descuento Delivery</h4>
-                                            <span class="px-2 py-1 bg-blue-100 text-blue-800 text-xs font-semibold rounded-full">ACTIVA</span>
-                                        </div>
-                                        <p class="text-sm text-gray-600 mb-3">15% de descuento en pedidos de delivery superiores a $1000</p>
-                                        <div class="space-y-1 text-xs text-gray-500">
-                                            <div>Válida: Hasta 15/09</div>
-                                            <div>Usos esta semana: 8</div>
-                                            <div>Descuento aplicado: $1,240</div>
-                                        </div>
-                                        <div class="mt-3 flex space-x-2">
-                                            <button onclick="editPromotion(2)" class="text-xs bg-white border border-gray-300 text-gray-700 px-2 py-1 rounded hover:bg-gray-50">
-                                                Editar
-                                            </button>
-                                            <button onclick="pausePromotion(2)" class="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded hover:bg-yellow-200">
-                                                Pausar
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Promotion History -->
-                            <div class="bg-white rounded-lg shadow-lg overflow-hidden">
-                                <div class="px-6 py-4 border-b border-gray-200">
-                                    <h3 class="text-lg font-medium text-gray-900">Historial de Promociones</h3>
-                                </div>
-                                <div class="overflow-x-auto">
-                                    <table class="min-w-full divide-y divide-gray-200">
-                                        <thead class="bg-gray-50">
-                                            <tr>
-                                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Promoción</th>
-                                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tipo</th>
-                                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Período</th>
-                                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Usos</th>
-                                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Descuento Total</th>
-                                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
-                                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody class="bg-white divide-y divide-gray-200">
-                                            <tr class="hover:bg-gray-50">
-                                                <td class="px-6 py-4 whitespace-nowrap">
-                                                    <div class="text-sm font-medium text-gray-900">2x1 Empanadas Viernes</div>
-                                                    <div class="text-sm text-gray-500">Docena gratis por docena comprada</div>
-                                                </td>
-                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">2x1</td>
-                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Todos los Viernes</td>
-                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">12</td>
-                                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-red-600">$2,880</td>
-                                                <td class="px-6 py-4 whitespace-nowrap">
-                                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Activa</span>
-                                                </td>
-                                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
-                                                    <button onclick="editPromotion(1)" class="text-indigo-600 hover:text-indigo-900">Editar</button>
-                                                    <button onclick="duplicatePromotion(1)" class="text-green-600 hover:text-green-900">Duplicar</button>
-                                                </td>
-                                            </tr>
-                                            <tr class="hover:bg-gray-50">
-                                                <td class="px-6 py-4 whitespace-nowrap">
-                                                    <div class="text-sm font-medium text-gray-900">15% Descuento Delivery</div>
-                                                    <div class="text-sm text-gray-500">Pedidos superiores a $1000</div>
-                                                </td>
-                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Porcentual</td>
-                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">01/09 - 15/09</td>
-                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">8</td>
-                                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-red-600">$1,240</td>
-                                                <td class="px-6 py-4 whitespace-nowrap">
-                                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Activa</span>
-                                                </td>
-                                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
-                                                    <button onclick="editPromotion(2)" class="text-indigo-600 hover:text-indigo-900">Editar</button>
-                                                    <button onclick="duplicatePromotion(2)" class="text-green-600 hover:text-green-900">Duplicar</button>
-                                                </td>
-                                            </tr>
-                                            <tr class="hover:bg-gray-50">
-                                                <td class="px-6 py-4 whitespace-nowrap">
-                                                    <div class="text-sm font-medium text-gray-900">Combo Familiar Agosto</div>
-                                                    <div class="text-sm text-gray-500">Milanesa + empanadas + bebida</div>
-                                                </td>
-                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Combo</td>
-                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">01/08 - 31/08</td>
-                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">45</td>
-                                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-red-600">$6,750</td>
-                                                <td class="px-6 py-4 whitespace-nowrap">
-                                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">Finalizada</span>
-                                                </td>
-                                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
-                                                    <button onclick="viewPromotionStats(3)" class="text-blue-600 hover:text-blue-900">Ver Stats</button>
-                                                    <button onclick="duplicatePromotion(3)" class="text-green-600 hover:text-green-900">Duplicar</button>
-                                                </td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-                        </div>
-
-                    </div>
+<div class="bg-white overflow-hidden shadow-lg rounded-lg">
+    <div class="p-5">
+        <div class="flex items-center">
+            <div class="flex-shrink-0">
+                <div class="w-8 h-8 bg-blue-500 rounded-md flex items-center justify-center">
+                    <span class="text-white text-sm">🚗</span>
                 </div>
-            </main>
+            </div>
+            <div class="ml-5 w-0 flex-1">
+                <dl>
+                    <dt class="text-sm font-medium text-gray-500 truncate">Delivery</dt>
+                    <dd class="text-2xl font-semibold text-gray-900">$<?php echo number_format($total_delivery, 2, ',', '.'); ?></dd>
+                </dl>
+            </div>
         </div>
     </div>
-<!-- MODALES - Agregar antes del script admin.js -->
+</div>
 
+<div class="bg-white overflow-hidden shadow-lg rounded-lg">
+    <div class="p-5">
+        <div class="flex items-center">
+            <div class="flex-shrink-0">
+                <div class="w-8 h-8 bg-red-500 rounded-md flex items-center justify-center">
+                    <span class="text-white text-sm">📉</span>
+                </div>
+            </div>
+            <div class="ml-5 w-0 flex-1">
+                <dl>
+                    <dt class="text-sm font-medium text-gray-500 truncate">Costos</dt>
+                    <dd class="text-2xl font-semibold text-gray-900">$<?php echo number_format($costos_estimados, 2, ',', '.'); ?></dd>
+                </dl>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="bg-white overflow-hidden shadow-lg rounded-lg">
+    <div class="p-5">
+        <div class="flex items-center">
+            <div class="flex-shrink-0">
+                <div class="w-8 h-8 bg-purple-500 rounded-md flex items-center justify-center">
+                    <span class="text-white text-sm">📈</span>
+                </div>
+            </div>
+            <div class="ml-5 w-0 flex-1">
+                <dl>
+                    <dt class="text-sm font-medium text-gray-500 truncate">Ganancia Neta</dt>
+                    <dd class="text-2xl font-semibold text-green-600">$<?php echo number_format($ganancia_neta, 2, ',', '.'); ?></dd>
+                </dl>
+            </div>
+        </div>
+    </div>
+</div>
+</div>
+
+<!-- Financial Charts -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+<div class="bg-white p-6 rounded-lg shadow-lg" style="min-height: 300px;">
+    <h3 class="text-lg font-medium text-gray-900 mb-4">Evolución Mensual</h3>
+    <canvas id="monthlyRevenueChart" width="400" height="200"></canvas>
+</div>
+<div class="bg-white p-6 rounded-lg shadow-lg" style="min-height: 300px;">
+    <h3 class="text-lg font-medium text-gray-900 mb-4">Distribución de Ingresos</h3>
+    <canvas id="revenueBreakdownChart" width="400" height="200"></canvas>
+</div>
+</div>
+
+<!-- Detailed Financial Table -->
+<div class="bg-white shadow-lg rounded-lg overflow-hidden">
+<div class="px-6 py-4 border-b border-gray-200">
+    <h3 class="text-lg font-medium text-gray-900">Detalle Diario</h3>
+</div>
+<div class="overflow-x-auto">
+    <table class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-gray-50">
+            <tr>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fecha</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Pedidos</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ingresos</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Delivery</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Costos</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ganancia</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Margen %</th>
+            </tr>
+        </thead>
+        <tbody class="bg-white divide-y divide-gray-200">
+            <!-- Los datos se cargarán dinámicamente -->
+        </tbody>
+    </table>
+</div>
+</div>
+</div>
+
+<!-- Configuración Local Section -->
+<div id="configuracion" class="section hidden">
+<div class="mb-6">
+<h2 class="text-xl font-semibold text-gray-900">Configuración del Local</h2>
+</div>
+
+<div class="space-y-6">
+<!-- General Settings -->
+<div class="bg-white shadow-lg rounded-lg p-6">
+    <h3 class="text-lg font-medium text-gray-900 mb-4">Información General</h3>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+            <label class="block text-sm font-medium text-gray-700">Nombre del Local</label>
+            <input type="text" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary" value="Rotisería Del Barrio">
+        </div>
+        <div>
+            <label class="block text-sm font-medium text-gray-700">Teléfono Principal</label>
+            <input type="tel" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary" value="+54 11 1234-5678">
+        </div>
+        <div>
+            <label class="block text-sm font-medium text-gray-700">Email Contacto</label>
+            <input type="email" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary" value="info@rotiseria.com">
+        </div>
+        <div>
+            <label class="block text-sm font-medium text-gray-700">Dirección</label>
+            <input type="text" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary" value="Av. Corrientes 1234, CABA">
+        </div>
+    </div>
+</div>
+
+<div class="flex justify-end">
+    <button onclick="saveConfiguration()" class="bg-primary hover:bg-yellow-600 text-white px-6 py-2 rounded-lg transition-colors duration-200">
+        💾 Guardar Configuración
+    </button>
+</div>
+</div>
+</div>
+
+<!-- Métodos de Pago Section -->
+<div id="pagos" class="section hidden">
+<div class="mb-6">
+<div class="flex justify-between items-center">
+    <h2 class="text-xl font-semibold text-gray-900">Gestión de Métodos de Pago</h2>
+</div>
+</div>
+
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+<!-- Payment Method Cards -->
+<div class="bg-white rounded-lg shadow-lg p-6 border-l-4 border-green-500">
+    <div class="flex items-center justify-between mb-4">
+        <div class="flex items-center space-x-3">
+            <div class="h-12 w-12 bg-green-100 rounded-lg flex items-center justify-center">
+                <span class="text-2xl">💵</span>
+            </div>
+            <div>
+                <h3 class="font-semibold text-gray-900">Efectivo</h3>
+                <p class="text-sm text-gray-500">Pago tradicional</p>
+            </div>
+        </div>
+        <span class="px-3 py-1 bg-green-100 text-green-800 text-xs font-semibold rounded-full">ACTIVO</span>
+    </div>
+    <div class="space-y-2 text-sm">
+        <div class="flex justify-between">
+            <span class="text-gray-600">Comisión:</span>
+            <span class="font-medium">0%</span>
+        </div>
+        <div class="flex justify-between">
+            <span class="text-gray-600">Uso esta semana:</span>
+            <span class="font-medium">68%</span>
+        </div>
+    </div>
+</div>
+
+<div class="bg-white rounded-lg shadow-lg p-6 border-l-4 border-purple-500">
+    <div class="flex items-center justify-between mb-4">
+        <div class="flex items-center space-x-3">
+            <div class="h-12 w-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                <span class="text-2xl">📱</span>
+            </div>
+            <div>
+                <h3 class="font-semibold text-gray-900">Digital</h3>
+                <p class="text-sm text-gray-500">MercadoPago, Modo</p>
+            </div>
+        </div>
+        <span class="px-3 py-1 bg-green-100 text-green-800 text-xs font-semibold rounded-full">ACTIVO</span>
+    </div>
+    <div class="space-y-2 text-sm">
+        <div class="flex justify-between">
+            <span class="text-gray-600">Comisión:</span>
+            <span class="font-medium">3.2%</span>
+        </div>
+        <div class="flex justify-between">
+            <span class="text-gray-600">Uso esta semana:</span>
+            <span class="font-medium">32%</span>
+        </div>
+    </div>
+</div>
+</div>
+</div>
+
+</div>
+</div>
+</main>
+</div>
+</div>
+
+<!-- MODALES -->
 <!-- Modal Usuario -->
 <div id="modalUsuario" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-    <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
-        <div class="mt-3">
-            <h3 class="text-lg font-medium text-gray-900 mb-4" id="tituloModalUsuario">Nuevo Usuario</h3>
-            <form id="formUsuario" onsubmit="guardarUsuario(event)">
-                <input type="hidden" id="usuario_id" name="id">
-                
-                <div class="mb-4">
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Nombre</label>
-                    <input type="text" id="usuario_nombre" name="nombre" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C81E2D]">
-                </div>
-                
-                <div class="mb-4">
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Apellido</label>
-                    <input type="text" id="usuario_apellido" name="apellido" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C81E2D]">
-                </div>
-                
-                <div class="mb-4">
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Email</label>
-                    <input type="email" id="usuario_email" name="email" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C81E2D]">
-                </div>
-                
-                <div class="mb-4">
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Teléfono</label>
-                    <input type="tel" id="usuario_telefono" name="telefono" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C81E2D]">
-                </div>
-                
-                <div class="mb-4">
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Dirección</label>
-                    <input type="text" id="usuario_direccion" name="direccion" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C81E2D]">
-                </div>
-                
-                <div class="mb-4">
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Rol</label>
-                    <select id="usuario_rol" name="rol" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C81E2D]">
-                        <option value="cliente">Cliente</option>
-                        <option value="cajero">Cajero</option>
-                        <option value="cocinero">Cocinero</option>
-                        <option value="repartidor">Repartidor</option>
-                        <option value="administrador">Administrador</option>
-                    </select>
-                </div>
-                
-                <div class="mb-4" id="campo_password">
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Contraseña</label>
-                    <input type="password" id="usuario_password" name="password" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C81E2D]">
-                    <p class="text-xs text-gray-500 mt-1">Dejar en blanco para mantener la actual (solo al editar)</p>
-                </div>
-                
-                <div class="flex justify-end space-x-2 mt-6">
-                    <button type="button" onclick="cerrarModalUsuario()" class="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400">
-                        Cancelar
-                    </button>
-                    <button type="submit" class="px-4 py-2 bg-[#C81E2D] text-white rounded-md hover:bg-[#AD1926]">
-                        Guardar
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
+<div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+<div class="mt-3">
+<h3 class="text-lg font-medium text-gray-900 mb-4" id="tituloModalUsuario">Nuevo Usuario</h3>
+<form id="formUsuario" onsubmit="guardarUsuario(event)">
+<input type="hidden" id="usuario_id">
+
+<div class="mb-4">
+<label class="block text-sm font-medium text-gray-700 mb-2">Nombre</label>
+<input type="text" id="usuario_nombre" name="nombre" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C81E2D]">
+</div>
+
+<div class="mb-4">
+<label class="block text-sm font-medium text-gray-700 mb-2">Apellido</label>
+<input type="text" id="usuario_apellido" name="apellido" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C81E2D]">
+</div>
+
+<div class="mb-4">
+<label class="block text-sm font-medium text-gray-700 mb-2">Email</label>
+<input type="email" id="usuario_email" name="email" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C81E2D]">
+</div>
+
+<div class="mb-4">
+<label class="block text-sm font-medium text-gray-700 mb-2">Teléfono</label>
+<input type="tel" id="usuario_telefono" name="telefono" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C81E2D]">
+</div>
+
+<div class="mb-4">
+<label class="block text-sm font-medium text-gray-700 mb-2">Rol</label>
+<select id="usuario_rol" name="rol" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C81E2D]">
+<option value="cliente">Cliente</option>
+<option value="cajero">Cajero</option>
+<option value="cocinero">Cocinero</option>
+<option value="repartidor">Repartidor</option>
+<option value="administrador">Administrador</option>
+</select>
+</div>
+
+<div class="mb-4">
+<label class="block text-sm font-medium text-gray-700 mb-2">Contraseña</label>
+<input type="password" id="usuario_password" name="password" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C81E2D]">
+<p class="text-xs text-gray-500 mt-1">Dejar en blanco para mantener la actual (solo al editar)</p>
+</div>
+
+<div class="flex justify-end space-x-2 mt-6">
+<button type="button" onclick="cerrarModalUsuario()" class="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400">
+Cancelar
+</button>
+<button type="submit" class="px-4 py-2 bg-[#C81E2D] text-white rounded-md hover:bg-[#AD1926]">
+Guardar
+</button>
+</div>
+</form>
+</div>
+</div>
 </div>
 
 <!-- Modal Producto -->
 <div id="modalProducto" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-    <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
-        <div class="mt-3">
-            <h3 class="text-lg font-medium text-gray-900 mb-4" id="tituloModalProducto">Nuevo Producto</h3>
-            <form id="formProducto" onsubmit="guardarProducto(event)" enctype="multipart/form-data">
-                <input type="hidden" id="producto_id" name="id">
-                
-                <div class="mb-4">
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Nombre</label>
-                    <input type="text" id="producto_nombre" name="nombre" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C81E2D]">
-                </div>
-                
-                <div class="mb-4">
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Descripción</label>
-                    <textarea id="producto_descripcion" name="descripcion" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C81E2D]"></textarea>
-                </div>
-                
-                <div class="mb-4">
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Precio</label>
-                    <input type="number" id="producto_precio" name="precio" step="0.01" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C81E2D]">
-                </div>
-                
-                <div class="mb-4">
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Categoría</label>
-                    <select id="producto_categoria" name="categoria_id" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C81E2D]">
-                        <option value="">Seleccione una categoría</option>
-                    </select>
-                </div>
-                
-                <div class="mb-4">
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Ingredientes</label>
-                    <textarea id="producto_ingredientes" name="ingredientes" rows="2" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C81E2D]"></textarea>
-                </div>
-                
-                <div class="mb-4">
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Tiempo de Preparación (minutos)</label>
-                    <input type="number" id="producto_tiempo" name="tiempo_preparacion" value="20" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C81E2D]">
-                </div>
-                
-                <div class="mb-4">
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Imagen</label>
-                    <input type="file" id="producto_imagen" name="imagen" accept="image/*" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C81E2D]">
-                </div>
-                
-                <div class="mb-4">
-                    <label class="flex items-center">
-                        <input type="checkbox" id="producto_disponible" name="disponible" checked class="rounded border-gray-300 text-[#C81E2D] focus:ring-[#C81E2D]">
-                        <span class="ml-2 text-sm text-gray-700">Disponible</span>
-                    </label>
-                </div>
-                
-                <div class="flex justify-end space-x-2 mt-6">
-                    <button type="button" onclick="cerrarModalProducto()" class="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400">
-                        Cancelar
-                    </button>
-                    <button type="submit" class="px-4 py-2 bg-[#C81E2D] text-white rounded-md hover:bg-[#AD1926]">
-                        Guardar
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
+<div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+<div class="mt-3">
+<h3 class="text-lg font-medium text-gray-900 mb-4" id="tituloModalProducto">Nuevo Producto</h3>
+<form id="formProducto" onsubmit="guardarProducto(event)" enctype="multipart/form-data">
+<input type="hidden" id="producto_id" name="id">
+
+<div class="mb-4">
+<label class="block text-sm font-medium text-gray-700 mb-2">Nombre</label>
+<input type="text" id="producto_nombre" name="nombre" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C81E2D]">
 </div>
 
-<!-- Modal Promoción -->
-<div id="modalPromocion" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-    <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
-        <div class="mt-3">
-            <h3 class="text-lg font-medium text-gray-900 mb-4" id="tituloModalPromocion">Nueva Promoción</h3>
-            <form id="formPromocion" onsubmit="guardarPromocion(event)">
-                <input type="hidden" id="promocion_id" name="id">
-                
-                <div class="mb-4">
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Nombre</label>
-                    <input type="text" id="promocion_nombre" name="nombre" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C81E2D]">
-                </div>
-                
-                <div class="mb-4">
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Descripción</label>
-                    <textarea id="promocion_descripcion" name="descripcion" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C81E2D]"></textarea>
-                </div>
-                
-                <div class="mb-4">
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Tipo</label>
-                    <select id="promocion_tipo" name="tipo" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C81E2D]">
-                        <option value="descuento_porcentaje">Descuento Porcentual</option>
-                        <option value="descuento_fijo">Descuento Fijo</option>
-                    </select>
-                </div>
-                
-                <div class="mb-4">
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Valor</label>
-                    <input type="number" id="promocion_valor" name="valor" step="0.01" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C81E2D]">
-                    <p class="text-xs text-gray-500 mt-1">Porcentaje o monto según el tipo seleccionado</p>
-                </div>
-                
-                <div class="mb-4">
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Monto Mínimo</label>
-                    <input type="number" id="promocion_monto_minimo" name="monto_minimo" step="0.01" value="0" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C81E2D]">
-                </div>
-                
-                <div class="mb-4">
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Fecha Inicio</label>
-                    <input type="date" id="promocion_fecha_inicio" name="fecha_inicio" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C81E2D]">
-                </div>
-                
-                <div class="mb-4">
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Fecha Fin</label>
-                    <input type="date" id="promocion_fecha_fin" name="fecha_fin" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C81E2D]">
-                </div>
-                
-                <div class="flex justify-end space-x-2 mt-6">
-                    <button type="button" onclick="cerrarModalPromocion()" class="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400">
-                        Cancelar
-                    </button>
-                    <button type="submit" class="px-4 py-2 bg-[#C81E2D] text-white rounded-md hover:bg-[#AD1926]">
-                        Guardar
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
+<div class="mb-4">
+<label class="block text-sm font-medium text-gray-700 mb-2">Descripción</label>
+<textarea id="producto_descripcion" name="descripcion" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C81E2D]"></textarea>
 </div>
+
+<div class="mb-4">
+<label class="block text-sm font-medium text-gray-700 mb-2">Precio</label>
+<input type="number" id="producto_precio" name="precio" step="0.01" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C81E2D]">
+</div>
+
+<div class="mb-4">
+<label class="block text-sm font-medium text-gray-700 mb-2">Categoría</label>
+<select id="producto_categoria" name="categoria_id" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C81E2D]">
+<option value="">Seleccione una categoría</option>
+</select>
+</div>
+
+<div class="mb-4">
+<label class="block text-sm font-medium text-gray-700 mb-2">Ingredientes</label>
+<textarea id="producto_ingredientes" name="ingredientes" rows="2" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C81E2D]"></textarea>
+</div>
+
+<div class="mb-4">
+<label class="block text-sm font-medium text-gray-700 mb-2">Tiempo de Preparación (minutos)</label>
+<input type="number" id="producto_tiempo" name="tiempo_preparacion" value="20" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C81E2D]">
+</div>
+
+<div class="mb-4">
+<label class="flex items-center">
+<input type="checkbox" id="producto_disponible" name="disponible" checked class="rounded border-gray-300 text-[#C81E2D] focus:ring-[#C81E2D]">
+<span class="ml-2 text-sm text-gray-700">Disponible</span>
+</label>
+</div>
+
+<div class="flex justify-end space-x-2 mt-6">
+<button type="button" onclick="cerrarModalProducto()" class="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400">
+Cancelar
+</button>
+<button type="submit" class="px-4 py-2 bg-[#C81E2D] text-white rounded-md hover:bg-[#AD1926]">
+Guardar
+</button>
+</div>
+</form>
+</div>
+</div>
+</div>
+
 </body>
 <script src="../js/admin.js"></script>
-¿</html>
+</html>

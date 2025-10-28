@@ -3586,3 +3586,535 @@ GET: Array
 
 RAW INPUT: 
 
+=== 2025-10-27 22:05:59 ===
+REQUEST_METHOD: POST
+POST: Array
+(
+    [email] => brunofornasar@gmailcom
+    [password] => 123123
+)
+
+GET: Array
+(
+)
+
+RAW INPUT: 
+
+=== 2025-10-27 22:07:21 ===
+REQUEST_METHOD: POST
+POST: Array
+(
+    [email] => brunofornasar@gmailcom
+    [password] => 123123
+)
+
+GET: Array
+(
+)
+
+RAW INPUT: 
+
+=== 2025-10-27 22:07:56 ===
+REQUEST_METHOD: POST
+POST: Array
+(
+    [email] => brunofornasar@gmailcom
+    [password] => 123123
+)
+
+GET: Array
+(
+)
+
+RAW INPUT: 
+
+=== 2025-10-27 22:08:49 ===
+REQUEST_METHOD: POST
+POST: Array
+(
+    [email] => admin@system.com
+    [password] => admin123
+)
+
+GET: Array
+(
+)
+
+RAW INPUT: 
+
+=== 2025-10-27 22:08:50 ===
+REQUEST_METHOD: POST
+POST: Array
+(
+    [email] => admin@system.com
+    [password] => admin123
+)
+
+GET: Array
+(
+)
+
+RAW INPUT: 
+
+=== 2025-10-27 22:08:50 ===
+REQUEST_METHOD: POST
+POST: Array
+(
+    [email] => admin@system.com
+    [password] => admin123
+)
+
+GET: Array
+(
+)
+
+RAW INPUT: 
+
+=== 2025-10-27 22:08:50 ===
+REQUEST_METHOD: POST
+POST: Array
+(
+    [email] => admin@system.com
+    [password] => admin123
+)
+
+GET: Array
+(
+)
+
+RAW INPUT: 
+
+=== 2025-10-27 22:08:51 ===
+REQUEST_METHOD: POST
+POST: Array
+(
+    [email] => admin@system.com
+    [password] => admin123
+)
+
+GET: Array
+(
+)
+
+RAW INPUT: 
+
+=== 2025-10-27 22:08:51 ===
+REQUEST_METHOD: POST
+POST: Array
+(
+    [email] => admin@system.com
+    [password] => admin123
+)
+
+GET: Array
+(
+)
+
+RAW INPUT: 
+
+=== 2025-10-27 22:08:58 ===
+REQUEST_METHOD: POST
+POST: Array
+(
+    [email] => admin@system.com
+    [password] => admin123
+)
+
+GET: Array
+(
+)
+
+RAW INPUT: 
+
+=== 2025-10-27 22:08:58 ===
+REQUEST_METHOD: POST
+POST: Array
+(
+    [email] => admin@system.com
+    [password] => admin123
+)
+
+GET: Array
+(
+)
+
+RAW INPUT: 
+
+=== 2025-10-27 22:08:58 ===
+REQUEST_METHOD: POST
+POST: Array
+(
+    [email] => admin@system.com
+    [password] => admin123
+)
+
+GET: Array
+(
+)
+
+RAW INPUT: 
+
+=== 2025-10-27 22:08:58 ===
+REQUEST_METHOD: POST
+POST: Array
+(
+    [email] => admin@system.com
+    [password] => admin123
+)
+
+GET: Array
+(
+)
+
+RAW INPUT: 
+
+=== 2025-10-27 22:08:58 ===
+REQUEST_METHOD: POST
+POST: Array
+(
+    [email] => admin@system.com
+    [password] => admin123
+)
+
+GET: Array
+(
+)
+
+RAW INPUT: 
+
+=== 2025-10-27 22:08:58 ===
+REQUEST_METHOD: POST
+POST: Array
+(
+    [email] => admin@system.com
+    [password] => admin123
+)
+
+GET: Array
+(
+)
+
+RAW INPUT: 
+
+=== 2025-10-27 22:09:30 ===
+REQUEST_METHOD: POST
+POST: Array
+(
+    [email] => admin@system.com
+    [password] => admin123
+)
+
+GET: Array
+(
+)
+
+RAW INPUT: 
+
+=== 2025-10-27 23:28:43 ===
+REQUEST_METHOD: POST
+POST: Array
+(
+    [email] => brunofornasar@gmail.com
+    [password] => 123123
+)
+
+GET: Array
+(
+)
+
+RAW INPUT: 
+
+=== 2025-10-27 23:30:24 ===
+REQUEST_METHOD: POST
+POST: Array
+(
+    [email] => admin@system.com
+    [password] => asdmin123
+)
+
+GET: Array
+(
+)
+
+RAW INPUT: 
+
+=== 2025-10-27 23:30:30 ===
+REQUEST_METHOD: POST
+POST: Array
+(
+    [email] => admin@system.com
+    [password] => admin123
+)
+
+GET: Array
+(
+)
+
+RAW INPUT: 
+
+=== 2025-10-28 00:24:46 ===
+REQUEST_METHOD: POST
+POST: Array
+(
+    [email] => admin@system.com
+    [password] => admin123
+)
+
+GET: Array
+(
+)
+
+RAW INPUT: 
+
+=== 2025-10-28 00:25:45 ===
+REQUEST_METHOD: POST
+POST: Array
+(
+    [email] => brunofornasar@gmail.com
+    [password] => 123123
+)
+
+GET: Array
+(
+)
+
+RAW INPUT: 
+
+=== 2025-10-28 00:26:02 ===
+REQUEST_METHOD: POST
+POST: Array
+(
+    [email] => luchocampanelli1@gmail.com
+    [password] => drysda08
+)
+
+GET: Array
+(
+)
+
+RAW INPUT: 
+
+=== 2025-10-28 00:27:12 ===
+REQUEST_METHOD: POST
+POST: Array
+(
+    [email] => brunofornasar@gmail.com
+    [password] => 123123
+)
+
+GET: Array
+(
+)
+
+RAW INPUT: 
+
+=== 2025-10-28 00:27:52 ===
+REQUEST_METHOD: POST
+POST: Array
+(
+    [email] => cocinero20@rotiseria.com
+    [password] => drysda08
+)
+
+GET: Array
+(
+)
+
+RAW INPUT: 
+
+=== 2025-10-28 00:28:31 ===
+REQUEST_METHOD: POST
+POST: Array
+(
+    [email] => repartidor@rotiseria.com
+    [password] => drysda08
+)
+
+GET: Array
+(
+)
+
+RAW INPUT: 
+
+=== 2025-10-28 00:29:03 ===
+REQUEST_METHOD: POST
+POST: Array
+(
+    [email] => cocinero20@rotiseria.com
+    [password] => drysda08
+)
+
+GET: Array
+(
+)
+
+RAW INPUT: 
+
+=== 2025-10-28 00:30:06 ===
+REQUEST_METHOD: POST
+POST: Array
+(
+    [email] => repartidor@rotiseria.com
+    [password] => drysda08
+)
+
+GET: Array
+(
+)
+
+RAW INPUT: 
+
+=== 2025-10-28 00:30:41 ===
+REQUEST_METHOD: POST
+POST: Array
+(
+    [email] => luchocampanelli1@gmail.com
+    [password] => drysda08
+)
+
+GET: Array
+(
+)
+
+RAW INPUT: 
+
+=== 2025-10-28 00:33:06 ===
+REQUEST_METHOD: POST
+POST: Array
+(
+    [email] => repartidor@rotiseria.com
+    [password] => drysda08
+)
+
+GET: Array
+(
+)
+
+RAW INPUT: 
+
+=== 2025-10-28 00:36:14 ===
+REQUEST_METHOD: POST
+POST: Array
+(
+    [email] => brunofornasar@gmail.com
+    [password] => admin123
+)
+
+GET: Array
+(
+)
+
+RAW INPUT: 
+
+=== 2025-10-28 00:36:17 ===
+REQUEST_METHOD: POST
+POST: Array
+(
+    [email] => brunofornasar@gmail.com
+    [password] => 123123
+)
+
+GET: Array
+(
+)
+
+RAW INPUT: 
+
+=== 2025-10-28 01:00:40 ===
+REQUEST_METHOD: POST
+POST: Array
+(
+    [email] => admin@system.com
+    [password] => drysda08
+)
+
+GET: Array
+(
+)
+
+RAW INPUT: 
+
+=== 2025-10-28 01:00:44 ===
+REQUEST_METHOD: POST
+POST: Array
+(
+    [email] => admin@system.com
+    [password] => admin123
+)
+
+GET: Array
+(
+)
+
+RAW INPUT: 
+
+=== 2025-10-28 01:01:00 ===
+REQUEST_METHOD: POST
+POST: Array
+(
+    [email] => luchocampanelli1@gmail.com
+    [password] => drysda08
+)
+
+GET: Array
+(
+)
+
+RAW INPUT: 
+
+=== 2025-10-28 01:01:33 ===
+REQUEST_METHOD: POST
+POST: Array
+(
+    [email] => cocinero20@rotiseria.com
+    [password] => drysda08
+)
+
+GET: Array
+(
+)
+
+RAW INPUT: 
+
+=== 2025-10-28 01:02:07 ===
+REQUEST_METHOD: POST
+POST: Array
+(
+    [email] => repartidor@rotiseria.com
+    [password] => drysda08
+)
+
+GET: Array
+(
+)
+
+RAW INPUT: 
+
+=== 2025-10-28 01:07:10 ===
+REQUEST_METHOD: POST
+POST: Array
+(
+    [email] => admin@system.com
+    [password] => drysda08
+)
+
+GET: Array
+(
+)
+
+RAW INPUT: 
+
+=== 2025-10-28 01:07:14 ===
+REQUEST_METHOD: POST
+POST: Array
+(
+    [email] => admin@system.com
+    [password] => admin123
+)
+
+GET: Array
+(
+)
+
+RAW INPUT: 
+

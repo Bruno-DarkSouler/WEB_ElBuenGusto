@@ -109,7 +109,6 @@ function crearUsuario() {
     $apellido = trim($_POST['apellido']);
     $email = trim($_POST['email']);
     $telefono = trim($_POST['telefono']);
-    $direccion = isset($_POST['direccion']) ? trim($_POST['direccion']) : '';
     $rol = $_POST['rol'];
     $password = $_POST['password'];
     
@@ -162,7 +161,6 @@ function actualizarUsuario($data) {
     $apellido = trim($data['apellido']);
     $email = trim($data['email']);
     $telefono = trim($data['telefono']);
-    $direccion = isset($data['direccion']) ? trim($data['direccion']) : '';
     $rol = $data['rol'];
     
     // Verificar si el email ya existe en otro usuario
@@ -182,14 +180,14 @@ function actualizarUsuario($data) {
     if (isset($data['password']) && !empty($data['password'])) {
         $password_hash = password_hash($data['password'], PASSWORD_DEFAULT);
         $stmt = $conexion->prepare("UPDATE usuarios 
-                                    SET nombre = ?, apellido = ?, email = ?, telefono = ?, direccion = ?, rol = ?, contraseña = ? 
+                                    SET nombre = ?, apellido = ?, email = ?, telefono = ?, rol = ?, contraseña = ? 
                                     WHERE id = ?");
-        $stmt->bind_param("sssssssi", $nombre, $apellido, $email, $telefono, $direccion, $rol, $password_hash, $id);
+        $stmt->bind_param("ssssssi", $nombre, $apellido, $email, $telefono, $rol, $password_hash, $id);
     } else {
         $stmt = $conexion->prepare("UPDATE usuarios 
-                                    SET nombre = ?, apellido = ?, email = ?, telefono = ?, direccion = ?, rol = ? 
+                                    SET nombre = ?, apellido = ?, email = ?, telefono = ?, rol = ? 
                                     WHERE id = ?");
-        $stmt->bind_param("ssssssi", $nombre, $apellido, $email, $telefono, $direccion, $rol, $id);
+        $stmt->bind_param("sssssi", $nombre, $apellido, $email, $telefono, $rol, $id);
     }
     
     if ($stmt->execute()) {
