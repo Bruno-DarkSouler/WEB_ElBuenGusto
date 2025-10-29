@@ -474,10 +474,17 @@ async function cargarReportes() {
 function actualizarResumenFinanciero(resumen) {
     const cards = document.querySelectorAll('#reportes .grid .bg-white');
     if (cards.length >= 4) {
+        // Ingresos Brutos
         cards[0].querySelector('dd').textContent = `$${Number(resumen.ingresos_brutos || 0).toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+        
+        // Total Delivery
         cards[1].querySelector('dd').textContent = `$${Number(resumen.total_delivery || 0).toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
-        cards[2].querySelector('dd').textContent = `$${Number(resumen.costos_estimados || 0).toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
-        cards[3].querySelector('dd').textContent = `$${Number(resumen.ganancia_neta || 0).toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+        
+        // Ganancia por Pedidos
+        cards[2].querySelector('dd').textContent = `$${Number(resumen.ganancia_pedidos || 0).toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+        
+        // Precio Promedio
+        cards[3].querySelector('dd').textContent = `$${Number(resumen.precio_promedio || 0).toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
     }
 }
 
@@ -519,8 +526,8 @@ function renderizarReporteDetallado(detalle) {
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${dia.pedidos}</td>
             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">$${Number(dia.ingresos).toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">$${Number(dia.delivery).toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-red-600">$${Number(dia.costos).toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-green-600">$${Number(dia.ganancia).toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-green-600">$${Number(dia.ganancia_pedidos).toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">$${Number(dia.precio_promedio).toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${dia.margen}%</td>
         `;
         tbody.appendChild(tr);

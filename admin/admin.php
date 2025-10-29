@@ -42,25 +42,42 @@ $gasto_promedio = $stmt->get_result()->fetch_assoc()['gasto_promedio'];
 $stmt->close();
 
 // REPORTES FINANCIEROS
+// REPORTES FINANCIEROS
 $fecha_mes_inicio = date('Y-m-01');
 $fecha_mes_fin = date('Y-m-d');
 
-// Ingresos brutos del mes
-$stmt = $conexion->prepare("SELECT COALESCE(SUM(total), 0) as ingresos_brutos FROM pedidos WHERE DATE(fecha_pedido) BETWEEN ? AND ? AND estado = 'entregado' AND activo = 1");
-$stmt->bind_param("ss", $fecha_mes_inicio, $fecha_mes_fin);
-$stmt->execute();
-$ingresos_brutos = $stmt->get_result()->fetch_assoc()['ingresos_brutos'];
-$stmt->close();
-
-// Total delivery del mes
-$stmt = $conexion->prepare("SELECT COALESCE(SUM(precio_delivery), 0) as total_delivery FROM pedidos WHERE DATE(fecha_pedido) BETWEEN ? AND ? AND estado = 'entregado' AND activo = 1");
+// 1. Total recaudado por delivery
+$stmt = $conexion->prepare("SELECT COALESCE(SUM(precio_delivery), 0) as total_delivery 
+                            FROM pedidos 
+                            WHERE DATE(fecha_pedido) BETWEEN ? AND ? 
+                            AND estado = 'entregado' 
+                            AND activo = 1");
 $stmt->bind_param("ss", $fecha_mes_inicio, $fecha_mes_fin);
 $stmt->execute();
 $total_delivery = $stmt->get_result()->fetch_assoc()['total_delivery'];
 $stmt->close();
 
-$costos_estimados = ($ingresos_brutos - $total_delivery) * 0.4;
-$ganancia_neta = $ingresos_brutos - $costos_estimados;
+// 2. Ganancia por pedidos (subtotal sin delivery)
+$stmt = $conexion->prepare("SELECT COALESCE(SUM(subtotal), 0) as ganancia_pedidos 
+                            FROM pedidos 
+                            WHERE DATE(fecha_pedido) BETWEEN ? AND ? 
+                            AND estado = 'entregado' 
+                            AND activo = 1");
+$stmt->bind_param("ss", $fecha_mes_inicio, $fecha_mes_fin);
+$stmt->execute();
+$ganancia_neta = $stmt->get_result()->fetch_assoc()['ganancia_pedidos'];
+$stmt->close();
+
+// 3. Ingresos brutos (ganancia pedidos + delivery)
+$ingresos_brutos = $ganancia_neta + $total_delivery;
+
+// 4. Precio promedio de productos
+$stmt = $conexion->prepare("SELECT COALESCE(AVG(precio), 0) as precio_promedio 
+                            FROM productos 
+                            WHERE disponible = 1 AND activo = 1");
+$stmt->execute();
+$costos_estimados = $stmt->get_result()->fetch_assoc()['precio_promedio'];
+$stmt->close();
 ?>
 <!DOCTYPE html>
 <html lang="es" class="h-full bg-gray-50">
@@ -179,72 +196,67 @@ $ganancia_neta = $ingresos_brutos - $costos_estimados;
                         <!-- Métricas & Dashboard Section -->
                         <div id="metricas" class="section">
                             <!-- Stats Cards -->
+                            <!-- Financial Summary Cards -->
                             <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4 mb-8">
-                                <div class="bg-white overflow-hidden shadow-lg rounded-lg hover:shadow-xl transition-all duration-300">
+                                <!-- Ingresos Brutos (Ganancia Pedidos + Delivery) -->
+                                <div class="bg-white overflow-hidden shadow-lg rounded-lg">
                                     <div class="p-5">
                                         <div class="flex items-center">
                                             <div class="flex-shrink-0">
-                                                <div class="w-8 h-8 bg-blue-500 rounded-md flex items-center justify-center">
+                                                <div class="w-8 h-8 bg-green-500 rounded-md flex items-center justify-center">
                                                     <span class="text-white text-sm">💰</span>
                                                 </div>
                                             </div>
                                             <div class="ml-5 w-0 flex-1">
                                                 <dl>
-                                                    <dt class="text-sm font-medium text-gray-500 truncate">Ventas Hoy</dt>
-                                                    <dd class="flex items-baseline">
-                                                        <div class="text-2xl font-semibold text-gray-900">$<?php echo number_format($ventas_hoy, 2, ',', '.'); ?></div>
-                                                    </dd>
+                                                    <dt class="text-sm font-medium text-gray-500 truncate">Ingresos Brutos</dt>
+                                                    <dd class="text-2xl font-semibold text-gray-900">$<?php echo number_format($ingresos_brutos, 2, ',', '.'); ?></dd>
                                                 </dl>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
 
-                                <div class="bg-white overflow-hidden shadow-lg rounded-lg hover:shadow-xl transition-all duration-300">
+                                <!-- Total Delivery -->
+                                <div class="bg-white overflow-hidden shadow-lg rounded-lg">
                                     <div class="p-5">
                                         <div class="flex items-center">
                                             <div class="flex-shrink-0">
-                                                <div class="w-8 h-8 bg-green-500 rounded-md flex items-center justify-center">
-                                                    <span class="text-white text-sm">📋</span>
+                                                <div class="w-8 h-8 bg-blue-500 rounded-md flex items-center justify-center">
+                                                    <span class="text-white text-sm">🚗</span>
                                                 </div>
                                             </div>
                                             <div class="ml-5 w-0 flex-1">
                                                 <dl>
-                                                    <dt class="text-sm font-medium text-gray-500 truncate">Pedidos Procesados</dt>
-                                                    <dd class="flex items-baseline">
-                                                        <div class="text-2xl font-semibold text-gray-900"><?php echo $pedidos_hoy; ?></div>
-                                                        <div class="ml-2 flex items-baseline text-sm font-semibold text-green-600">
-                                                            <svg class="self-center flex-shrink-0 h-5 w-5 text-green-500" viewBox="0 0 20 20" fill="currentColor">
-                                                                <path fill-rule="evenodd" d="M5.293 9.707a1 1 0 010-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 01-1.414 1.414L11 7.414V15a1 1 0 11-2 0V7.414L6.707 9.707a1 1 0 01-1.414 0z" clip-rule="evenodd" />
-                                                            </svg>
-                                                            15%
-                                                        </div>
-                                                    </dd>
+                                                    <dt class="text-sm font-medium text-gray-500 truncate">Total Delivery</dt>
+                                                    <dd class="text-2xl font-semibold text-gray-900">$<?php echo number_format($total_delivery, 2, ',', '.'); ?></dd>
                                                 </dl>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
 
-                                <div class="bg-white overflow-hidden shadow-lg rounded-lg hover:shadow-xl transition-all duration-300">
+                                <!-- Ganancia por Pedidos -->
+                                <div class="bg-white overflow-hidden shadow-lg rounded-lg">
                                     <div class="p-5">
                                         <div class="flex items-center">
                                             <div class="flex-shrink-0">
                                                 <div class="w-8 h-8 bg-purple-500 rounded-md flex items-center justify-center">
-                                                    <span class="text-white text-sm">👥</span>
+                                                    <span class="text-white text-sm">📈</span>
                                                 </div>
                                             </div>
                                             <div class="ml-5 w-0 flex-1">
                                                 <dl>
-                                                    <dt class="text-sm font-medium text-gray-500 truncate">Empleados Activos</dt>
-                                                    <dd class="text-2xl font-semibold text-gray-900"><?php echo $empleados_activos; ?></dd>
+                                                    <dt class="text-sm font-medium text-gray-500 truncate">Ganancia por Pedidos</dt>
+                                                    <dd class="text-2xl font-semibold text-green-600">$<?php echo number_format($ganancia_neta, 2, ',', '.'); ?></dd>
                                                 </dl>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
 
-                                <div class="bg-white overflow-hidden shadow-lg rounded-lg hover:shadow-xl transition-all duration-300">
+                                <!-- Precio Promedio -->
+                                <div class="bg-white overflow-hidden shadow-lg rounded-lg">
                                     <div class="p-5">
                                         <div class="flex items-center">
                                             <div class="flex-shrink-0">
@@ -254,8 +266,8 @@ $ganancia_neta = $ingresos_brutos - $costos_estimados;
                                             </div>
                                             <div class="ml-5 w-0 flex-1">
                                                 <dl>
-                                                    <dt class="text-sm font-medium text-gray-500 truncate">Gasto Promedio</dt>
-                                                    <dd class="text-2xl font-semibold text-gray-900">$<?php echo number_format($gasto_promedio, 0, ',', '.'); ?></dd>
+                                                    <dt class="text-sm font-medium text-gray-500 truncate">Precio Promedio</dt>
+                                                    <dd class="text-2xl font-semibold text-gray-900">$<?php echo number_format($costos_estimados, 2, ',', '.'); ?></dd>
                                                 </dl>
                                             </div>
                                         </div>
@@ -325,15 +337,16 @@ $ganancia_neta = $ingresos_brutos - $costos_estimados;
                                 <div class="overflow-x-auto">
                                     <table class="min-w-full divide-y divide-gray-200">
                                         <thead class="bg-gray-50">
-                                            <tr>
-                                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Usuario</th>
-                                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rol</th>
-                                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Permisos</th>
-                                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Último Acceso</th>
-                                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
-                                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
-                                            </tr>
-                                        </thead>
+    <tr>
+        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fecha</th>
+        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Pedidos</th>
+        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ingresos Brutos</th>
+        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Delivery</th>
+        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ganancia Pedidos</th>
+        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Precio Promedio</th>
+        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Margen %</th>
+    </tr>
+</thead>
                                         <tbody class="bg-white divide-y divide-gray-200">
                                             <!-- Los usuarios se cargarán dinámicamente -->
                                         </tbody>
@@ -436,78 +449,83 @@ $ganancia_neta = $ingresos_brutos - $costos_estimados;
                             </div>
 
                             <!-- Financial Summary Cards -->
-                            <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4 mb-8">
-                                <div class="bg-white overflow-hidden shadow-lg rounded-lg">
-                                    <div class="p-5">
-                                        <div class="flex items-center">
-                                            <div class="flex-shrink-0">
-                                                <div class="w-8 h-8 bg-green-500 rounded-md flex items-center justify-center">
-                                                    <span class="text-white text-sm">💰</span>
-                                                </div>
-                                            </div>
-                                            <div class="ml-5 w-0 flex-1">
-                                                <dl>
-                                                    <dt class="text-sm font-medium text-gray-500 truncate">Ingresos Brutos</dt>
-                                                    <dd class="text-2xl font-semibold text-gray-900">$<?php echo number_format($ingresos_brutos, 2, ',', '.'); ?></dd>
-                                                </dl>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    </div>
-
-<div class="bg-white overflow-hidden shadow-lg rounded-lg">
-    <div class="p-5">
-        <div class="flex items-center">
-            <div class="flex-shrink-0">
-                <div class="w-8 h-8 bg-blue-500 rounded-md flex items-center justify-center">
-                    <span class="text-white text-sm">🚗</span>
+                            <!-- Financial Summary Cards -->
+<div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4 mb-8">
+    <!-- Ingresos Brutos (Ganancia Pedidos + Delivery) -->
+    <div class="bg-white overflow-hidden shadow-lg rounded-lg">
+        <div class="p-5">
+            <div class="flex items-center">
+                <div class="flex-shrink-0">
+                    <div class="w-8 h-8 bg-green-500 rounded-md flex items-center justify-center">
+                        <span class="text-white text-sm">💰</span>
+                    </div>
                 </div>
-            </div>
-            <div class="ml-5 w-0 flex-1">
-                <dl>
-                    <dt class="text-sm font-medium text-gray-500 truncate">Delivery</dt>
-                    <dd class="text-2xl font-semibold text-gray-900">$<?php echo number_format($total_delivery, 2, ',', '.'); ?></dd>
-                </dl>
+                <div class="ml-5 w-0 flex-1">
+                    <dl>
+                        <dt class="text-sm font-medium text-gray-500 truncate">Ingresos Brutos</dt>
+                        <dd class="text-2xl font-semibold text-gray-900">$<?php echo number_format($ingresos_brutos, 2, ',', '.'); ?></dd>
+                    </dl>
+                </div>
             </div>
         </div>
     </div>
-</div>
 
-<div class="bg-white overflow-hidden shadow-lg rounded-lg">
-    <div class="p-5">
-        <div class="flex items-center">
-            <div class="flex-shrink-0">
-                <div class="w-8 h-8 bg-red-500 rounded-md flex items-center justify-center">
-                    <span class="text-white text-sm">📉</span>
+    <!-- Total Delivery -->
+    <div class="bg-white overflow-hidden shadow-lg rounded-lg">
+        <div class="p-5">
+            <div class="flex items-center">
+                <div class="flex-shrink-0">
+                    <div class="w-8 h-8 bg-blue-500 rounded-md flex items-center justify-center">
+                        <span class="text-white text-sm">🚗</span>
+                    </div>
                 </div>
-            </div>
-            <div class="ml-5 w-0 flex-1">
-                <dl>
-                    <dt class="text-sm font-medium text-gray-500 truncate">Costos</dt>
-                    <dd class="text-2xl font-semibold text-gray-900">$<?php echo number_format($costos_estimados, 2, ',', '.'); ?></dd>
-                </dl>
+                <div class="ml-5 w-0 flex-1">
+                    <dl>
+                        <dt class="text-sm font-medium text-gray-500 truncate">Delivery</dt>
+                        <dd class="text-2xl font-semibold text-gray-900">$<?php echo number_format($total_delivery, 2, ',', '.'); ?></dd>
+                    </dl>
+                </div>
             </div>
         </div>
     </div>
-</div>
 
-<div class="bg-white overflow-hidden shadow-lg rounded-lg">
-    <div class="p-5">
-        <div class="flex items-center">
-            <div class="flex-shrink-0">
-                <div class="w-8 h-8 bg-purple-500 rounded-md flex items-center justify-center">
-                    <span class="text-white text-sm">📈</span>
+    <!-- Ganancia por Pedidos -->
+    <div class="bg-white overflow-hidden shadow-lg rounded-lg">
+        <div class="p-5">
+            <div class="flex items-center">
+                <div class="flex-shrink-0">
+                    <div class="w-8 h-8 bg-purple-500 rounded-md flex items-center justify-center">
+                        <span class="text-white text-sm">📈</span>
+                    </div>
                 </div>
-            </div>
-            <div class="ml-5 w-0 flex-1">
-                <dl>
-                    <dt class="text-sm font-medium text-gray-500 truncate">Ganancia Neta</dt>
-                    <dd class="text-2xl font-semibold text-green-600">$<?php echo number_format($ganancia_neta, 2, ',', '.'); ?></dd>
-                </dl>
+                <div class="ml-5 w-0 flex-1">
+                    <dl>
+                        <dt class="text-sm font-medium text-gray-500 truncate">Ganancia por Pedidos</dt>
+                        <dd class="text-2xl font-semibold text-green-600">$<?php echo number_format($ganancia_neta, 2, ',', '.'); ?></dd>
+                    </dl>
+                </div>
             </div>
         </div>
     </div>
-</div>
+
+    <!-- Precio Promedio -->
+    <div class="bg-white overflow-hidden shadow-lg rounded-lg">
+        <div class="p-5">
+            <div class="flex items-center">
+                <div class="flex-shrink-0">
+                    <div class="w-8 h-8 bg-yellow-500 rounded-md flex items-center justify-center">
+                        <span class="text-white text-sm">💵</span>
+                    </div>
+                </div>
+                <div class="ml-5 w-0 flex-1">
+                    <dl>
+                        <dt class="text-sm font-medium text-gray-500 truncate">Precio Promedio</dt>
+                        <dd class="text-2xl font-semibold text-gray-900">$<?php echo number_format($costos_estimados, 2, ',', '.'); ?></dd>
+                    </dl>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
 <!-- Financial Charts -->

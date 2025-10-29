@@ -29,26 +29,16 @@ switch($accion) {
         break;
 }
 
+// En reportes.php, reemplaza la función obtenerResumen() por esta:
+
 function obtenerResumen() {
     global $conexion;
     
     $fecha_desde = isset($_GET['fecha_desde']) ? $_GET['fecha_desde'] : date('Y-m-01');
     $fecha_hasta = isset($_GET['fecha_hasta']) ? $_GET['fecha_hasta'] : date('Y-m-d');
     
-    // Ingresos totales
-    $stmt = $conexion->prepare("SELECT SUM(total) as ingresos_brutos, COUNT(*) as total_pedidos 
-                                FROM pedidos 
-                                WHERE DATE(fecha_pedido) BETWEEN ? AND ? 
-                                AND estado = 'entregado' 
-                                AND activo = 1");
-    $stmt->bind_param("ss", $fecha_desde, $fecha_hasta);
-    $stmt->execute();
-    $resultado = $stmt->get_result();
-    $ingresos = $resultado->fetch_assoc();
-    $stmt->close();
-    
-    // Delivery
-    $stmt = $conexion->prepare("SELECT SUM(precio_delivery) as total_delivery 
+    // 1. Total recaudado por delivery (suma de precio_delivery de todos los pedidos entregados)
+    $stmt = $conexion->prepare("SELECT COALESCE(SUM(precio_delivery), 0) as total_delivery 
                                 FROM pedidos 
                                 WHERE DATE(fecha_pedido) BETWEEN ? AND ? 
                                 AND estado = 'entregado' 
@@ -59,23 +49,45 @@ function obtenerResumen() {
     $delivery = $resultado->fetch_assoc();
     $stmt->close();
     
-    // Costos estimados (40% del subtotal)
-    $costos_estimados = ($ingresos['ingresos_brutos'] - $delivery['total_delivery']) * 0.4;
-    $ganancia_neta = $ingresos['ingresos_brutos'] - $costos_estimados;
+    // 2. Ganancia por pedidos (suma del subtotal, sin delivery)
+    $stmt = $conexion->prepare("SELECT COALESCE(SUM(subtotal), 0) as ganancia_pedidos 
+                                FROM pedidos 
+                                WHERE DATE(fecha_pedido) BETWEEN ? AND ? 
+                                AND estado = 'entregado' 
+                                AND activo = 1");
+    $stmt->bind_param("ss", $fecha_desde, $fecha_hasta);
+    $stmt->execute();
+    $resultado = $stmt->get_result();
+    $ganancia = $resultado->fetch_assoc();
+    $stmt->close();
+    
+    // 3. Ingreso bruto (ganancia por pedidos + delivery)
+    $ingresos_brutos = $ganancia['ganancia_pedidos'] + $delivery['total_delivery'];
+    
+    // 4. Precio promedio de productos (suma de precios / cantidad de productos)
+    $stmt = $conexion->prepare("SELECT 
+                                    COALESCE(AVG(precio), 0) as precio_promedio
+                                FROM productos 
+                                WHERE disponible = 1 AND activo = 1");
+    $stmt->execute();
+    $resultado = $stmt->get_result();
+    $precio_prom = $resultado->fetch_assoc();
+    $stmt->close();
     
     echo json_encode([
         'success' => true,
         'resumen' => [
-            'ingresos_brutos' => floatval($ingresos['ingresos_brutos']),
-            'total_pedidos' => intval($ingresos['total_pedidos']),
+            'ingresos_brutos' => floatval($ingresos_brutos),
             'total_delivery' => floatval($delivery['total_delivery']),
-            'costos_estimados' => floatval($costos_estimados),
-            'ganancia_neta' => floatval($ganancia_neta),
+            'ganancia_pedidos' => floatval($ganancia['ganancia_pedidos']),
+            'precio_promedio' => floatval($precio_prom['precio_promedio']),
             'fecha_desde' => $fecha_desde,
             'fecha_hasta' => $fecha_hasta
         ]
     ]);
 }
+
+// Reemplaza la función obtenerReporteDetallado() por esta:
 
 function obtenerReporteDetallado() {
     global $conexion;
@@ -83,11 +95,12 @@ function obtenerReporteDetallado() {
     $fecha_desde = isset($_GET['fecha_desde']) ? $_GET['fecha_desde'] : date('Y-m-01');
     $fecha_hasta = isset($_GET['fecha_hasta']) ? $_GET['fecha_hasta'] : date('Y-m-d');
     
-    $stmt = $conexion->prepare("SELECT DATE(fecha_pedido) as fecha, 
+    $stmt = $conexion->prepare("SELECT 
+                                DATE(fecha_pedido) as fecha, 
                                 COUNT(*) as total_pedidos,
-                                SUM(total) as ingresos,
-                                SUM(precio_delivery) as delivery,
-                                SUM(subtotal) as subtotal
+                                COALESCE(SUM(subtotal), 0) as ganancia_pedidos,
+                                COALESCE(SUM(precio_delivery), 0) as delivery,
+                                COALESCE(SUM(total), 0) as ingresos_brutos
                                 FROM pedidos 
                                 WHERE DATE(fecha_pedido) BETWEEN ? AND ? 
                                 AND estado = 'entregado' 
@@ -98,19 +111,29 @@ function obtenerReporteDetallado() {
     $stmt->execute();
     $resultado = $stmt->get_result();
     
+    // Obtener precio promedio (es el mismo para todos los días)
+    $stmt_precio = $conexion->prepare("SELECT COALESCE(AVG(precio), 0) as precio_promedio
+                                       FROM productos 
+                                       WHERE disponible = 1 AND activo = 1");
+    $stmt_precio->execute();
+    $resultado_precio = $stmt_precio->get_result();
+    $precio_prom = $resultado_precio->fetch_assoc();
+    $precio_promedio = floatval($precio_prom['precio_promedio']);
+    $stmt_precio->close();
+    
     $detalle = [];
     while($fila = $resultado->fetch_assoc()) {
-        $costos = $fila['subtotal'] * 0.4;
-        $ganancia = $fila['ingresos'] - $costos;
-        $margen = ($fila['ingresos'] > 0) ? ($ganancia / $fila['ingresos']) * 100 : 0;
+        // Calcular porcentaje que representa la ganancia respecto al ingreso bruto
+        $margen = ($fila['ingresos_brutos'] > 0) ? 
+                  (($fila['ganancia_pedidos'] / $fila['ingresos_brutos']) * 100) : 0;
         
         $detalle[] = [
             'fecha' => $fila['fecha'],
             'pedidos' => intval($fila['total_pedidos']),
-            'ingresos' => floatval($fila['ingresos']),
+            'ingresos' => floatval($fila['ingresos_brutos']),
             'delivery' => floatval($fila['delivery']),
-            'costos' => floatval($costos),
-            'ganancia' => floatval($ganancia),
+            'ganancia_pedidos' => floatval($fila['ganancia_pedidos']),
+            'precio_promedio' => $precio_promedio,
             'margen' => round($margen, 2)
         ];
     }

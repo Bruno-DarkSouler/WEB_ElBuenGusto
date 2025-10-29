@@ -4132,3 +4132,31 @@ GET: Array
 
 RAW INPUT: 
 
+=== 2025-10-29 15:32:48 ===
+REQUEST_METHOD: POST
+POST: Array
+(
+    [email] => brunofornasar@gmail.com
+    [password] => 123123
+)
+
+GET: Array
+(
+)
+
+RAW INPUT: 
+
+=== 2025-10-29 15:33:44 ===
+REQUEST_METHOD: POST
+POST: Array
+(
+    [email] => admin@system.com
+    [password] => admin123
+)
+
+GET: Array
+(
+)
+
+RAW INPUT: 
+
