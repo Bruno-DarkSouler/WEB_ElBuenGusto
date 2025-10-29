@@ -77,18 +77,18 @@ $_SESSION['user_telefono'] = $usuario['telefono']; // ← LÍNEA AGREGADA
 $_SESSION['user_rol'] = $usuario['rol'];
 
 // Usar rutas absolutas desde la raíz del servidor
-$redirect_url = '/html/inicio.php';
+$redirect_url = '/dashboard/WEB_ElBuenGusto/html/inicio.php';
 if ($usuario['rol'] === 'administrador' || $usuario['email'] === 'admin@elbuengusto.com') {
-    $redirect_url = '/admin/admin.php';
+    $redirect_url = '/dashboard/WEB_ElBuenGusto/admin/admin.php';
 }
 if ($usuario['rol'] === 'cocinero'){
-    $redirect_url = '/admin/cocinero.php';
+    $redirect_url = '/dashboard/WEB_ElBuenGusto/admin/cocinero.php';
 }
 if ($usuario['rol'] === 'repartidor'){
-    $redirect_url = '/admin/repartidor.php';
+    $redirect_url = '/dashboard/WEB_ElBuenGusto/admin/repartidor.php';
 }
 if ($usuario['rol'] === 'cajero'){
-    $redirect_url = '/admin/cajero.php';
+    $redirect_url = '/dashboard/WEB_ElBuenGusto/admin/cajero.php';
 }
 
 echo json_encode([

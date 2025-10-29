@@ -4118,3 +4118,17 @@ GET: Array
 
 RAW INPUT: 
 
+=== 2025-10-28 23:33:18 ===
+REQUEST_METHOD: POST
+POST: Array
+(
+    [email] => admin@system.com
+    [password] => admin123
+)
+
+GET: Array
+(
+)
+
+RAW INPUT: 
+

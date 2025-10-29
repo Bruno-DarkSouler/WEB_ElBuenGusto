@@ -1,8 +1,8 @@
 <?php
 // Configuración de la base de datos
 $servidor = "localhost";
-$usuario = "elbuengusto";
-$password = "Rotiseria2025";
+$usuario = "root";
+$password = "";
 $base_datos = "elbuengusto_elbuengusto";
 
 // Crear conexión

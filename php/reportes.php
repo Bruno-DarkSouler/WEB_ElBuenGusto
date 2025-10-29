@@ -124,22 +124,49 @@ function obtenerMetricas() {
     
     $fecha_hoy = date('Y-m-d');
     
-    // Métricas de hoy (todos los pedidos procesados)
-    $stmt = $conexion->prepare("SELECT 
-                                COUNT(*) as pedidos_hoy,
-                                COALESCE(SUM(total), 0) as ventas_hoy,
-                                COALESCE(AVG(total), 0) as gasto_promedio
+    // 1. PEDIDOS PROCESADOS (TODOS los pedidos, no solo de hoy)
+    $stmt = $conexion->prepare("SELECT COUNT(*) as pedidos_hoy
+                                FROM pedidos 
+                                WHERE estado != 'cancelado'
+                                AND activo = 1");
+    $stmt->execute();
+    $resultado = $stmt->get_result();
+    $pedidos_data = $resultado->fetch_assoc();
+    $stmt->close();
+    
+    // 2. INGRESOS HOY (suma del PRECIO TOTAL de pedidos entregados hoy)
+    $stmt = $conexion->prepare("SELECT COALESCE(SUM(total), 0) as ventas_hoy
                                 FROM pedidos 
                                 WHERE DATE(fecha_pedido) = ? 
-                                AND estado IN ('confirmado', 'en_preparacion', 'listo', 'en_camino', 'entregado') 
+                                AND estado = 'entregado'
                                 AND activo = 1");
     $stmt->bind_param("s", $fecha_hoy);
     $stmt->execute();
     $resultado = $stmt->get_result();
-    $metricas_hoy = $resultado->fetch_assoc();
+    $ventas_data = $resultado->fetch_assoc();
     $stmt->close();
     
-    // Empleados activos
+    // 3. GASTO PROMEDIO (ingresos del día / cantidad de pedidos del día)
+    $stmt = $conexion->prepare("SELECT 
+                                COUNT(*) as cantidad_pedidos,
+                                COALESCE(SUM(total), 0) as total_ingresos
+                                FROM pedidos 
+                                WHERE DATE(fecha_pedido) = ? 
+                                AND estado = 'entregado'
+                                AND activo = 1");
+    $stmt->bind_param("s", $fecha_hoy);
+    $stmt->execute();
+    $resultado = $stmt->get_result();
+    $gasto_data = $resultado->fetch_assoc();
+    $stmt->close();
+    
+    // Calcular el promedio (evitar división por cero)
+    $gasto_promedio = 0;
+    if ($gasto_data['cantidad_pedidos'] > 0) {
+        $gasto_promedio = $gasto_data['total_ingresos'] / $gasto_data['cantidad_pedidos'];
+    }
+    
+    // 4. Empleados activos
     $stmt = $conexion->prepare("SELECT COUNT(*) as empleados_activos 
                                 FROM usuarios 
                                 WHERE rol IN ('cajero', 'cocinero', 'repartidor', 'administrador') 
@@ -152,13 +179,14 @@ function obtenerMetricas() {
     echo json_encode([
         'success' => true,
         'metricas' => [
-            'pedidos_hoy' => intval($metricas_hoy['pedidos_hoy']),
-            'ventas_hoy' => floatval($metricas_hoy['ventas_hoy']),
-            'gasto_promedio' => floatval($metricas_hoy['gasto_promedio']),
+            'pedidos_hoy' => intval($pedidos_data['pedidos_hoy']),
+            'ventas_hoy' => floatval($ventas_data['ventas_hoy']),
+            'gasto_promedio' => floatval($gasto_promedio),
             'empleados_activos' => intval($empleados['empleados_activos'])
         ]
     ]);
 }
+
 
 cerrarConexion($conexion);
 ?>

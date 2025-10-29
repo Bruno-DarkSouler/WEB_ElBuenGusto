@@ -42,11 +42,14 @@ async function verificarSesion() {
             return;
         }
         
-        // Verificar si el usuario es administrador o tiene el email admin@elbuengusto.com
         if (!data.user.is_admin) {
             window.location.href = '../index.html';
             return;
         }
+        
+        // AGREGAR ESTA LÍNEA:
+        cargarMetricas();
+        
     } catch (error) {
         console.error('Error al verificar sesión:', error);
         window.location.href = '../html/login.html';
