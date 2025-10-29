@@ -552,14 +552,30 @@ async function cargarConfiguracion() {
         const response = await fetch(API_BASE + 'configuracion.php');
         const data = await response.json();
         
-        if (data.success) {
-            showToast('Configuración cargada');
+        if (data.success && data.configuracion) {
+            const c = data.configuracion;
+
+            const nombreLocal = document.querySelector('input[name="nombre_local"]');
+            const telefono = document.querySelector('input[name="telefono"]');
+            const emailContacto = document.querySelector('input[name="email_contacto"]');
+            const direccion = document.querySelector('input[name="direccion"]');
+            const descripcion = document.querySelector('textarea[name="descripcion"]');
+
+            if (nombreLocal) nombreLocal.value = c.nombre_local || "";
+            if (telefono) telefono.value = c.telefono || "";
+            if (emailContacto) emailContacto.value = c.email_contacto || "";
+            if (direccion) direccion.value = c.direccion || "";
+            if (descripcion) descripcion.value = c.descripcion || "";
+        } else {
+            showToast('No se pudo cargar la configuración', 'error');
         }
+
     } catch (error) {
         console.error('Error al cargar configuración:', error);
         showToast('Error al cargar configuración', 'error');
     }
 }
+
 
 function abrir_opciones() {
     var opciones = document.getElementById("opciones");
@@ -570,8 +586,13 @@ function abrir_opciones() {
 
 async function saveConfiguration() {
     try {
+
         const config = {
-            nombre_local: document.querySelector('input[type="text"]').value,
+            nombre_local: document.querySelector('input[name="nombre_local"]').value,
+            telefono: document.querySelector('input[name="telefono"]').value,
+            email_contacto: document.querySelector('input[name="email_contacto"]').value,
+            direccion: document.querySelector('input[name="direccion"]').value,
+            descripcion: document.querySelector('textarea[name="descripcion"]').value
         };
         
         const response = await fetch(API_BASE + 'configuracion.php', {
@@ -587,11 +608,13 @@ async function saveConfiguration() {
         } else {
             showToast(data.message, 'error');
         }
+
     } catch (error) {
         console.error('Error al guardar configuración:', error);
         showToast('Error al guardar configuración', 'error');
     }
 }
+
 
 // ============ MÉTODOS DE PAGO ============
 async function cargarMetodosPago() {
@@ -628,23 +651,22 @@ async function cargarMetricas() {
             
             const cards = document.querySelectorAll('#metricas .grid .bg-white');
             if (cards.length >= 4) {
-                // Ventas Hoy
                 const ventasElement = cards[0].querySelector('.text-2xl');
                 ventasElement.textContent = `$${Number(metricas.ventas_hoy || 0).toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
                 
-                // Pedidos Procesados
                 const pedidosElement = cards[1].querySelector('.text-2xl');
                 pedidosElement.textContent = metricas.pedidos_hoy || 0;
                 
-                // Empleados Activos
                 const empleadosElement = cards[2].querySelector('.text-2xl');
                 empleadosElement.textContent = metricas.empleados_activos || 0;
                 
-                // Gasto Promedio
                 const gastoPromedioElement = cards[3].querySelector('.text-2xl');
                 gastoPromedioElement.textContent = `$${Number(metricas.gasto_promedio || 0).toLocaleString('es-AR', {minimumFractionDigits: 0, maximumFractionDigits: 0})}`;
             }
         }
+        
+        // Cargar pedidos activos
+        await cargarPedidosActivos();
     } catch (error) {
         console.error('Error al cargar métricas:', error);
         showToast('Error al cargar métricas', 'error');
@@ -970,6 +992,197 @@ function editUser(id) {
 
 function editProduct(id) {
     showProductModal(id);
+}
+
+// ============ PEDIDOS ACTIVOS ============
+let pedidosActivosGlobal = [];
+
+async function cargarPedidosActivos() {
+    try {
+        const response = await fetch(API_BASE + 'pedidos_activos.php');
+        const data = await response.json();
+        
+        if (data.success) {
+            pedidosActivosGlobal = data.pedidos;
+            renderizarPedidosActivos(data.pedidos.slice(0, 5)); // Solo 5 para el dashboard
+        }
+    } catch (error) {
+        console.error('Error al cargar pedidos activos:', error);
+        showToast('Error al cargar pedidos activos', 'error');
+    }
+}
+
+function renderizarPedidosActivos(pedidos) {
+    const tbody = document.getElementById('pedidosActivosTabla');
+    if (!tbody) return;
+    
+    tbody.innerHTML = '';
+    
+    if (pedidos.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" class="px-4 py-4 text-center text-gray-500">No hay pedidos activos</td></tr>';
+        return;
+    }
+    
+    pedidos.forEach(pedido => {
+        const tr = document.createElement('tr');
+        tr.classList.add('hover:bg-gray-50', 'cursor-pointer');
+        tr.onclick = () => verDetallePedido(pedido.id);
+        
+        tr.innerHTML = `
+            <td class="px-4 py-3 text-sm font-medium text-gray-900">${pedido.numero_pedido}</td>
+            <td class="px-4 py-3 text-sm text-gray-600">${pedido.nombre_cliente || 'Cliente'}</td>
+            <td class="px-4 py-3">
+                <span class="px-2 py-1 text-xs font-semibold rounded-full ${getEstadoColor(pedido.estado)}">
+                    ${getEstadoNombre(pedido.estado)}
+                </span>
+            </td>
+            <td class="px-4 py-3 text-sm font-medium text-gray-900">$${formatearPrecio(pedido.total)}</td>
+        `;
+        tbody.appendChild(tr);
+    });
+}
+
+function verTodosPedidos() {
+    const modal = document.getElementById('modalTodosPedidos');
+    modal.classList.remove('hidden');
+    renderizarTodosPedidos(pedidosActivosGlobal);
+    
+    // Agregar event listeners después de abrir el modal
+    const buscarInput = document.getElementById('buscarPedido');
+    const filtroEstado = document.getElementById('filtroEstado');
+    
+    if (buscarInput) {
+        buscarInput.removeEventListener('input', filtrarPedidos); // Evitar duplicados
+        buscarInput.addEventListener('input', filtrarPedidos);
+    }
+    
+    if (filtroEstado) {
+        filtroEstado.removeEventListener('change', filtrarPedidos); // Evitar duplicados
+        filtroEstado.addEventListener('change', filtrarPedidos);
+    }
+}
+
+function cerrarModalTodosPedidos() {
+    const modal = document.getElementById('modalTodosPedidos');
+    modal.classList.add('hidden');
+}
+
+function renderizarTodosPedidos(pedidos) {
+    const tbody = document.getElementById('todosPedidosTabla');
+    if (!tbody) return;
+    
+    tbody.innerHTML = '';
+    
+    if (pedidos.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" class="px-6 py-4 text-center text-gray-500">No hay pedidos activos</td></tr>';
+        return;
+    }
+    
+    pedidos.forEach(pedido => {
+        const tr = document.createElement('tr');
+        tr.classList.add('hover:bg-gray-50');
+        
+        const fecha = new Date(pedido.fecha_pedido);
+        const fechaFormateada = fecha.toLocaleDateString('es-AR', { 
+            day: '2-digit', 
+            month: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+        
+        tr.innerHTML = `
+            <td class="px-6 py-4 text-sm font-medium text-gray-900">${pedido.numero_pedido}</td>
+            <td class="px-6 py-4 text-sm text-gray-600">${pedido.nombre_cliente || 'Cliente'}</td>
+            <td class="px-6 py-4 text-sm text-gray-500">${fechaFormateada}</td>
+            <td class="px-6 py-4">
+                <span class="px-2 py-1 text-xs font-semibold rounded-full ${getEstadoColor(pedido.estado)}">
+                    ${getEstadoNombre(pedido.estado)}
+                </span>
+            </td>
+            <td class="px-6 py-4 text-sm text-gray-600">${pedido.tipo_pedido === 'inmediato' ? 'Inmediato' : 'Programado'}</td>
+            <td class="px-6 py-4 text-sm font-medium text-gray-900">$${formatearPrecio(pedido.total)}</td>
+            <td class="px-6 py-4 text-sm text-gray-600">${pedido.nombre_repartidor || 'Sin asignar'}</td>
+        `;
+        tbody.appendChild(tr);
+    });
+}
+
+function getEstadoColor(estado) {
+    const colores = {
+        'en_preparacion': 'bg-yellow-100 text-yellow-800',
+        'listo': 'bg-blue-100 text-blue-800',
+        'en_camino': 'bg-purple-100 text-purple-800',
+        'entregado': 'bg-green-100 text-green-800'
+    };
+    return colores[estado] || 'bg-gray-100 text-gray-800';
+}
+
+function getEstadoNombre(estado) {
+    const nombres = {
+        'en_preparacion': 'En Preparación',
+        'listo': 'Listo',
+        'en_camino': 'En Camino',
+        'entregado': 'Entregado'
+    };
+    return nombres[estado] || estado;
+}
+
+function formatearPrecio(precio) {
+    return Number(precio).toLocaleString('es-AR', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    });
+}
+
+// Filtros del modal
+
+function filtrarPedidos() {
+    const busqueda = document.getElementById('buscarPedido')?.value.toLowerCase() || '';
+    const estadoFiltro = document.getElementById('filtroEstado')?.value || '';
+    
+    const pedidosFiltrados = pedidosActivosGlobal.filter(pedido => {
+        const coincideBusqueda = pedido.numero_pedido.toLowerCase().includes(busqueda) ||
+                                (pedido.nombre_cliente && pedido.nombre_cliente.toLowerCase().includes(busqueda));
+        
+        const coincideEstado = !estadoFiltro || pedido.estado === estadoFiltro;
+        
+        return coincideBusqueda && coincideEstado;
+    });
+    
+    renderizarTodosPedidos(pedidosFiltrados);
+}
+
+// Llamar al cargar métricas
+async function cargarMetricas() {
+    try {
+        const response = await fetch(API_BASE + 'reportes.php?accion=metricas');
+        const data = await response.json();
+        
+        if (data.success) {
+            const metricas = data.metricas;
+            
+            const cards = document.querySelectorAll('#metricas .grid .bg-white');
+            if (cards.length >= 4) {
+                const ventasElement = cards[0].querySelector('.text-2xl');
+                ventasElement.textContent = `$${Number(metricas.ventas_hoy || 0).toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+                
+                const pedidosElement = cards[1].querySelector('.text-2xl');
+                pedidosElement.textContent = metricas.pedidos_hoy || 0;
+                
+                const empleadosElement = cards[2].querySelector('.text-2xl');
+                empleadosElement.textContent = metricas.empleados_activos || 0;
+                
+                const gastoPromedioElement = cards[3].querySelector('.text-2xl');
+                gastoPromedioElement.textContent = `$${Number(metricas.gasto_promedio || 0).toLocaleString('es-AR', {minimumFractionDigits: 0, maximumFractionDigits: 0})}`;
+            }
+        }
+        
+        // Cargar pedidos activos
+        await cargarPedidosActivos();
+    } catch (error) {
+        console.error('Error al cargar métricas:', error);
+        showToast('Error al cargar métricas', 'error');
+    }
 }
 
 // Función para cerrar la sesión (utilizando fetch/AJAX)

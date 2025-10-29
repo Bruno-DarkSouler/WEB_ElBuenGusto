@@ -209,7 +209,7 @@ $stmt->close();
                                             </div>
                                             <div class="ml-5 w-0 flex-1">
                                                 <dl>
-                                                    <dt class="text-sm font-medium text-gray-500 truncate">Ingresos Brutos</dt>
+                                                    <dt class="text-sm font-medium text-gray-500 truncate">Ingresos del día</dt>
                                                     <dd class="text-2xl font-semibold text-gray-900">$<?php echo number_format($ingresos_brutos, 2, ',', '.'); ?></dd>
                                                 </dl>
                                             </div>
@@ -228,7 +228,7 @@ $stmt->close();
                                             </div>
                                             <div class="ml-5 w-0 flex-1">
                                                 <dl>
-                                                    <dt class="text-sm font-medium text-gray-500 truncate">Total Delivery</dt>
+                                                    <dt class="text-sm font-medium text-gray-500 truncate">Total pedidos</dt>
                                                     <dd class="text-2xl font-semibold text-gray-900">$<?php echo number_format($total_delivery, 2, ',', '.'); ?></dd>
                                                 </dl>
                                             </div>
@@ -247,7 +247,7 @@ $stmt->close();
                                             </div>
                                             <div class="ml-5 w-0 flex-1">
                                                 <dl>
-                                                    <dt class="text-sm font-medium text-gray-500 truncate">Ganancia por Pedidos</dt>
+                                                    <dt class="text-sm font-medium text-gray-500 truncate">Total repartidores</dt>
                                                     <dd class="text-2xl font-semibold text-green-600">$<?php echo number_format($ganancia_neta, 2, ',', '.'); ?></dd>
                                                 </dl>
                                             </div>
@@ -284,13 +284,29 @@ $stmt->close();
                                     </div>
                                     <canvas id="salesChart" width="400" height="200"></canvas>
                                 </div>
+                                
                                 <div class="bg-white p-6 rounded-lg shadow-lg" style="min-height: 300px;">
                                     <div class="flex justify-between items-center mb-4">
-                                        <h3 class="text-lg font-medium text-gray-900">Performance por Empleado</h3>
-                                        <button class="text-sm text-indigo-600 hover:text-indigo-800">Gestionar</button>
+                                        <h3 class="text-lg font-medium text-gray-900">Pedidos Activos</h3>
+                                        <button onclick="verTodosPedidos()" class="text-sm text-indigo-600 hover:text-indigo-800">Ver todos</button>
                                     </div>
-                                    <canvas id="employeeChart" width="400" height="200"></canvas>
+                                    <div class="overflow-y-auto" style="max-height: 250px;">
+                                        <table class="min-w-full">
+                                            <thead class="bg-gray-50 sticky top-0">
+                                                <tr>
+                                                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500">N° Pedido</th>
+                                                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500">Cliente</th>
+                                                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500">Estado</th>
+                                                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500">Total</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="pedidosActivosTabla" class="divide-y divide-gray-200">
+                                                <!-- Se llenará con JavaScript -->
+                                            </tbody>
+                                        </table>
+                                    </div>
                                 </div>
+
                             </div>
 
                             <!-- Quick Status -->
@@ -304,13 +320,13 @@ $stmt->close();
                                     </div>
                                     <div class="text-center p-4 bg-blue-50 rounded-lg">
                                         <div class="text-2xl mb-2">💳</div>
-                                        <div class="text-sm font-medium text-gray-900">3 Métodos Activos</div>
-                                        <div class="text-xs text-gray-500">Efectivo, Digital, Tarjeta</div>
+                                        <div class="text-sm font-medium text-gray-900">2 Métodos Activos</div>
+                                        <div class="text-xs text-gray-500">MercadoPago, CuentaDNI, Efectivo(VIP)</div>
                                     </div>
                                     <div class="text-center p-4 bg-yellow-50 rounded-lg">
                                         <div class="text-2xl mb-2">🎯</div>
-                                        <div class="text-sm font-medium text-gray-900">2 Promociones</div>
-                                        <div class="text-xs text-gray-500">Activas hasta el viernes</div>
+                                        <div class="text-sm font-medium text-gray-900">Dirección</div>
+                                        <div class="text-xs text-gray-500">Cerrito 3966</div>
                                     </div>
                                     <div class="text-center p-4 bg-purple-50 rounded-lg">
                                         <div class="text-2xl mb-2">📊</div>
@@ -567,54 +583,87 @@ $stmt->close();
 </div>
 
 <!-- Configuración Local Section -->
+<!-- Configuración Local Section -->
 <div id="configuracion" class="section hidden">
-<div class="mb-6">
-<h2 class="text-xl font-semibold text-gray-900">Configuración del Local</h2>
-</div>
+    <div class="mb-6">
+        <h2 class="text-xl font-semibold text-gray-900">Configuración del Local</h2>
+    </div>
 
-<div class="space-y-6">
-<!-- General Settings -->
-<div class="bg-white shadow-lg rounded-lg p-6">
-    <h3 class="text-lg font-medium text-gray-900 mb-4">Información General</h3>
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div>
-            <label class="block text-sm font-medium text-gray-700">Nombre del Local</label>
-            <input type="text" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary" value="Rotisería Del Barrio">
-        </div>
-        <div>
-            <label class="block text-sm font-medium text-gray-700">Teléfono Principal</label>
-            <input type="tel" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary" value="+54 11 1234-5678">
-        </div>
-        <div>
-            <label class="block text-sm font-medium text-gray-700">Email Contacto</label>
-            <input type="email" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary" value="info@rotiseria.com">
-        </div>
-        <div>
-            <label class="block text-sm font-medium text-gray-700">Dirección</label>
-            <input type="text" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary" value="Av. Corrientes 1234, CABA">
+    <div class="bg-white rounded-lg shadow-lg p-6">
+        <div class="space-y-6">
+            <!-- General Settings -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Nombre del Local</label>
+                    <input 
+                        name="nombre_local"
+                        type="text" 
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-primary focus:border-primary"
+                    >
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Teléfono Principal</label>
+                    <input 
+                        name="telefono"
+                        type="text" 
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-primary focus:border-primary"
+                    >
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Email Contacto</label>
+                    <input 
+                        name="email_contacto"
+                        type="email" 
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-primary focus:border-primary"
+                    >
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Dirección</label>
+                    <input 
+                        name="direccion"
+                        type="text" 
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-primary focus:border-primary"
+                    >
+                </div>
+
+                <div class="md:col-span-2">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Descripción</label>
+                    <textarea 
+                        name="descripcion"
+                        rows="4"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-primary focus:border-primary"
+                    ></textarea>
+                </div>
+            </div>
+
+            <div class="flex justify-end pt-4">
+                <button onclick="saveConfiguration()" class="bg-primary hover:bg-[#AD1926] text-white px-6 py-2 rounded-lg transition-colors duration-200 flex items-center gap-2">
+                    <span>💾</span>
+                    <span>Guardar Configuración</span>
+                </button>
+            </div>
         </div>
     </div>
-</div>
-
-<div class="flex justify-end">
-    <button onclick="saveConfiguration()" class="bg-primary hover:bg-yellow-600 text-white px-6 py-2 rounded-lg transition-colors duration-200">
-        💾 Guardar Configuración
-    </button>
-</div>
 </div>
 </div>
 
 <!-- Métodos de Pago Section -->
+<!-- Métodos de Pago Section -->
+<!-- Métodos de Pago Section -->
 <div id="pagos" class="section hidden">
-<div class="mb-6">
-<div class="flex justify-between items-center">
-    <h2 class="text-xl font-semibold text-gray-900">Gestión de Métodos de Pago</h2>
-</div>
-</div>
+    <div class="flex justify-center mb-6">
+        <div class="max-w-4xl w-full">
+            <h2 class="text-xl font-semibold text-gray-900">Gestión de Métodos de Pago</h2>
+        </div>
+    </div>
 
-<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-<!-- Payment Method Cards -->
-<div class="bg-white rounded-lg shadow-lg p-6 border-l-4 border-green-500">
+    <div class="flex justify-center">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 max-w-4xl w-full">
+            <!-- Payment Method Cards -->
+            <div class="bg-white rounded-lg shadow-lg p-6 border-l-4 border-green-500">
     <div class="flex items-center justify-between mb-4">
         <div class="flex items-center space-x-3">
             <div class="h-12 w-12 bg-green-100 rounded-lg flex items-center justify-center">
@@ -647,7 +696,7 @@ $stmt->close();
             </div>
             <div>
                 <h3 class="font-semibold text-gray-900">Digital</h3>
-                <p class="text-sm text-gray-500">MercadoPago, Modo</p>
+                <p class="text-sm text-gray-500">MercadoPago, CuentaDNI</p>
             </div>
         </div>
         <span class="px-3 py-1 bg-green-100 text-green-800 text-xs font-semibold rounded-full">ACTIVO</span>
@@ -789,6 +838,52 @@ Guardar
 </form>
 </div>
 </div>
+</div>
+
+<!-- Modal Todos los Pedidos -->
+<div id="modalTodosPedidos" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+    <div class="relative top-10 mx-auto p-5 border w-11/12 max-w-6xl shadow-lg rounded-md bg-white">
+        <div class="mt-3">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-medium text-gray-900">Todos los Pedidos Activos</h3>
+                <button onclick="cerrarModalTodosPedidos()" class="text-gray-400 hover:text-gray-600">
+                    <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+                    </svg>
+                </button>
+            </div>
+            
+            <div class="mb-4 flex gap-4">
+                <input type="text" id="buscarPedido" placeholder="Buscar por número de pedido o cliente..." class="flex-1 px-3 py-2 border border-gray-300 rounded-md">
+                <select id="filtroEstado" class="px-3 py-2 border border-gray-300 rounded-md">
+                    <option value="">Todos los estados</option>
+                    <option value="en_preparacion">En Preparación</option>
+                    <option value="listo">Listo</option>
+                    <option value="en_camino">En Camino</option>
+                    <option value="entregado">Entregado</option>
+                </select>
+            </div>
+
+            <div class="overflow-x-auto" style="max-height: 500px;">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50 sticky top-0">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">N° Pedido</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Cliente</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Fecha</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Estado</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tipo</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Total</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Repartidor</th>
+                        </tr>
+                    </thead>
+                    <tbody id="todosPedidosTabla" class="bg-white divide-y divide-gray-200">
+                        <!-- Se llenará con JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
 </div>
 
 </body>
