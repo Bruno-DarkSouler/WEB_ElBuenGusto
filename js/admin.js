@@ -539,12 +539,227 @@ function updateFinancialReport() {
 }
 
 
-function exportReport(tipo) {
-    if (tipo === 'pdf') {
-        window.print(); // Abre el diálogo de impresión
-    } else if (tipo === 'excel') {
-        showToast('Función de exportación a Excel en desarrollo');
+async function exportReport(tipo) {
+    try {
+        const fechaDesde = document.getElementById('dateFrom')?.value || '2025-09-01';
+        const fechaHasta = document.getElementById('dateTo')?.value || '2025-09-10';
+        
+        const response = await fetch(`${API_BASE}reportes.php?accion=detallado&fecha_desde=${fechaDesde}&fecha_hasta=${fechaHasta}`);
+        const data = await response.json();
+        
+        if (!data.success) {
+            showToast('Error al obtener datos del reporte', 'error');
+            return;
+        }
+        
+        if (tipo === 'pdf') {
+            exportarPDF(data.detalle, fechaDesde, fechaHasta);
+        } else if (tipo === 'excel') {
+            exportarExcel(data.detalle, fechaDesde, fechaHasta);
+        }
+    } catch (error) {
+        console.error('Error al exportar:', error);
+        showToast('Error al exportar reporte', 'error');
     }
+}
+
+function exportarExcel(detalle, fechaDesde, fechaHasta) {
+    // Crear el contenido CSV
+    let csv = 'Fecha,Pedidos,Ingresos Brutos,Delivery,Ganancia Pedidos,Precio Promedio,Margen %\n';
+    
+    detalle.forEach(dia => {
+        const fechaFormateada = new Date(dia.fecha + 'T00:00:00').toLocaleDateString('es-AR', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric'
+        });
+        
+        csv += `${fechaFormateada},`;
+        csv += `${dia.pedidos},`;
+        csv += `$${Number(dia.ingresos).toFixed(2)},`;
+        csv += `$${Number(dia.delivery).toFixed(2)},`;
+        csv += `$${Number(dia.ganancia_pedidos).toFixed(2)},`;
+        csv += `$${Number(dia.precio_promedio).toFixed(2)},`;
+        csv += `${dia.margen}%\n`;
+    });
+    
+    // Agregar totales al final
+    const totales = calcularTotales(detalle);
+    csv += `\nTOTALES,${totales.pedidos},$${totales.ingresos.toFixed(2)},$${totales.delivery.toFixed(2)},$${totales.ganancia.toFixed(2)},$${totales.promedioGeneral.toFixed(2)},${totales.margenPromedio}%\n`;
+    
+    // Crear el archivo y descargarlo
+    const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    
+    link.setAttribute('href', url);
+    link.setAttribute('download', `reporte_financiero_${fechaDesde}_${fechaHasta}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    showToast('Reporte Excel exportado exitosamente');
+}
+
+function exportarPDF(detalle, fechaDesde, fechaHasta) {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    
+    const totales = calcularTotales(detalle);
+    
+    // Configuración de colores
+    const primaryColor = [200, 30, 45]; // #C81E2D
+    const grayColor = [107, 114, 128];
+    
+    // ENCABEZADO
+    doc.setFillColor(...primaryColor);
+    doc.rect(0, 0, 210, 35, 'F');
+    
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(22);
+    doc.setFont(undefined, 'bold');
+    doc.text('🍽️ Rotisería - Reporte Financiero', 105, 15, { align: 'center' });
+    
+    doc.setFontSize(11);
+    doc.setFont(undefined, 'normal');
+    doc.text('Sistema de Gestión Administrativa', 105, 25, { align: 'center' });
+    
+    // PERÍODO
+    doc.setFillColor(243, 244, 246);
+    doc.rect(15, 40, 180, 12, 'F');
+    
+    doc.setTextColor(0, 0, 0);
+    doc.setFontSize(11);
+    doc.setFont(undefined, 'bold');
+    const fechaDesdeFormateada = new Date(fechaDesde + 'T00:00:00').toLocaleDateString('es-AR');
+    const fechaHastaFormateada = new Date(fechaHasta + 'T00:00:00').toLocaleDateString('es-AR');
+    doc.text(`Período: ${fechaDesdeFormateada} - ${fechaHastaFormateada}`, 105, 47, { align: 'center' });
+    
+    // TABLA DE DATOS
+    const tableData = detalle.map(dia => {
+        const fechaFormateada = new Date(dia.fecha + 'T00:00:00').toLocaleDateString('es-AR', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric'
+        });
+        
+        return [
+            fechaFormateada,
+            dia.pedidos,
+            '$' + Number(dia.ingresos).toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2}),
+            '$' + Number(dia.delivery).toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2}),
+            '$' + Number(dia.ganancia_pedidos).toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2}),
+            '$' + Number(dia.precio_promedio).toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2}),
+            dia.margen + '%'
+        ];
+    });
+    
+    // Agregar fila de totales
+    tableData.push([
+        { content: 'TOTALES', styles: { fontStyle: 'bold' } },
+        { content: totales.pedidos, styles: { fontStyle: 'bold' } },
+        { content: '$' + totales.ingresos.toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2}), styles: { fontStyle: 'bold' } },
+        { content: '$' + totales.delivery.toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2}), styles: { fontStyle: 'bold' } },
+        { content: '$' + totales.ganancia.toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2}), styles: { fontStyle: 'bold' } },
+        { content: '$' + totales.promedioGeneral.toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2}), styles: { fontStyle: 'bold' } },
+        { content: totales.margenPromedio + '%', styles: { fontStyle: 'bold' } }
+    ]);
+    
+    doc.autoTable({
+        startY: 58,
+        head: [['Fecha', 'Pedidos', 'Ingresos', 'Delivery', 'Ganancia', 'Precio Prom.', 'Margen %']],
+        body: tableData,
+        theme: 'grid',
+        headStyles: {
+            fillColor: primaryColor,
+            textColor: [255, 255, 255],
+            fontStyle: 'bold',
+            fontSize: 9
+        },
+        bodyStyles: {
+            fontSize: 8,
+            textColor: [51, 51, 51]
+        },
+        alternateRowStyles: {
+            fillColor: [249, 250, 251]
+        },
+        footStyles: {
+            fillColor: [243, 244, 246],
+            textColor: [0, 0, 0],
+            fontStyle: 'bold'
+        },
+        margin: { left: 15, right: 15 },
+        didDrawPage: function (data) {
+            // PIE DE PÁGINA
+            const pageCount = doc.internal.getNumberOfPages();
+            const pageSize = doc.internal.pageSize;
+            const pageHeight = pageSize.height ? pageSize.height : pageSize.getHeight();
+            
+            doc.setFontSize(8);
+            doc.setTextColor(...grayColor);
+            doc.setFont(undefined, 'normal');
+            
+            const fechaGeneracion = new Date().toLocaleDateString('es-AR');
+            const horaGeneracion = new Date().toLocaleTimeString('es-AR');
+            
+            doc.text(
+                `Documento generado el ${fechaGeneracion} a las ${horaGeneracion}`,
+                105,
+                pageHeight - 15,
+                { align: 'center' }
+            );
+            
+            doc.text(
+                'Sistema de Gestión - Rotisería Del Barrio',
+                105,
+                pageHeight - 10,
+                { align: 'center' }
+            );
+            
+            doc.text(
+                `Página ${data.pageNumber} de ${pageCount}`,
+                pageSize.width - 20,
+                pageHeight - 10,
+                { align: 'right' }
+            );
+        }
+    });
+    
+    // DESCARGAR PDF
+    doc.save(`reporte_financiero_${fechaDesde}_${fechaHasta}.pdf`);
+    
+    showToast('Reporte PDF descargado exitosamente');
+}
+
+function calcularTotales(detalle) {
+    let totalPedidos = 0;
+    let totalIngresos = 0;
+    let totalDelivery = 0;
+    let totalGanancia = 0;
+    let sumaPrecios = 0;
+    let sumaMargenes = 0;
+    
+    detalle.forEach(dia => {
+        totalPedidos += parseInt(dia.pedidos) || 0;
+        totalIngresos += parseFloat(dia.ingresos) || 0;
+        totalDelivery += parseFloat(dia.delivery) || 0;
+        totalGanancia += parseFloat(dia.ganancia_pedidos) || 0;
+        sumaPrecios += parseFloat(dia.precio_promedio) || 0;
+        sumaMargenes += parseFloat(dia.margen) || 0;
+    });
+    
+    const promedioGeneral = detalle.length > 0 ? sumaPrecios / detalle.length : 0;
+    const margenPromedio = detalle.length > 0 ? Math.round(sumaMargenes / detalle.length) : 0;
+    
+    return {
+        pedidos: totalPedidos,
+        ingresos: totalIngresos,
+        delivery: totalDelivery,
+        ganancia: totalGanancia,
+        promedioGeneral: promedioGeneral,
+        margenPromedio: margenPromedio
+    };
 }
 // ============ CONFIGURACIÓN ============
 async function cargarConfiguracion() {

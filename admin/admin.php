@@ -87,6 +87,8 @@ $stmt->close();
     <title>Panel Administrador - Rotisería</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
 </head>
 <body class="h-full overflow-hidden">
     <div class="h-24 bg-[#C81E2D] flex justify-between items-center md:hidden">
